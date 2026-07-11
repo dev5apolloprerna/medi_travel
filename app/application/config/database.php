@@ -75,6 +75,8 @@ include_once(APPPATH . 'config/app-config.php');
 $active_group  = 'default';
 $query_builder = true;
 
+$default_database = config_item('default_database') ?: APP_DB_NAME;
+
 global $app_db_encrypt;
 $db_encrypt = false;
 if (defined('APP_DB_ENCRYPT')) {
@@ -89,7 +91,7 @@ $db['default'] = array_merge([
     'hostname'     => APP_DB_HOSTNAME,
     'username'     => APP_DB_USERNAME,
     'password'     => APP_DB_PASSWORD,
-    'database'     => config_item('default_database'),
+    'database'     => $default_database,
     'dbdriver'     => defined('APP_DB_DRIVER') ? APP_DB_DRIVER : 'mysqli',
     'dbprefix'     => db_prefix(),
     'pconnect'     => false,
@@ -115,7 +117,7 @@ $db['default'] = array_merge([
     'hostname'     => APP_DB_HOSTNAME,
     'username'     => APP_DB_USERNAME,
     'password'     => APP_DB_PASSWORD,
-    'database'     => config_item('default_database'),
+    'database'     => $default_database,
     'dbdriver'     => defined('APP_DB_DRIVER') ? APP_DB_DRIVER : 'mysqli',
     'dbprefix'     => db_prefix(),
     'pconnect'     => false,

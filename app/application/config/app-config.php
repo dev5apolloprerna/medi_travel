@@ -74,6 +74,12 @@ define('APP_DB_PASSWORD', '');
 define('APP_DB_NAME', 'medi_travel_solution');
 
 
+$config['default_database'] = APP_DB_NAME;
+$config['database_hostname'] = APP_DB_HOSTNAME;
+$config['database_username'] = APP_DB_USERNAME;
+$config['database_password'] = APP_DB_PASSWORD;
+$config['default_url']       = APP_BASE_URL;
+$config['main_url']          = APP_BASE_URL;
 
 
 /**
@@ -109,4 +115,3 @@ define('APP_SESSION_COOKIE_SAME_SITE', 'Lax');
 define('APP_CSRF_PROTECTION', true);
 
 
-require_once(FCPATH . 'modules/branch/config/my_config.php'); // added by branch

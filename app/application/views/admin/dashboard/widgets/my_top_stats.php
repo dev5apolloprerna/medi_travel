@@ -1,6 +1,10 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget relative" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('quick_stats'); ?>">
-   <?php if(is_admin()){?>
+<?php
+   $date_range = $this->input->get('date_range') ?: '';
+   $from_date  = $this->input->get('from_date') ?: '';
+   $to_date    = $this->input->get('to_date') ?: '';
+   ?>
     <div class=""></div>
     <div class="row">
         <?php
@@ -24,20 +28,20 @@
                           
                             <select class="selectpicker" data-none-selected-text="" data-width="100%" name="date_range" id="date_range">  
                                     <option value="">Nothing Selected</option>
-                                    <option value="today" <?php echo $_GET['date_range'] == 'today' ? 'selected' : '';?>>Today</option>
-                                    <option value="this_week" <?php echo $_GET['date_range'] == 'this_week' ? 'selected' : '';?>>This Week</option>
-                                    <option value="this_month" <?php echo $_GET['date_range'] == 'this_month' ? 'selected' : '';?>>This Month</option>
+                                    <option value="today" <?php echo $date_range == 'today' ? 'selected' : '';?>>Today</option>
+                                    <option value="this_week" <?php echo $date_range == 'this_week' ? 'selected' : '';?>>This Week</option>
+                                    <option value="this_month" <?php echo $date_range == 'this_month' ? 'selected' : '';?>>This Month</option>
                                 </select>
                            
                             </div>
                         </div> 
                          <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12 col-12 uid">
                         <label for="rx-str-date" class="control-label">From Date</label>
-                        <input type="date" id="from_date" name="from_date" class="form-control" value="<?php echo $_GET['from_date'];?>">
+                        <input type="date" id="from_date" name="from_date" class="form-control" value="<?php echo $from_date;?>">
                     </div>
                      <div class="col-xl-3 col-lg-3 col-md-3 col-sm-12 col-12 uid">
                         <label for="rx-str-date" class="control-label">To Date</label>
-                        <input type="date" id="to_date" name="to_date" class="form-control" value="<?php echo $_GET['to_date'];?>">
+                        <input type="date" id="to_date" name="to_date" class="form-control" value="<?php echo $to_date;?>">
                     </div>
                     <div class="col-xl-1 col-lg-1 col-md-1 col-sm-12 col-12 uid" style="padding-right: 0px;">
                        
@@ -65,7 +69,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate">Total</span>                     
          </div>
-          <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? " date BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+          <?php $sql = ($from_date != '' && $to_date != '') ? " date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0"><?php echo total_rows(db_prefix() . 'appointly_appointments',$sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -82,7 +86,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:blue;">Approved</span>                     
          </div>
-         <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? " AND date BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+         <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:blue;"><?php echo total_rows(db_prefix() . 'appointly_appointments','approved = 1' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -99,7 +103,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:orange;">Pending Approval</span>                     
          </div>
-         <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? " AND date BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+         <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:orange;"><?php echo total_rows(db_prefix() . 'appointly_appointments','approved = 0' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -116,7 +120,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:red;">Cancelled</span>                     
          </div>
-          <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? " AND date BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+          <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:red;"><?php echo total_rows(db_prefix() . 'appointly_appointments','cancelled = 1' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -133,7 +137,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:green;">Finished</span>                     
          </div>
-          <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? " AND date BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+          <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:green;"><?php echo total_rows(db_prefix() . 'appointly_appointments','finished = 1' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -151,7 +155,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:blue;">Upcoming</span>                     
          </div>
-            <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? " AND date BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+            <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:blue;"><?php echo total_rows(db_prefix() . 'appointly_appointments','date > CURDATE()' .$sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -169,7 +173,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:#f4032f96;">Missed</span>                     
          </div>
-           <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? " AND date BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+           <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:#f4032f96;"><?php echo total_rows(db_prefix() . 'appointly_appointments','finished != 1 AND date < CURDATE()' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -187,7 +191,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate">Repeat</span>                     
          </div>
-          <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? " AND date BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+          <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" ><?php echo total_rows(db_prefix() . 'appointly_appointments','recurring = 1' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -205,7 +209,7 @@
            <i class="fa fa-user" style="margin-right: 10px;"></i>
             <span class="tw-truncate">Total Patients</span>                     
          </div>
-          <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? "DATE(datecreated) BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+          <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0"><?php echo total_rows(db_prefix() . 'clients',$sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">

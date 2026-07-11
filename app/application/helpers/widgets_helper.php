@@ -12,7 +12,7 @@ function get_dashboard_widgets()
 {
     $widgets = [
         [
-            'path'      => 'admin/dashboard/widgets/top_stats',
+            'path'      => 'admin/dashboard/widgets/my_top_stats',
             'container' => 'top-12',
         ],
         [

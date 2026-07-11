@@ -21,8 +21,6 @@ class Authentication extends App_Controller
         $this->form_validation->set_message('matches', _l('form_validation_matches'));
 
         hooks()->do_action('admin_auth_init');
-        $this->load->helper('branch');
-        $this->load->model('branch_model');
     }
 
     public function index()
@@ -46,7 +44,7 @@ class Authentication extends App_Controller
 
             if ($this->form_validation->run() !== false) {
                 $email    = $this->input->post('email');
-                $this->apply_branch_context_for_email($email);
+
                 $password = $this->input->post('password', false);
                 $remember = $this->input->post('remember');
                 $data = $this->Authentication_model->login($email, $password, $remember, true);
@@ -91,89 +89,10 @@ class Authentication extends App_Controller
         $this->load->view('authentication/login_admin', $data);
     }
 
-    public function redirect_login(){
-
-        if($this->input->get()){
-
-
-            if(isset($_GET['branch']) && !empty($_GET['branch'])){
-                   
-                $branch = $_GET['branch'];   
-                $branch1 = $this->Authentication_model->check_staff_admin($branch,$_GET['email']);
-
-                $cookie_name = "branch";
-                $cookie_value = $branch1->branch_db;
-                setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/"); // 86400 = 1 day
-                
-            }
-            redirect(admin_url('authentication/admin_login'));
-        }
-    }
 
     public function admin_login()
     {
-        if (is_staff_logged_in()) {
-            redirect(admin_url());
-        }
-
-        $this->form_validation->set_rules('password', _l('admin_auth_login_password'), 'required');
-        $this->form_validation->set_rules('email', _l('admin_auth_login_email'), 'trim|required|valid_email');
-        if (show_recaptcha()) {
-            $this->form_validation->set_rules('g-recaptcha-response', 'Captcha', 'callback_recaptcha');
-        }
-        if ($this->input->post()) {
-
-            if ($this->form_validation->run() !== false) {
-                $email    = $this->input->post('email');
-                $this->apply_branch_context_for_email($email);
-                $password = $this->input->post('password', false);
-                $remember = $this->input->post('remember');
-                $data = $this->Authentication_model->login($email, $password, $remember, true);
-
-                if (is_array($data) && isset($data['memberinactive'])) {
-                    set_alert('danger', _l('admin_auth_inactive_account'));
-                    redirect(admin_url('authentication'));
-                } elseif (is_array($data) && isset($data['two_factor_auth'])) {
-                    $this->session->set_userdata('_two_factor_auth_established', true);
-                    if ($data['user']->two_factor_auth_enabled == 1) {
-                        $this->Authentication_model->set_two_factor_auth_code($data['user']->staffid);
-                        $sent = send_mail_template('staff_two_factor_auth_key', $data['user']);
-
-                        if (!$sent) {
-                            set_alert('danger', _l('two_factor_auth_failed_to_send_code'));
-                            redirect(admin_url('authentication'));
-                        } else {
-                            $this->session->set_userdata('_two_factor_auth_staff_email', $email);
-                            set_alert('success', _l('two_factor_auth_code_sent_successfully', $email));
-                            redirect(admin_url('authentication/two_factor'));
-                        }
-                    } else {
-                        set_alert('success', _l('enter_two_factor_auth_code_from_mobile'));
-                        redirect(admin_url('authentication/two_factor/app'));
-                    }
-                } elseif ($data == false) {
-                    set_alert('danger', _l('admin_auth_invalid_email_or_password'));
-                    redirect(admin_url('authentication'));
-                }
-
-
-                
-              
-              
-               
-                $this->load->model('announcements_model');
-                $this->announcements_model->set_announcements_as_read_except_last_one(get_staff_user_id(), true);
-                
-                // is logged in
-                maybe_redirect_to_previous_url();
-
-                hooks()->do_action('after_staff_login');
-                redirect(admin_url());
-            }
-        }
-        $data['login_class'] = 'admin-login';
-        $data['title'] = _l('admin_auth_login_heading');
-        $this->load->view('authentication/login_admin', $data);
+                $this->admin();
     }
 
     public function two_factor($type = 'email')
@@ -322,106 +241,15 @@ class Authentication extends App_Controller
         redirect(admin_url('authentication'));
     }
 
-     /**
-     * Resolve branch users by email on the direct login form and switch the
-     * current request to that branch database before the normal staff login runs.
-     */
-   private function apply_branch_context_for_email($email)
-    {
-        $branch = $this->get_login_branch_for_email($email);
-
-        if (!$branch || empty($branch->branch_db)) {
-            $this->clear_branch_context();
-            return;
-        }
-
-        setcookie('branch', $branch->branch_db, time() + (86400 * 30), "/");
-        $this->session->set_userdata('branch', $branch->branch_db);
-
-        $config_db = $this->config->item('config_db');
-        $config_db['database'] = $branch->branch_db;
-        $branch_config_db = $config_db;
-        $branch_config_db['username'] = !empty($branch->branch_db_user) ? $branch->branch_db_user : $branch_config_db['username'];
-        $branch_config_db['password'] = !empty($branch->branch_db_pass) ? $branch->branch_db_pass : $branch_config_db['password'];
-
-        if (function_exists('branch_database_config_connects')) {
-            if (branch_database_config_connects($branch_config_db)) {
-                $config_db = $branch_config_db;
-            } elseif (!branch_database_config_connects($config_db)) {
-                $this->clear_branch_context();
-                return;
-            }
-        } else {
-            $config_db = $branch_config_db;
-        }
-
-        $this->db = $this->load->database($config_db, true);
-        $this->Authentication_model->db = $this->db;
-    }
+    
 
     /**
-     * Look up the branch belonging to a staff email from the main database.
-     */
-    private function get_login_branch_for_email($email)
-    {
-        $email = trim((string) $email);
-
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return null;
-        }
-
-        $mainDbConfig = $this->config->item('config_db');
-        $mainDbConfig['database'] = config_item('default_database');
-        $mainDb = $this->load->database($mainDbConfig, true);
-
-        $mainDb->select('b.branch_db, b.branch_db_user, b.branch_db_pass');
-        $mainDb->from(db_prefix() . 'staff s');
-        $mainDb->join(db_prefix() . 'branch b', 'b.staff_id = s.staffid', 'inner');
-        $mainDb->where('LOWER(s.email)', strtolower($email));
-        $mainDb->where('b.active', 1);
-        $branch = $mainDb->get()->row();
-
-        if ($branch) {
-            return $branch;
-        }
-
-        $emailPrefix = strtolower(strstr($email, '@', true));
-        $normalizedPrefix = preg_replace('/[^a-z0-9]/', '', $emailPrefix);
-
-        if ($normalizedPrefix === '') {
-            return null;
-        }
-
-        $branches = $mainDb
-            ->select('branch_db, branch_db_user, branch_db_pass, branch, branch_code')
-            ->where('active', 1)
-            ->get(db_prefix() . 'branch')
-            ->result();
-
-        foreach ($branches as $branch) {
-            $normalizedBranch = preg_replace('/[^a-z0-9]/', '', strtolower($branch->branch));
-            $normalizedCode   = preg_replace('/[^a-z0-9]/', '', strtolower($branch->branch_code));
-
-            if ($normalizedBranch !== '' && (strpos($normalizedBranch, $normalizedPrefix) !== false || strpos($normalizedPrefix, $normalizedBranch) !== false)) {
-                return $branch;
-            }
-
-            if ($normalizedCode !== '' && $normalizedCode === $normalizedPrefix) {
-                return $branch;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Staff and doctors now authenticate from the default admin login screen,
-     * so remove any previously selected branch before showing the form or after logout.
      */
     private function clear_branch_context()
     {
-        setcookie('branch', '', time() - 3600, "/");
-        $this->session->set_userdata('branch', '');
+        setcookie('branch', '', time() - 3600, '/');
+        unset($_COOKIE['branch']);
+        $this->session->unset_userdata('branch');
     }
 
 

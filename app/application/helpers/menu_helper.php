@@ -14,30 +14,24 @@ function app_init_admin_sidebar_menu_items()
         'badge'    => [],
     ]);
 
-    if (
-        staff_can('view',  'customers')
-        || (have_assigned_customers()
-            || (!have_assigned_customers() && staff_can('create',  'customers')))
-    ) {
-        $CI->app_menu->add_sidebar_menu_item('customers', [
-            'name'     => _l('als_clients'),
-            'href'     => admin_url('clients'),
-            'position' => 15,
-            'icon'     => 'fa-regular fa-user',
-            'badge'    => [],
-        ]);
-        $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
-            'name'     => 'Patient Search',
-            'href'     => admin_url('clients/branch_wise_patients'),
-            'position' => 16,
-            'icon'     => 'fa-solid fa-magnifying-glass',
-            'badge'    => [],
-        ]);
-    }
+     $CI->app_menu->add_sidebar_menu_item('customers', [
+        'name'     => 'Patients',
+        'href'     => admin_url('clients'),
+        'position' => 15,
+        'icon'     => 'fa-regular fa-user',
+        'badge'    => [],
+    ]);
+    $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
+        'name'     => 'Patient Search',
+        'href'     => admin_url('clients/branch_wise_patients'),
+        'position' => 16,
+        'icon'     => 'fa-solid fa-magnifying-glass',
+        'badge'    => [],
+    ]);
 
     $CI->app_menu->add_sidebar_menu_item('sales', [
         'collapse' => true,
-        'name'     => _l('als_sales'),
+        'name'     => 'Payments',
         'position' => 20,
         'icon'     => 'fa-solid fa-receipt',
         'badge'    => [],
@@ -281,8 +275,7 @@ function app_init_admin_sidebar_menu_items()
     //     ]);
     // }
 
-    if (staff_can('view-timesheets', 'reports') || staff_can('view', 'reports')) {
-        $CI->app_menu->add_sidebar_menu_item('reports', [
+    $CI->app_menu->add_sidebar_menu_item('reports', [
             'collapse' => true,
             'name'     => _l('als_reports'),
             'href'     => admin_url('reports'),
@@ -290,7 +283,7 @@ function app_init_admin_sidebar_menu_items()
             'position' => 60,
             'badge'    => [],
         ]);
-    }
+    
 
     // if (staff_can('view-timesheets', 'reports')) {
     //     $CI->app_menu->add_sidebar_children_item('reports', [
@@ -302,28 +295,13 @@ function app_init_admin_sidebar_menu_items()
     //     ]);
     // }
 
-    if (staff_can('view',  'reports')) {
-        $CI->app_menu->add_sidebar_children_item('reports', [
+    $CI->app_menu->add_sidebar_children_item('reports', [
             'slug'     => 'sales-reports',
             'name'     => _l('als_sales'),
             'href'     => admin_url('reports/sales'),
             'position' => 5,
             'badge'    => [],
         ]);
-        // $CI->app_menu->add_sidebar_children_item('reports', [
-        //     'slug'     => 'expenses-reports',
-        //     'name'     => _l('als_reports_expenses'),
-        //     'href'     => admin_url('reports/expenses'),
-        //     'position' => 10,
-        //     'badge'    => [],
-        // ]);
-        // $CI->app_menu->add_sidebar_children_item('reports', [
-        //     'slug'     => 'expenses-vs-income-reports',
-        //     'name'     => _l('als_expenses_vs_income'),
-        //     'href'     => admin_url('reports/expenses_vs_income'),
-        //     'position' => 15,
-        //     'badge'    => [],
-        // ]);
         $CI->app_menu->add_sidebar_children_item('reports', [
             'slug'     => 'leads-reports',
             'name'     => _l('als_reports_leads_submenu'),
@@ -331,33 +309,20 @@ function app_init_admin_sidebar_menu_items()
             'position' => 20,
             'badge'    => [],
         ]);
-        if (!empty($_COOKIE['branch'])) {
-             $CI->app_menu->add_sidebar_children_item('reports', [
-                'slug'     => 'reports-doctor-treatment',
-                'name'     => 'Doctor Treatment Report',
-                'href'     => admin_url('generalreport?repo_type=doctor_treatment'),
-                'position' => 99,
-                // 'icon'     => 'fa fa-user-md',
-            ]);
-        }
-        // $CI->app_menu->add_sidebar_children_item('reports', [
-        //     'slug'     => 'knowledge-base-reports',
-        //     'name'     => _l('als_kb_articles_submenu'),
-        //     'href'     => admin_url('reports/knowledge_base_articles'),
-        //     'position' => 30,
-        //     'badge'    => [],
-        // ]);
-    }
-
-    // Setup menu
-    if (staff_can('view',  'staff')) {
+        $CI->app_menu->add_sidebar_children_item('reports', [
+            'slug'     => 'reports-doctor-treatment',
+            'name'     => 'Doctor Treatment Report',
+            'href'     => admin_url('generalreport?repo_type=doctor_treatment'),
+            'position' => 99,
+            // 'icon'     => 'fa fa-user-md',
+        ]);
         $CI->app_menu->add_setup_menu_item('staff', [
             'name'     => _l('als_staff'),
             'href'     => admin_url('staff'),
             'position' => 5,
             'badge'    => [],
         ]);
-    }
+           
 
     if (is_admin()) {
         $CI->app_menu->add_setup_menu_item('customers', [
