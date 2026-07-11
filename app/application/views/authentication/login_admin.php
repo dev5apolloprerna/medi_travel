@@ -1,7 +1,5 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
-<?php   
-$this->load->helper('branch');
-$this->load->view('authentication/includes/head.php'); ?>
+<?php $this->load->view('authentication/includes/head.php'); ?>
 
 <body class="tw-bg-neutral-100 login_admin">
 
@@ -10,9 +8,12 @@ $this->load->view('authentication/includes/head.php'); ?>
             <?php get_dark_company_logo(); ?>
         </div>
 
-        <h1 class="tw-text-2xl tw-text-neutral-800 text-center tw-font-semibold tw-mb-5">
-            <?php echo _l('admin_auth_login_heading'); ?>
+        <h1 class="tw-text-2xl tw-text-neutral-800 text-center tw-font-semibold tw-mb-2">
+            Staff & Doctor Login
         </h1>
+        <p class="tw-text-neutral-500 text-center tw-mb-5">
+            Sign in with your staff or doctor account. No branch selection is required.
+        </p>
 
         <div class="tw-bg-white tw-mx-2 sm:tw-mx-6 tw-py-6 tw-px-6 sm:tw-px-8 tw-shadow tw-rounded-lg">
 
