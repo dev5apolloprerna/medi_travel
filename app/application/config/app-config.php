@@ -17,7 +17,23 @@ defined('BASEPATH') or exit('No direct script access allowed');
 * environments.
 *
 */
-define('APP_BASE_URL', 'https://localhost/medi_travel/app/');
+// define('APP_BASE_URL', 'https://localhost/medi_travel/app/');
+$app_base_url = getenv('APP_BASE_URL');
+
+if (!$app_base_url) {
+    $is_https = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && strtolower($_SERVER['HTTP_X_FORWARDED_PROTO']) === 'https')
+        || (!empty($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443);
+
+    $scheme = $is_https ? 'https' : 'http';
+    $host   = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $script = $_SERVER['SCRIPT_NAME'] ?? '/index.php';
+    $path   = rtrim(str_replace('\\', '/', dirname($script)), '/\\');
+
+    $app_base_url = $scheme . '://' . $host . ($path ? $path : '') . '/';
+}
+
+define('APP_BASE_URL', rtrim($app_base_url, '/') . '/');
 
 
 
