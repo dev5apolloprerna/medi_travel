@@ -34,3 +34,5 @@ ERROR - 2026-07-11 14:46:39 --> Severity: Warning --> Undefined array key "from_
 ERROR - 2026-07-11 14:46:39 --> Severity: Warning --> Undefined array key "from_date" C:\wamp64\www\medi_travel\app\application\views\admin\dashboard\widgets\my_top_stats.php 190
 ERROR - 2026-07-11 14:46:39 --> Severity: Warning --> Undefined array key "from_date" C:\wamp64\www\medi_travel\app\application\views\admin\dashboard\widgets\my_top_stats.php 208
 ERROR - 2026-07-11 14:46:39 --> Severity: Warning --> Undefined array key "from_date" C:\wamp64\www\medi_travel\app\application\views\admin\dashboard\widgets\my_top_stats.php 226
+ERROR - 2026-07-11 11:43:00 --> Severity: error --> Exception: Access denied for user 'u614622744_iskon_ambli_db'@'localhost' (using password: YES) C:\wamp64\www\medi_travel\app\system\database\drivers\mysqli\mysqli_driver.php 203
+ERROR - 2026-07-11 12:14:25 --> Severity: error --> Exception: Access denied for user 'u614622744_iskon_ambli_db'@'localhost' (using password: YES) C:\wamp64\www\medi_travel\app\modules\branch\config\my_autoload.php 16
