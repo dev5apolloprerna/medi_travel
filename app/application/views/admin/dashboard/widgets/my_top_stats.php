@@ -1,9 +1,35 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget relative" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('quick_stats'); ?>">
-      <?php
-   $date_range = $this->input->get('date_range') ?: '';
-   $from_date  = $this->input->get('from_date') ?: '';
-   $to_date    = $this->input->get('to_date') ?: '';
+ 
+ <?php
+  $date_range = $this->input->get('date_range', true) ?: '';
+   $from_date  = $this->input->get('from_date', true) ?: '';
+   $to_date    = $this->input->get('to_date', true) ?: '';
+
+   if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $from_date)) {
+       $from_date = '';
+   }
+
+   if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $to_date)) {
+       $to_date = '';
+   }
+
+   if ($date_range && ($from_date === '' || $to_date === '')) {
+       if ($date_range === 'today') {
+           $from_date = date('Y-m-d');
+           $to_date   = date('Y-m-d');
+       } elseif ($date_range === 'this_week') {
+           $from_date = date('Y-m-d', strtotime('monday this week'));
+           $to_date   = date('Y-m-d', strtotime('sunday this week'));
+       } elseif ($date_range === 'this_month') {
+           $from_date = date('Y-m-01');
+           $to_date   = date('Y-m-t');
+       }
+   }
+
+   $appointment_date_sql = ($from_date !== '' && $to_date !== '') ? "date BETWEEN '" . $from_date . "' AND '" . $to_date . "'" : '';
+   $appointment_date_and_sql = $appointment_date_sql ? ' AND ' . $appointment_date_sql : '';
+   $lead_date_sql = ($from_date !== '' && $to_date !== '') ? "DATE(dateadded) BETWEEN '" . $from_date . "' AND '" . $to_date . "'" : '';
    ?>
     <div class=""></div>
     <div class="row">
@@ -69,7 +95,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate">Total</span>                     
          </div>
-          <?php $sql = ($from_date != '' && $to_date != '') ? " date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
+          <?php $sql = $appointment_date_sql; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0"><?php echo total_rows(db_prefix() . 'appointly_appointments',$sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -86,7 +112,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:blue;">Approved</span>                     
          </div>
-         <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
+         <?php $sql = $appointment_date_and_sql; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:blue;"><?php echo total_rows(db_prefix() . 'appointly_appointments','approved = 1' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -103,7 +129,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:orange;">Pending Approval</span>                     
          </div>
-         <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
+         <?php $sql = $appointment_date_and_sql; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:orange;"><?php echo total_rows(db_prefix() . 'appointly_appointments','approved = 0' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -120,7 +146,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:red;">Cancelled</span>                     
          </div>
-          <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
+          <?php $sql = $appointment_date_and_sql; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:red;"><?php echo total_rows(db_prefix() . 'appointly_appointments','cancelled = 1' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -137,7 +163,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:green;">Finished</span>                     
          </div>
-          <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
+          <?php $sql = $appointment_date_and_sql; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:green;"><?php echo total_rows(db_prefix() . 'appointly_appointments','finished = 1' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -155,7 +181,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:blue;">Upcoming</span>                     
          </div>
-            <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
+            <?php $sql = $appointment_date_and_sql; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:blue;"><?php echo total_rows(db_prefix() . 'appointly_appointments','date > CURDATE()' .$sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -173,7 +199,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate" style="color:#f4032f96;">Missed</span>                     
          </div>
-           <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
+           <?php $sql = $appointment_date_and_sql; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" style="color:#f4032f96;"><?php echo total_rows(db_prefix() . 'appointly_appointments','finished != 1 AND date < CURDATE()' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -191,7 +217,7 @@
            <i class="fa fa-calendar" style="margin-right: 10px;"></i>
             <span class="tw-truncate">Repeat</span>                     
          </div>
-          <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
+          <?php $sql = $appointment_date_and_sql; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0" ><?php echo total_rows(db_prefix() . 'appointly_appointments','recurring = 1' . $sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -209,7 +235,7 @@
            <i class="fa fa-user" style="margin-right: 10px;"></i>
             <span class="tw-truncate">Total Patients</span>                     
          </div>
-          <?php $sql = ($from_date != '' && $to_date != '') ? " AND date BETWEEN '" . $from_date ."' AND '". $to_date ."'": '';?>
+          <?php $sql = ($from_date !== '' && $to_date !== '') ? "DATE(datecreated) BETWEEN '" . $from_date . "' AND '" . $to_date . "'" : ''; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0"><?php echo total_rows(db_prefix() . 'clients',$sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -227,7 +253,7 @@
            <i class="fa fa-tty" style="margin-right: 10px;"></i>
             <span class="tw-truncate">Total Leads</span>                     
          </div>
-          <?php $sql = ($_GET['from_date'] != '' && $_GET['to_date'] != '') ? "DATE(dateadded) BETWEEN '" . $_GET['from_date'] ."' AND '". $_GET['to_date'] ."'": '';?>
+          <?php $sql = $lead_date_sql; ?>
          <span class="tw-font-semibold tw-text-neutral-600 tw-shrink-0"><?php echo total_rows(db_prefix() . 'leads',$sql)?></span>                 
       </div>
       <!-- <div class="progress tw-mb-0 tw-mt-5 progress-bar-mini">
@@ -236,8 +262,6 @@
    </div>
    </a>
 </div>
-
-    </div>
- <?php }?>
+</div>
 </div>
 
