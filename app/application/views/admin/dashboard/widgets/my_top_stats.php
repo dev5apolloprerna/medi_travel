@@ -1,6 +1,6 @@
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="widget relative" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('quick_stats'); ?>">
-<?php
+      <?php
    $date_range = $this->input->get('date_range') ?: '';
    $from_date  = $this->input->get('from_date') ?: '';
    $to_date    = $this->input->get('to_date') ?: '';
