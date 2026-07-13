@@ -140,7 +140,7 @@ class Clients extends AdminController
             if (isset($orderData[0]['dir']) && strtolower((string) $orderData[0]['dir']) === 'asc') {
                 $orderDir = 'asc';
             }
-
+        }
             
         $sortKey = isset($columnMap[$orderIndex]) ? $columnMap[$orderIndex] : 'datecreated';
 
@@ -251,8 +251,24 @@ class Clients extends AdminController
         exit;
     }
 }
-       private function get_global_search_branches($mainDb)
+    private function get_global_search_branches($mainDb)
     {
+         $defaultDbName = isset($mainDb->database) ? (string) $mainDb->database : '';
+        $branches = [];
+        $seenDatabases = [];
+
+        if ($defaultDbName !== '') {
+            $branches[] = [
+                'branch_db'    => $defaultDbName,
+                'branch_label' => 'Main Branch',
+            ];
+            $seenDatabases[$defaultDbName] = true;
+        }
+
+        if (!$mainDb->table_exists(db_prefix() . 'branch')) {
+            return $branches;
+        }
+
         $branchFields = $mainDb->list_fields(db_prefix() . 'branch');
         $select = ['branch_db'];
 
@@ -268,18 +284,7 @@ class Clients extends AdminController
         $mainDb->where('branch_db !=', '');
         $branchRows = $mainDb->get(db_prefix() . 'branch')->result_array();
 
-        $branches = [];
-        $seenDatabases = [];
-
-        $defaultDbName = isset($mainDb->database) ? (string) $mainDb->database : '';
-        if ($defaultDbName !== '') {
-            $branches[] = [
-                'branch_db'    => $defaultDbName,
-                'branch_label' => 'Main Branch',
-            ];
-            $seenDatabases[$defaultDbName] = true;
-        }
-
+        
         foreach ($branchRows as $item) {
             if (!isset($item['branch_db']) || $item['branch_db'] === '') {
                 continue;

@@ -14,20 +14,23 @@ function app_init_admin_sidebar_menu_items()
         'badge'    => [],
     ]);
 
-     $CI->app_menu->add_sidebar_menu_item('customers', [
-        'name'     => 'Patients',
-        'href'     => admin_url('clients'),
-        'position' => 15,
-        'icon'     => 'fa-regular fa-user',
-        'badge'    => [],
-    ]);
-    $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
-        'name'     => 'Patient Search',
-        'href'     => admin_url('clients/branch_wise_patients'),
-        'position' => 16,
-        'icon'     => 'fa-solid fa-magnifying-glass',
-        'badge'    => [],
-    ]);
+       if (staff_can('view', 'customers') || staff_can('create', 'customers') || have_assigned_customers()) {
+    $CI->app_menu->add_sidebar_menu_item('customers', [
+            'name'     => 'Patients',
+            'href'     => admin_url('clients'),
+            'position' => 15,
+            'icon'     => 'fa-regular fa-user',
+            'badge'    => [],
+        ]);
+
+        $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
+            'name'     => 'Patient Search',
+            'href'     => admin_url('clients/branch_wise_patients'),
+            'position' => 16,
+            'icon'     => 'fa-solid fa-magnifying-glass',
+            'badge'    => [],
+        ]);
+    }
 
     $CI->app_menu->add_sidebar_menu_item('sales', [
         'collapse' => true,
