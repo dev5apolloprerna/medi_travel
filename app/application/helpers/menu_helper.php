@@ -14,23 +14,50 @@ function app_init_admin_sidebar_menu_items()
         'badge'    => [],
     ]);
 
-       if (staff_can('view', 'customers') || staff_can('create', 'customers') || have_assigned_customers()) {
+ $CI->app_menu->add_sidebar_menu_item('appointly', [
+        'collapse' => true,
+        'name'     => 'Appointments',
+        'href'     => admin_url('appointly/appointments'),
+        'position' => 10,
+        'icon'     => 'fa-regular fa-calendar',
+        'badge'    => [],
+    ]);
+    
+ if (!defined('APPOINTLY_MODULE_NAME')) {
+        $CI->app_menu->add_sidebar_menu_item('appointly', [
+            'collapse' => true,
+            'name'     => 'Appointments',
+            'href'     => admin_url('appointly/appointments'),
+            'position' => 10,
+            'icon'     => 'fa-regular fa-calendar',
+            'badge'    => [],
+        ]);
+
+        $CI->app_menu->add_sidebar_children_item('appointly', [
+            'slug'     => 'appointly-user-dashboard',
+            'name'     => 'All Appointments',
+            'href'     => admin_url('appointly/appointments'),
+            'position' => 5,
+            'icon'     => 'fa fa-th-list',
+            'badge'    => [],
+        ]);
+    }
+
     $CI->app_menu->add_sidebar_menu_item('customers', [
-            'name'     => 'Patients',
+           'name'     => 'Patients',
             'href'     => admin_url('clients'),
             'position' => 15,
             'icon'     => 'fa-regular fa-user',
             'badge'    => [],
         ]);
 
-        $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
+         $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
             'name'     => 'Patient Search',
             'href'     => admin_url('clients/branch_wise_patients'),
             'position' => 16,
             'icon'     => 'fa-solid fa-magnifying-glass',
             'badge'    => [],
         ]);
-    }
 
     $CI->app_menu->add_sidebar_menu_item('sales', [
         'collapse' => true,
@@ -64,30 +91,22 @@ function app_init_admin_sidebar_menu_items()
     //     ]);
     // }
 
-     if ((staff_can('view',  'invoices') || staff_can('view_own',  'invoices'))
-        || (staff_has_assigned_invoices() && get_option('allow_staff_view_invoices_assigned') == 1)
-    ) {
-        $CI->app_menu->add_sidebar_children_item('sales', [
-            'slug'     => 'invoices',
-            'name'     => _l('invoices'),
-            'href'     => admin_url('invoices'),
-            'position' => 15,
-            'badge'    => [],
-        ]);
-    }
+      $CI->app_menu->add_sidebar_children_item('sales', [
+        'slug'     => 'invoices',
+        'name'     => _l('invoices'),
+        'href'     => admin_url('invoices'),
+        'position' => 15,
+        'badge'    => [],
+    ]);
 
-    if (
-        staff_can('view',  'payments') || staff_can('view_own',  'invoices')
-        || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices())
-    ) {
-        $CI->app_menu->add_sidebar_children_item('sales', [
-            'slug'     => 'payments',
-            'name'     => _l('payments'),
-            'href'     => admin_url('payments'),
-            'position' => 20,
-            'badge'    => [],
-        ]);
-    }
+    $CI->app_menu->add_sidebar_children_item('sales', [
+        'slug'     => 'payments',
+        'name'     => _l('payments'),
+        'href'     => admin_url('payments'),
+        'position' => 20,
+        'badge'    => [],
+    ]);
+
 
     // if (staff_can('view',  'credit_notes') || staff_can('view_own',  'credit_notes')) {
     //     $CI->app_menu->add_sidebar_children_item('sales', [

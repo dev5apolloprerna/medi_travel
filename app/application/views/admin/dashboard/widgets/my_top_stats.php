@@ -2,7 +2,7 @@
 <div class="widget relative" id="widget-<?php echo create_widget_id(); ?>" data-name="<?php echo _l('quick_stats'); ?>">
  
  <?php
-  $date_range = $this->input->get('date_range', true) ?: '';
+   $date_range = $this->input->get('date_range', true) ?: '';
    $from_date  = $this->input->get('from_date', true) ?: '';
    $to_date    = $this->input->get('to_date', true) ?: '';
 
