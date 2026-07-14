@@ -24,28 +24,12 @@ function app_admin_setup_menu_custom_positions($items)
     return _apply_menu_items_position($items, json_decode(get_option('setup_menu_active')));
 }
 
-function app_menu_setup_is_protected_sidebar_item($slug)
-{
-    return in_array($slug, [
-        'dashboard',
-        'leads',
-        'appointly',
-        'customers',
-        'global-patient-search',
-        'sales',
-        'tasks',
-        'reports',
-        'setup',
-    ], true);
-}
-
 function _apply_menu_items_options($items, $options)
 {
     foreach ($items as $key => $item) {
         if (isset($options->{$item['slug']})) {
             if (isset($options->{$item['slug']}->disabled)
-                && $options->{$item['slug']}->disabled === 'true'
-                && ! app_menu_setup_is_protected_sidebar_item($item['slug'])) {
+                && $options->{$item['slug']}->disabled === 'true') {
                 // Main item is disabled
                 unset($items[$key]);
             } else {

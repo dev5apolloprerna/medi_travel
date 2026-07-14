@@ -142,7 +142,7 @@ function appointly_register_menu_items()
 {
     $CI = &get_instance();
 
-    if (is_admin() || staff_can('view', 'appointments') || staff_can('view_own', 'appointments')) {
+    if (is_staff_member() || is_admin()) {
         $CI->app_menu->add_sidebar_menu_item(APPOINTLY_MODULE_NAME, [
             'name'     => 'appointly_module_name',
             'href'     => admin_url('appointly/appointments'),
