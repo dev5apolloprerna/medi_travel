@@ -2,1398 +2,946 @@
 
 defined('BASEPATH') or exit('No direct script access allowed');
 
-class Clients extends AdminController
+use app\services\projects\Gantt;
+use app\services\ValidatesContact;
+
+class Clients extends ClientsController
 {
-    /* List all clients */
+    /**
+     * @since  2.3.3
+     */
+    use ValidatesContact;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        hooks()->do_action('after_clients_area_init', $this);
+    }
+
     public function index()
     {
-        if (staff_cant('view', 'customers')) {
-            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
-                access_denied('customers');
-            }
+        $data['is_home'] = true;
+        $this->load->model('reports_model');
+        $data['payments_years'] = $this->reports_model->get_distinct_customer_invoices_years();
+
+        $data['project_statuses'] = $this->projects_model->get_project_statuses();
+        $data['title']            = get_company_name(get_client_user_id());
+        $this->data($data);
+        $this->view('home');
+        $this->layout();
+    }
+
+    public function announcements()
+    {
+        $data['title']         = _l('announcements');
+        $data['announcements'] = $this->announcements_model->get();
+        $this->data($data);
+        $this->view('announcements');
+        $this->layout();
+    }
+
+    public function announcement($id)
+    {
+        $data['announcement'] = $this->announcements_model->get($id);
+        $data['title']        = $data['announcement']->name;
+        $this->data($data);
+        $this->view('announcement');
+        $this->layout();
+    }
+
+    public function calendar()
+    {
+        $data['title'] = _l('calendar');
+        $this->view('calendar');
+        $this->data($data);
+        $this->layout();
+    }
+
+    public function get_calendar_data()
+    {
+        $this->load->model('utilities_model');
+        $data = $this->utilities_model->get_calendar_data(
+            date('Y-m-d', strtotime($this->input->get('start'))),
+            date('Y-m-d', strtotime($this->input->get('end'))),
+            get_user_id_by_contact_id(get_contact_user_id()),
+            get_contact_user_id()
+        );
+
+        echo json_encode($data);
+    }
+
+    public function projects($status = '')
+    {
+        if (!has_contact_permission('projects')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
         }
-              
-
-        $this->load->model('contracts_model');
-        $data['contract_types'] = $this->contracts_model->get_contract_types();
-        $data['groups']         = $this->clients_model->get_groups();
-        $data['title']          = _l('clients');
-
-        $this->load->model('proposals_model');
-        $data['proposal_statuses'] = $this->proposals_model->get_statuses();
-
-        $this->load->model('invoices_model');
-        $data['invoice_statuses'] = $this->invoices_model->get_statuses();
-
-        $this->load->model('estimates_model');
-        $data['estimate_statuses'] = $this->estimates_model->get_statuses();
-
-        $this->load->model('projects_model');
         $data['project_statuses'] = $this->projects_model->get_project_statuses();
 
-        
-        $data['customer_admins'] = $this->clients_model->get_customers_admin_unique_ids();
+        $where = 'clientid=' . get_client_user_id();
 
-        $whereContactsLoggedIn = '';
-        if (staff_cant('view', 'customers')) {
-            $whereContactsLoggedIn = ' AND userid IN (SELECT customer_id FROM ' . db_prefix() . 'customer_admins WHERE staff_id=' . get_staff_user_id() . ')';
-        }
-
-        $data['contacts_logged_in_today'] = $this->clients_model->get_contacts('', 'last_login LIKE "' . date('Y-m-d') . '%"' . $whereContactsLoggedIn);
-
-        $data['countries'] = $this->clients_model->get_clients_distinct_countries();
-        $data['table'] = App_table::find('clients');
-       
-        $this->load->view('admin/clients/manage', $data);
-    }
-
-    public function table()
-    {
-        if (staff_cant('view', 'customers')) {
-            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
-                ajax_access_denied();
-            }
-           
-        }
-
-       $_POST['order'][0]['column'] = 1;
-       $_POST['order'][0]['dir'] = 'desc';
-
-        App_table::find('clients')->output();
-    }
-
-      public function global_search()
-    {
-        return $this->branch_wise_patients();
-    }
-
-
-   public function branch_wise_patients()
-    {
-        if (staff_cant('view', 'customers')) {
-            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
-                access_denied('customers');
-            }
-        }
-
-        $data['title'] = 'Branch Wise Patient Search';
-
-        $this->load->view('admin/clients/branch_wise_patients', $data);
-    }
-
-
-    public function global_search_table()
-    {
-        return $this->branch_wise_patients_table();
-    }
-
-     public function branch_wise_patients_table()
-    {
-        if (staff_cant('view', 'customers')) {
-            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
-                ajax_access_denied();
-            }
-        }
-
-        $draw   = (int) $this->input->post('draw');
-        $start  = (int) $this->input->post('start');
-        $length = (int) $this->input->post('length');
-
-        if ($start < 0) {
-            $start = 0;
-        }
-
-        if ($length <= 0) {
-            $length = 25;
-        }
-
-        
-        $searchValue = '';
-        $searchData = $this->input->post('search');
-        if (is_array($searchData) && isset($searchData['value'])) {
-            $searchValue = trim((string) $searchData['value']);
-        }
-
-        $columnMap = [
-            0 => 'userid',
-            1 => 'uid',
-            2 => 'branch_name',
-            3 => 'company',
-            4 => 'fullname',
-            5 => 'email',
-            6 => 'phonenumber',
-            7 => 'datecreated',
-        ];
-
-        
-        $orderIndex = 7;
-        $orderDir   = 'desc';
-        $orderData  = $this->input->post('order');
-
-           
-        if (is_array($orderData) && isset($orderData[0])) {
-            if (isset($orderData[0]['column'])) {
-                $orderIndex = (int) $orderData[0]['column'];
-            }
-
-           
-            if (isset($orderData[0]['dir']) && strtolower((string) $orderData[0]['dir']) === 'asc') {
-                $orderDir = 'asc';
-            }
-        }
-            
-        $sortKey = isset($columnMap[$orderIndex]) ? $columnMap[$orderIndex] : 'datecreated';
-
-     
-        $mainDb   = $this->load->database('default', true);
-        $rows     = [];
-        $branches = $this->get_global_search_branches($mainDb);
-
-        foreach ($branches as $branch) 
-        {
-            if (!isset($branch['branch_db']) || !$this->is_valid_db_identifier($branch['branch_db'])) {
-                continue;
-            }
-
-            $dbName      = $branch['branch_db'];
-            $branchLabel = isset($branch['branch_label']) ? $branch['branch_label'] : $dbName;
-
-            $sql = 'SELECT c.userid, ct.uid, c.company, CONCAT(IFNULL(ct.firstname, ""), " ", IFNULL(ct.lastname, "")) as fullname, ct.email, c.phonenumber, c.datecreated '
-                . 'FROM `' . $dbName . '`.`' . db_prefix() . 'clients` c '
-                . 'LEFT JOIN `' . $dbName . '`.`' . db_prefix() . 'contacts` ct ON ct.userid = c.userid AND ct.is_primary = 1 '
-                . 'WHERE 1=1';
-
-            $binds = [];
-            if ($searchValue !== '') {
-                $sql .= ' AND (ct.uid LIKE ? OR c.phonenumber LIKE ? OR c.company LIKE ? OR ct.firstname LIKE ? OR ct.lastname LIKE ?)';
-                $like = '%' . $searchValue . '%';
-                $binds = [$like, $like, $like, $like, $like];
-            }
-
-            try {
-                $result = $mainDb->query($sql, $binds)->result_array();
-            } catch (Exception $e) {
-                continue;
-            }
-
-            foreach ($result as $record) {
-                $rows[] = [
-                    'userid'      => isset($record['userid']) ? (string) $record['userid'] : '',
-                    'uid'         => isset($record['uid']) ? (string) $record['uid'] : '',
-                    'branch_name' => (string) $branchLabel,
-                    'company'     => isset($record['company']) ? (string) $record['company'] : '',
-                    'fullname'    => isset($record['fullname']) ? trim((string) $record['fullname']) : '',
-                    'email'       => isset($record['email']) ? (string) $record['email'] : '',
-                    'phonenumber' => isset($record['phonenumber']) ? (string) $record['phonenumber'] : '',
-                    'datecreated' => isset($record['datecreated']) ? (string) $record['datecreated'] : '',
-                ];
-            }
-        }
-
-     
-       usort($rows, function ($a, $b) use ($sortKey, $orderDir) {
-            $left  = isset($a[$sortKey]) ? $a[$sortKey] : '';
-            $right = isset($b[$sortKey]) ? $b[$sortKey] : '';
-
-            if ($sortKey === 'datecreated') {
-                $leftValue  = strtotime((string) $left);
-                $rightValue = strtotime((string) $right);
-
-                $leftValue  = $leftValue !== false ? $leftValue : 0;
-                $rightValue = $rightValue !== false ? $rightValue : 0;
-            } elseif ($sortKey === 'userid') {
-                $leftValue  = (int) $left;
-                $rightValue = (int) $right;
-            } else {
-                $leftValue  = strtolower((string) $left);
-                $rightValue = strtolower((string) $right);
-            }
-
-            if ($leftValue == $rightValue) {
-                return 0;
-            }
-
-            if ($orderDir === 'asc') {
-                return ($leftValue < $rightValue) ? -1 : 1;
-            }
-
-            return ($leftValue > $rightValue) ? -1 : 1;
-        });
-
-        $totalRecords    = count($rows);
-        $filteredRecords = $totalRecords;
-        $pagedRows       = array_slice($rows, $start, $length);
-
-        $data = [];
-        foreach ($pagedRows as $row) {
-            $data[] = [
-                $row['userid'],
-                e($row['uid']),
-                e($row['branch_name']),
-                e($row['company']),
-                e($row['fullname']),
-                $row['email'] !== '' ? '<a href="mailto:' . e($row['email']) . '">' . e($row['email']) . '</a>' : '-',
-                $row['phonenumber'] !== '' ? '<a href="tel:' . e($row['phonenumber']) . '">' . e($row['phonenumber']) . '</a>' : '-',
-                $row['datecreated'] !== '' ? e(_dt($row['datecreated'])) : '-',
-            ];
-        }
-
-        $output = [
-            'draw'            => $draw,
-            'recordsTotal'    => $totalRecords,
-            'recordsFiltered' => $filteredRecords,
-            'data'            => $data,
-            'aaData'          => $data,
-        ];
-
-        header('Content-Type: application/json');
-        echo json_encode($output);
-        exit;
-    }
-}
-    private function get_global_search_branches($mainDb)
-    {
-         $defaultDbName = isset($mainDb->database) ? (string) $mainDb->database : '';
-        $branches = [];
-        $seenDatabases = [];
-
-        if ($defaultDbName !== '') {
-            $branches[] = [
-                'branch_db'    => $defaultDbName,
-                'branch_label' => 'Main Branch',
-            ];
-            $seenDatabases[$defaultDbName] = true;
-        }
-
-        if (!$mainDb->table_exists(db_prefix() . 'branch')) {
-            return $branches;
-        }
-
-        $branchFields = $mainDb->list_fields(db_prefix() . 'branch');
-        $select = ['branch_db'];
-
-        if (in_array('branch', $branchFields, true)) {
-            $select[] = 'branch';
-        }
-
-        if (in_array('branch_code', $branchFields, true)) {
-            $select[] = 'branch_code';
-        }
-
-        $mainDb->select(implode(',', $select));
-        $mainDb->where('branch_db !=', '');
-        $branchRows = $mainDb->get(db_prefix() . 'branch')->result_array();
-
-        
-        foreach ($branchRows as $item) {
-            if (!isset($item['branch_db']) || $item['branch_db'] === '') {
-                continue;
-            }
-
-            $branchDb = (string) $item['branch_db'];
-            if (isset($seenDatabases[$branchDb])) {
-                continue;
-            }
-
-            $label = '';
-            if (!empty($item['branch'])) {
-                $label = $item['branch'];
-            } elseif (!empty($item['branch_code'])) {
-                $label = $item['branch_code'];
-            } else {
-                $label = $branchDb;
-            }
-
-            $branches[] = [
-                'branch_db'    => $branchDb,
-                'branch_label' => $label,
-            ];
-            $seenDatabases[$branchDb] = true;
-        }
-
-        return $branches;
-    }
-
-
-    private function is_valid_db_identifier($name)
-    {
-        return (bool) preg_match('/^[A-Za-z0-9_]+$/', (string) $name);
-    }
-    
-    public function all_contacts()
-    {
-        if ($this->input->is_ajax_request()) {
-            $this->app->get_table_data('all_contacts');
-        }
-
-        if (is_gdpr() && get_option('gdpr_enable_consent_for_contacts') == '1') {
-            $this->load->model('gdpr_model');
-            $data['consent_purposes'] = $this->gdpr_model->get_consent_purposes();
-        }
-
-        $data['title'] = _l('customer_contacts');
-        $this->load->view('admin/clients/all_contacts', $data);
-    }
-
-    // function generateRandomUID($length = 6) {
-    //     $characters = '0123456789';
-    //     $charactersLength = strlen($characters);
-    //     $randomString = 'PT-';
-    //     for ($i = 0; $i < $length; $i++) {
-    //         $randomString .= $characters[random_int(0, $charactersLength - 1)];
-    //     }
-    //     return $randomString;
-    // }
-
-    // function generateRandomUID($length = 6) {
-    // $query = $this->db->select_max('uid')->get(db_prefix() . 'contacts');
-    // $last = $query->row()->uid;
-    // if ($last === null) {
-    //     $last = 0; 
-    // }
-    // $last++;
-
-    // return  $last;
-    // }
-
-
-    /* Edit client or add new client*/
-    public function client($id = '')
-    {          
-
-        if (staff_cant('view', 'customers')) {
-            if ($id != '' && !is_customer_admin($id)) {
-                access_denied('customers');
-            }
-            
-        }
-
-        if ($this->input->post() && !$this->input->is_ajax_request()) {       
-            if ($id == '') {
-                if (staff_cant('create', 'customers')) {
-                    access_denied('customers');
-                }
-
-                if ($this->input->post() && !$this->input->is_ajax_request()) {
-                    $data = $this->input->post();
-            
-                    $this->load->library('form_validation');
-                    $this->form_validation->set_rules('firstname', 'First Name', 'required');
-                    $this->form_validation->set_rules('lastname', 'Last Name', 'required');
-                    $this->form_validation->set_rules('gender', 'Gender', 'required');
-                    $this->form_validation->set_rules('dob', 'Date of birth', 'required');
-                    // $this->form_validation->set_rules('email', 'Email', 'required|is_unique[tblcontacts.email]');
-                    //$this->form_validation->set_rules('phonenumber', 'Phone', 'required|numeric|min_length[10]|max_length[10]|is_unique[tblcontacts.phonenumber]');
-                    $this->form_validation->set_rules('phonenumber', 'Phone', 'required|max_length[15]|numeric');
-                    if ($this->form_validation->run() == TRUE) {
-                        $save_and_add_contact = false;
-                        if (isset($data['save_and_add_contact'])) {
-                            unset($data['save_and_add_contact']);
-                            $save_and_add_contact = true;
-                            
-                        }
-                        $id = $this->clients_model->add($data);
-                        if (staff_cant('view', 'customers')) {
-                            $assign['customer_admins']   = [];
-                            $assign['customer_admins'][] = get_staff_user_id();
-                            $this->clients_model->assign_admins($assign, $id);
-                        }
-                        if ($id) {
-                             $contatc = get_primary_contact_user_id($id);
-                            handle_contact_profile_image_upload($contatc);
-                            set_alert('success', _l('added_successfully', _l('client')));
-                            if ($save_and_add_contact == false) {
-                                redirect(admin_url('clients'));
-                            } else {
-                                redirect(admin_url('clients/client/' . $id . '?group=contacts&new_contact=true'));
-                            }
-                        }
-                    }
-                }            
-            } else {
-                if (staff_cant('edit', 'customers')) {
-                    if (!is_customer_admin($id)) {
-                        access_denied('customers');
-                    }
-                }
-                $success = $this->clients_model->update($this->input->post(), $id);
-                if ($success == true) {
-                    $contatc = get_primary_contact_user_id($id);
-                    handle_contact_profile_image_upload($contatc);
-                    set_alert('success', _l('updated_successfully', _l('client')));
-                }
-                // redirect(admin_url('clients/client/' . $id));
-                redirect(admin_url('clients'));
-            }
-        }
-    
-        $group         = !$this->input->get('group') ? 'profile' : $this->input->get('group');
-      
-        $data['group'] = $group;
-
-        if ($group != 'contacts' && $contact_id = $this->input->get('contactid')) {
-            redirect(admin_url('clients/client/' . $id . '?group=contacts&contactid=' . $contact_id));
-        }
-       
-        // Customer groups
-        $data['groups'] = $this->clients_model->get_groups();
-        
-
-        if ($id == '') {
-            $title = _l('add_new', _l('client_lowercase'));
+        if (is_numeric($status)) {
+            $where .= ' AND status=' . $this->db->escape_str($status);
         } else {
-            $client                = $this->clients_model->get($id);
-            $data['customer_tabs'] = get_customer_profile_tabs($id);
-
-            if (!$client) {
-                show_404();
-            }
-
-            if($group == 'patient_profile'){
-                $data['customer_tabs'][$group]['slug'] = 'patient_profile';
-                $data['customer_tabs'][$group]['name'] = 'Patient Profile';
-                $data['customer_tabs'][$group]['view'] = 'admin/clients/groups/patient_profile';
-                $data['customer_tabs'][$group]['icon'] = 'fa fa-user-circle';
-            }
-
-            
-                // echo "<pre>";
-                // print_r($data);
-                // exit;
-
-            $data['contacts'] = $this->clients_model->get_contacts($id);
-            $data['tab']      = isset($data['customer_tabs'][$group]) ? $data['customer_tabs'][$group] : null;
-
-            
-
-            if (!$data['tab']) {
-                show_404();
-            }
-            
-
-            // Fetch data based on groups
-            if ($group == 'profile') {
-                $data['customer_groups'] = $this->clients_model->get_customer_groups($id);
-                $data['customer_admins'] = $this->clients_model->get_admins($id);
-            } elseif ($group == 'attachments') {
-                $data['attachments'] = get_all_customer_attachments($id);
-            } elseif ($group == 'vault') {
-                $data['vault_entries'] = hooks()->apply_filters('check_vault_entries_visibility', $this->clients_model->get_vault_entries($id));
-                if ($data['vault_entries'] === -1) {
-                    $data['vault_entries'] = [];
-                }
-            } elseif ($group == 'estimates') {
-                $this->load->model('estimates_model');
-                $data['estimate_statuses'] = $this->estimates_model->get_statuses();
-            } elseif ($group == 'invoices') {
-                $this->load->model('invoices_model');
-                $data['invoice_statuses'] = $this->invoices_model->get_statuses();
-            } elseif ($group == 'credit_notes') {
-                $this->load->model('credit_notes_model');
-                $data['credit_notes_statuses'] = $this->credit_notes_model->get_statuses();
-                $data['credits_available']     = $this->credit_notes_model->total_remaining_credits_by_customer($id);
-            } elseif ($group == 'payments') {
-                $this->load->model('payment_modes_model');
-                $data['payment_modes'] = $this->payment_modes_model->get();
-            } elseif ($group == 'notes') {
-                $data['user_notes'] = $this->misc_model->get_notes($id, 'customer');
-            } elseif ($group == 'projects') {
-                $this->load->model('projects_model');
-                $data['project_statuses'] = $this->projects_model->get_project_statuses();
-            } elseif ($group == 'statement') {
-                if (staff_cant('view', 'invoices') && staff_cant('view', 'payments')) {
-                    set_alert('danger', _l('access_denied'));
-                    redirect(admin_url('clients/client/' . $id));
-                }
-
-                $data = array_merge($data, prepare_mail_preview_data('customer_statement', $id));
-            } elseif ($group == 'map') {
-                if (get_option('google_api_key') != '' && !empty($client->latitude) && !empty($client->longitude)) {
-                    $this->app_scripts->add('map-js', base_url($this->app_scripts->core_file('assets/js', 'map.js')) . '?v=' . $this->app_css->core_version());
-
-                    $this->app_scripts->add('google-maps-api-js', [
-                        'path'       => 'https://maps.googleapis.com/maps/api/js?key=' . get_option('google_api_key') . '&callback=initMap',
-                        'attributes' => [
-                            'async',
-                            'defer',
-                            'latitude'       => "$client->latitude",
-                            'longitude'      => "$client->longitude",
-                            'mapMarkerTitle' => "$client->company",
-                        ],
-                        ]);
+            $listStatusesIds = [];
+            $where .= ' AND status IN (';
+            foreach ($data['project_statuses'] as $projectStatus) {
+                if (isset($projectStatus['filter_default']) && $projectStatus['filter_default'] == true) {
+                    $listStatusesIds[] = $projectStatus['id'];
+                    $where .= $this->db->escape_str($projectStatus['id']) . ',';
                 }
             }
-
-            
-
-            $data['staff'] = $this->staff_model->get('', ['active' => 1]);
-
-            
-            $data['client'] = $client;
-            
-            $title          = $client->company;
-
-            // Get all active staff members (used to add reminder)
-            $data['members'] = $data['staff'];
-
-            $data['xray_file'] = [];
-
-            if (!empty($data['client']->company)) {
-                // Check if is realy empty client company so we can set this field to empty
-                // The query where fetch the client auto populate firstname and lastname if company is empty
-                if (is_empty_customer_company($data['client']->userid)) {
-                    $data['client']->company = '';
-                }
-
-                $test = get_primary_contact_user_id($client->userid);
-                $contact = $this->clients_model->get_contact($test);   
-                $data['contact'] = $contact;
-
-                $medical = get_primary_contact_user_id($client->userid);
-                $medical_history = $this->clients_model->get_medicaldata($client->userid); 
-                $data['medical_history'] = $medical_history;
-
-                $xray = get_primary_contact_user_id($client->userid);
-                $xray_files = $this->clients_model->get_xrayfiles($client->userid);
-                $data['xray_file'] = $xray_files;
-                                   
-            }
-
+            $where = rtrim($where, ',');
+            $where .= ')';
         }
 
-        
-
-        $this->load->model('currencies_model');
-        $data['currencies'] = $this->currencies_model->get();
-
-
-        $this->load->model('currencies_model');
-        $data['currencies'] = $this->currencies_model->get();
-
-        if ($id != '') {
-            $customer_currency = $data['client']->default_currency;
-
-            foreach ($data['currencies'] as $currency) {
-                if ($customer_currency != 0) {
-                    if ($currency['id'] == $customer_currency) {
-                        $customer_currency = $currency;
-
-                        break;
-                    }
-                } else {
-                    if ($currency['isdefault'] == 1) {
-                        $customer_currency = $currency;
-
-                        break;
-                    }
-                }
-            }
-
-            if (is_array($customer_currency)) {
-                $customer_currency = (object) $customer_currency;
-            }
-
-            $data['customer_currency'] = $customer_currency;
-
-            $slug_zip_folder = (
-                $client->company != ''
-                ? $client->company
-                : get_contact_full_name(get_primary_contact_user_id($client->userid))
-            );
-
-            $data['zip_in_folder'] = slug_it($slug_zip_folder);
-        }
-
-              
-        $data['bodyclass'] = 'customer-profile dynamic-create-groups';
-        $data['title']     = $title;
-        // $data['uid'] = $this->generateRandomUID(); 
-         $this->load->model('invoice_items_model');
-        $data['items'] = $this->invoice_items_model->get_grouped();
-
-        $this->load->view('admin/clients/client', $data);
-        
-
-        // echo "<pre>";
-        // print_r($group);exit;
+        $data['list_statuses'] = is_numeric($status) ? [$status] : $listStatusesIds;
+        $data['projects']      = $this->projects_model->get('', $where);
+        $data['title']         = _l('clients_my_projects');
+        $this->data($data);
+        $this->view('projects');
+        $this->layout();
     }
 
-    public function export($contact_id)
+    public function project($id)
     {
-        if (is_admin()) {
-            $this->load->library('gdpr/gdpr_contact');
-            $this->gdpr_contact->export($contact_id);
-        }
-    }
-
-    // Used to give a tip to the user if the company exists when new company is created
-    public function check_duplicate_customer_name()
-    {
-        if (staff_can('create',  'customers')) {
-            $companyName = trim($this->input->post('company'));
-            $response    = [
-                'exists'  => (bool) total_rows(db_prefix() . 'clients', ['company' => $companyName]) > 0,
-                'message' => _l('company_exists_info', '<b>' . $companyName . '</b>'),
-            ];
-            echo json_encode($response);
-        }
-    }
-
-    public function save_longitude_and_latitude($client_id)
-    {
-        if (staff_cant('edit', 'customers')) {
-            if (!is_customer_admin($client_id)) {
-                ajax_access_denied();
-            }
+        if (!has_contact_permission('projects')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
         }
 
-        $this->db->where('userid', $client_id);
-        $this->db->update(db_prefix() . 'clients', [
-            'longitude' => $this->input->post('longitude'),
-            'latitude'  => $this->input->post('latitude'),
+        $project = $this->projects_model->get($id, [
+            'clientid' => get_client_user_id(),
         ]);
-        if ($this->db->affected_rows() > 0) {
-            echo 'success';
-        } else {
-            echo 'false';
-        }
-    }
 
-    public function form_contact($customer_id, $contact_id = '')
-    {
-        if (staff_cant('view', 'customers')) {
-            if (!is_customer_admin($customer_id)) {
-                echo _l('access_denied');
+        if (!$project) {
+            show_404();
+        }
+
+        $data['project']                               = $project;
+        $data['project']->settings->available_features = unserialize($data['project']->settings->available_features);
+
+        $data['title'] = $data['project']->name;
+        if ($this->input->post('action')) {
+            $action = $this->input->post('action');
+
+            switch ($action) {
+                  case 'new_task':
+                  case 'edit_task':
+
+                    $data    = $this->input->post();
+                    $task_id = false;
+                    if (isset($data['task_id'])) {
+                        $task_id = $data['task_id'];
+                        unset($data['task_id']);
+                    }
+
+                    $data['rel_type']    = 'project';
+                    $data['rel_id']      = $project->id;
+                    $data['description'] = nl2br($data['description']);
+
+                    $assignees = isset($data['assignees']) ? $data['assignees'] : [];
+                    if (isset($data['assignees'])) {
+                        unset($data['assignees']);
+                    }
+                    unset($data['action']);
+
+                    if (!$task_id) {
+                        $task_id = $this->tasks_model->add($data, true);
+                        if ($task_id) {
+                            foreach ($assignees as $assignee) {
+                                $this->tasks_model->add_task_assignees(['taskid' => $task_id, 'assignee' => $assignee], false, true);
+                            }
+                            $uploadedFiles = handle_task_attachments_array($task_id);
+                            if ($uploadedFiles && is_array($uploadedFiles)) {
+                                foreach ($uploadedFiles as $file) {
+                                    $file['contact_id'] = get_contact_user_id();
+                                    $this->misc_model->add_attachment_to_database($task_id, 'task', [$file]);
+                                }
+                            }
+                            set_alert('success', _l('added_successfully', _l('task')));
+                            redirect(site_url('clients/project/' . $project->id . '?group=project_tasks&taskid=' . $task_id));
+                        }
+                    } else {
+                        if ($project->settings->edit_tasks == 1
+                            && total_rows(db_prefix() . 'tasks', ['is_added_from_contact' => 1, 'addedfrom' => get_contact_user_id(), 'billed' => 0]) > 0) {
+                            $affectedRows = 0;
+                            $updated      = $this->tasks_model->update($data, $task_id, true);
+                            if ($updated) {
+                                $affectedRows++;
+                            }
+
+                            $currentAssignees    = $this->tasks_model->get_task_assignees($task_id);
+                            $currentAssigneesIds = [];
+                            foreach ($currentAssignees as $assigned) {
+                                array_push($currentAssigneesIds, $assigned['assigneeid']);
+                            }
+
+                            $totalAssignees = count($assignees);
+
+                            /**
+                             * In case when contact created the task and then was able to view team members
+                             * Now in this case he still can view team members and can edit them
+                             */
+                            if ($totalAssignees == 0 && $project->settings->view_team_members == 1) {
+                                $this->db->where('taskid', $task_id);
+                                $this->db->delete(db_prefix() . 'task_assigned');
+                            } elseif ($totalAssignees > 0 && $project->settings->view_team_members == 1) {
+                                foreach ($currentAssignees as $assigned) {
+                                    if (!in_array($assigned['assigneeid'], $assignees)) {
+                                        if ($this->tasks_model->remove_assignee($assigned['id'], $task_id)) {
+                                            $affectedRows++;
+                                        }
+                                    }
+                                }
+                                foreach ($assignees as $assignee) {
+                                    if (!$this->tasks_model->is_task_assignee($assignee, $task_id)) {
+                                        if ($this->tasks_model->add_task_assignees(['taskid' => $task_id, 'assignee' => $assignee], false, true)) {
+                                            $affectedRows++;
+                                        }
+                                    }
+                                }
+                            }
+                            if ($affectedRows > 0) {
+                                set_alert('success', _l('updated_successfully', _l('task')));
+                            }
+                            redirect(site_url('clients/project/' . $project->id . '?group=project_tasks&taskid=' . $task_id));
+                        }
+                    }
+
+                    redirect(site_url('clients/project/' . $project->id . '?group=project_tasks'));
+
+                    break;
+                case 'discussion_comments':
+                    echo json_encode($this->projects_model->get_discussion_comments($this->input->post('discussion_id'), $this->input->post('discussion_type')));
+                    die;
+                case 'new_discussion_comment':
+                    echo json_encode($this->projects_model->add_discussion_comment($this->input->post(), $this->input->post('discussion_id'), $this->input->post('discussion_type')));
+                    die;
+
+                    break;
+                case 'update_discussion_comment':
+                    echo json_encode($this->projects_model->update_discussion_comment($this->input->post(), $this->input->post('discussion_id')));
+                    die;
+
+                    break;
+                case 'delete_discussion_comment':
+                    echo json_encode($this->projects_model->delete_discussion_comment($this->input->post('id')));
+                    die;
+
+                    break;
+                case 'new_discussion':
+                    $discussion_data = $this->input->post();
+                    unset($discussion_data['action']);
+                    $success = $this->projects_model->add_discussion($discussion_data);
+                    if ($success) {
+                        set_alert('success', _l('added_successfully', _l('project_discussion')));
+                    }
+                    redirect(site_url('clients/project/' . $id . '?group=project_discussions'));
+
+                    break;
+                case 'upload_file':
+                    handle_project_file_uploads($id);
+                    die;
+
+                    break;
+                case 'project_file_dropbox': // deprecated
+                case 'project_external_file':
+                        $data                        = [];
+                        $data['project_id']          = $id;
+                        $data['files']               = $this->input->post('files');
+                        $data['external']            = $this->input->post('external');
+                        $data['visible_to_customer'] = 1;
+                        $data['contact_id']          = get_contact_user_id();
+                        $this->projects_model->add_external_file($data);
                 die;
-            }
-        }
-        $data['customer_id'] = $customer_id;
-        $data['contactid']   = $contact_id;
 
-       
+                break;
+                case 'get_file':
+                    $file_data['discussion_user_profile_image_url'] = contact_profile_image_url(get_contact_user_id());
+                    $file_data['current_user_is_admin']             = false;
+                    $file_data['file']                              = $this->projects_model->get_file($this->input->post('id'), $this->input->post('project_id'));
 
-        if (is_automatic_calling_codes_enabled()) {
-            $clientCountryId = $this->db->select('country')
-                ->where('userid', $customer_id)
-                ->get('clients')->row()->country ?? null;
-
-            $clientCountry = get_country($clientCountryId);
-            $callingCode   = $clientCountry ? '+' . ltrim($clientCountry->calling_code, '+') : null;
-        } else {
-            $callingCode = null;
-        }
-
-        if ($this->input->post()) {
-            $data             = $this->input->post();
-            $data['password'] = $this->input->post('password', false);
-
-            if ($callingCode && !empty($data['phonenumber']) && $data['phonenumber'] == $callingCode) {
-                $data['phonenumber'] = '';
-            }
-
-            unset($data['contactid']);
-
-            if ($contact_id == '') {
-                if (staff_cant('create', 'customers')) {
-                    if (!is_customer_admin($customer_id)) {
-                        header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad error');
-                        echo json_encode([
-                            'success' => false,
-                            'message' => _l('access_denied'),
-                        ]);
+                    if (!$file_data['file']) {
+                        header('HTTP/1.0 404 Not Found');
                         die;
                     }
-                }
-                $id      = $this->clients_model->add_contact($data, $customer_id);
-                $message = '';
-                $success = false;
-                if ($id) {
-                    handle_contact_profile_image_upload($id);
-                    $success = true;
-                    $message = _l('added_successfully', _l('contact'));
-                }
-                echo json_encode([
-                    'success'             => $success,
-                    'message'             => $message,
-                    'has_primary_contact' => (total_rows(db_prefix() . 'contacts', ['userid' => $customer_id, 'is_primary' => 1]) > 0 ? true : false),
-                    'is_individual'       => is_empty_customer_company($customer_id) && total_rows(db_prefix() . 'contacts', ['userid' => $customer_id]) == 1,
-                ]);
-                die;
-            }
-            if (staff_cant('edit', 'customers')) {
-                if (!is_customer_admin($customer_id)) {
-                    header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad error');
-                    echo json_encode([
-                            'success' => false,
-                            'message' => _l('access_denied'),
-                        ]);
+                    echo get_template_part('projects/file', $file_data, true);
                     die;
-                }
+
+                    break;
+                case 'update_file_data':
+                    $file_data = $this->input->post();
+                    unset($file_data['action']);
+                    $this->projects_model->update_file_data($file_data);
+
+                    break;
+                case 'upload_task_file':
+                    $taskid = $this->input->post('task_id');
+                    $files  = handle_task_attachments_array($taskid, 'file');
+                    if ($files) {
+                        $i   = 0;
+                        $len = count($files);
+                        foreach ($files as $file) {
+                            $file['contact_id'] = get_contact_user_id();
+                            $file['staffid']    = 0;
+                            $this->tasks_model->add_attachment_to_database($taskid, [$file], false, ($i == $len - 1 ? true : false));
+                            $i++;
+                        }
+                    }
+                    die;
+
+                    break;
+                case 'add_task_external_file':
+                    $taskid                = $this->input->post('task_id');
+                    $file                  = $this->input->post('files');
+                    $file[0]['contact_id'] = get_contact_user_id();
+                    $file[0]['staffid']    = 0;
+                    $this->tasks_model->add_attachment_to_database($this->input->post('task_id'), $file, $this->input->post('external'));
+                    die;
+
+                    break;
+                case 'new_task_comment':
+                    $comment_data            = $this->input->post();
+                    $comment_data['content'] = nl2br($comment_data['content']);
+                    $comment_id              = $this->tasks_model->add_task_comment($comment_data);
+                    $url                     = site_url('clients/project/' . $id . '?group=project_tasks&taskid=' . $comment_data['taskid']);
+
+                    if ($comment_id) {
+                        set_alert('success', _l('task_comment_added'));
+                        $url .= '#comment_' . $comment_id;
+                    }
+
+                    redirect($url);
+
+                    break;
+                default:
+                    redirect(site_url('clients/project/' . $id));
+
+                    break;
             }
-            $original_contact = $this->clients_model->get_contact($contact_id);
-            $success          = $this->clients_model->update_contact($data, $contact_id);
-            $message          = '';
-            $proposal_warning = false;
-            $original_email   = '';
-            $updated          = false;
-            if (is_array($success)) {
-                if (isset($success['set_password_email_sent'])) {
-                    $message = _l('set_password_email_sent_to_client');
-                } elseif (isset($success['set_password_email_sent_and_profile_updated'])) {
-                    $updated = true;
-                    $message = _l('set_password_email_sent_to_client_and_profile_updated');
-                }
-            } else {
-                if ($success == true) {
-                    $updated = true;
-                    $message = _l('updated_successfully', _l('contact'));
-                }
-            }
-            if (handle_contact_profile_image_upload($contact_id) && !$updated) {
-                $message = _l('updated_successfully', _l('contact'));
-                $success = true;
-            }
-            if ($updated == true) {
-                $contact = $this->clients_model->get_contact($contact_id);
-                if (total_rows(db_prefix() . 'proposals', [
-                        'rel_type' => 'customer',
-                        'rel_id' => $contact->userid,
-                        'email' => $original_contact->email,
-                    ]) > 0 && ($original_contact->email != $contact->email)) {
-                    $proposal_warning = true;
-                    $original_email   = $original_contact->email;
-                }
-            }
-            echo json_encode([
-                    'success'             => $success,
-                    'proposal_warning'    => $proposal_warning,
-                    'message'             => $message,
-                    'original_email'      => $original_email,
-                    'has_primary_contact' => (total_rows(db_prefix() . 'contacts', ['userid' => $customer_id, 'is_primary' => 1]) > 0 ? true : false),
-                ]);
-            die;
         }
-
-
-        $data['calling_code'] = $callingCode;
-
-        if ($contact_id == '') {
-            $title = _l('add_new', _l('contact_lowercase'));
+        if (!$this->input->get('group')) {
+            $group = 'project_overview';
         } else {
-            $data['contact'] = $this->clients_model->get_contact($contact_id);
+            $group = $this->input->get('group');
+        }
+        $data['project_status'] = get_project_status_by_id($data['project']->status);
+        if ($group != 'edit_task') {
+            if ($group == 'project_overview') {
+                $percent          = $this->projects_model->calc_progress($id);
+                @$data['percent'] = $percent / 100; // old
+                $data['progress'] = $percent;
+                $this->load->helper('date');
+                $data['project_total_days']        = round((human_to_unix($data['project']->deadline . ' 00:00') - human_to_unix($data['project']->start_date . ' 00:00')) / 3600 / 24);
+                $data['project_days_left']         = $data['project_total_days'];
+                $data['project_time_left_percent'] = 100;
+                if ($data['project']->deadline) {
+                    if (human_to_unix($data['project']->start_date . ' 00:00') < time() && human_to_unix($data['project']->deadline . ' 00:00') > time()) {
+                        $data['project_days_left'] = round((human_to_unix($data['project']->deadline . ' 00:00') - time()) / 3600 / 24);
 
-            if (!$data['contact']) {
-                header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad error');
-                echo json_encode([
-                    'success' => false,
-                    'message' => 'Contact Not Found',
+                        $data['project_time_left_percent'] = $data['project_days_left'] / $data['project_total_days'] * 100;
+                        $data['project_time_left_percent'] = round($data['project_time_left_percent'], 2);
+                    }
+                    if (human_to_unix($data['project']->deadline . ' 00:00') < time()) {
+                        $data['project_days_left']         = 0;
+                        $data['project_time_left_percent'] = 0;
+                    }
+                }
+                $total_tasks = $this->projects_model->get_tasks($id, [
+                    db_prefix() . 'milestones.hide_from_customer' => 0,
+                ], false, true);
+
+                $total_tasks = hooks()->apply_filters('client_project_total_tasks', $total_tasks, $id);
+
+                $data['tasks_not_completed'] = $this->projects_model->get_tasks($id, [
+                    'status !='                                   => 5,
+                    db_prefix() . 'milestones.hide_from_customer' => 0,
+                ], false, true);
+
+                $data['tasks_not_completed'] = hooks()->apply_filters('client_project_tasks_not_completed', $data['tasks_not_completed'], $id);
+
+                $data['tasks_completed'] = $this->projects_model->get_tasks($id, [
+                    'status'                                      => 5,
+                    db_prefix() . 'milestones.hide_from_customer' => 0,
+                ], false, true);
+
+                $data['tasks_completed'] = hooks()->apply_filters('client_project_tasks_completed', $data['tasks_completed'], $id);
+
+                $data['total_tasks']                  = $total_tasks;
+                $data['tasks_not_completed_progress'] = ($total_tasks > 0 ? number_format(($data['tasks_completed'] * 100) / $total_tasks, 2) : 0);
+                $data['tasks_not_completed_progress'] = round($data['tasks_not_completed_progress'], 2);
+            } elseif ($group == 'new_task') {
+                if ($project->settings->create_tasks == 0) {
+                    redirect(site_url('clients/project/' . $project->id));
+                }
+                $data['milestones'] = $this->projects_model->get_milestones($id, ['hide_from_customer' => 0]);
+            } elseif ($group == 'project_gantt') {
+                $data['gantt_data'] = (new Gantt($id, 'milestones'))->excludeMilestonesFromCustomer()->get();
+            } elseif ($group == 'project_discussions') {
+                if ($this->input->get('discussion_id')) {
+                    $data['discussion_user_profile_image_url'] = contact_profile_image_url(get_contact_user_id());
+                    $data['discussion']                        = $this->projects_model->get_discussion($this->input->get('discussion_id'), $id);
+                    $data['current_user_is_admin']             = false;
+                }
+                $data['discussions'] = $this->projects_model->get_discussions($id);
+            } elseif ($group == 'project_files') {
+                $data['files'] = $this->projects_model->get_files($id);
+            } elseif ($group == 'project_tasks') {
+                $data['tasks_statuses'] = $this->tasks_model->get_statuses();
+                $data['project_tasks']  = $this->projects_model->get_tasks($id, [
+                    db_prefix() . 'milestones.hide_from_customer' => 0,
+                    ]);
+            } elseif ($group == 'project_contracts') {
+                $data['contracts'] = [];
+                if (has_contact_permission('contracts')) {
+                    $data['contracts'] = $this->contracts_model->get('', [
+                            'client'                => get_client_user_id(),
+                            'project_id'            => $id,
+                            'not_visible_to_client' => 0,
+                        ]);
+                }
+            } elseif ($group == 'project_activity') {
+                $data['activity'] = $this->projects_model->get_activity($id);
+            } elseif ($group == 'project_milestones') {
+                $data['milestones'] = $this->projects_model->get_milestones($id, ['hide_from_customer' => 0]);
+            } elseif ($group == 'project_invoices') {
+                $data['invoices'] = [];
+                if (has_contact_permission('invoices')) {
+                    $whereInvoices = [
+                            'clientid'   => get_client_user_id(),
+                            'project_id' => $id,
+                        ];
+                    if (get_option('exclude_invoice_from_client_area_with_draft_status') == 1) {
+                        $whereInvoices['status !='] = 6;
+                    }
+                    $data['invoices'] = $this->invoices_model->get('', $whereInvoices);
+                }
+            } elseif ($group == 'project_tickets') {
+                $data['tickets'] = [];
+                if (has_contact_permission('support')) {
+                    $where_tickets = [
+                        db_prefix() . 'tickets.userid' => get_client_user_id(),
+                        'project_id'                   => $id,
+                    ];
+
+                    if (!can_logged_in_contact_view_all_tickets()) {
+                        $where_tickets[db_prefix() . 'tickets.contactid'] = get_contact_user_id();
+                    }
+
+                    $data['tickets']                 = $this->tickets_model->get('', $where_tickets);
+                    $data['show_submitter_on_table'] = show_ticket_submitter_on_clients_area_table();
+                }
+            } elseif ($group == 'project_estimates') {
+                $data['estimates'] = [];
+                if (has_contact_permission('estimates')) {
+                    $where_estimates = [
+                        'clientid'   => get_client_user_id(),
+                        'project_id' => $id,
+                    ];
+
+                    if (get_option('exclude_estimate_from_client_area_with_draft_status') == 1) {
+                        $where_estimates['status !='] = 1;
+                    }
+
+                    $data['estimates'] = $this->estimates_model->get('', $where_estimates);
+                }
+            } elseif ($group == 'project_proposals') {
+                $data['proposals'] = [];
+
+                if (has_contact_permission('proposals')) {
+                    $where_proposals = '(rel_id =' . get_client_user_id() . ' AND rel_type ="customer"';
+
+                    if (!is_null($project->client_data->leadid)) {
+                        $where_proposals .= ' OR rel_type="lead" AND rel_id=' . $project->client_data->leadid;
+                    }
+
+                    $where_proposals .= ')';
+
+                    if (get_option('exclude_proposal_from_client_area_with_draft_status') == 1) {
+                        $where_proposals .= ' AND status != 6';
+                    }
+
+                    $where_proposals .= ' AND project_id=' . $id;
+
+                    $data['proposals'] = $this->proposals_model->get('', $where_proposals);
+                }
+            } elseif ($group == 'project_timesheets') {
+                $data['timesheets'] = $this->projects_model->get_timesheets($id);
+            }
+
+            if ($this->input->get('taskid')) {
+                $data['view_task'] = $this->tasks_model->get($this->input->get('taskid'), [
+                    'rel_id'   => $project->id,
+                    'rel_type' => 'project',
                 ]);
-                die;
+
+                if (total_rows('milestones', ['hide_from_customer' => 1, 'id' => $data['view_task']->milestone]) > 0) {
+                    show_404();
+                }
+
+                $data['title'] = $data['view_task']->name;
             }
-            $title = $data['contact']->firstname . ' ' . $data['contact']->lastname;
-        }
-
-        $data['customer_permissions'] = get_contact_permissions();
-        $data['title']                = $title;
-        $this->load->view('admin/clients/modals/contact', $data);
-        
-        
-    }
-
-    public function confirm_registration($client_id)
-    {
-        if (!is_admin()) {
-            access_denied('Customer Confirm Registration, ID: ' . $client_id);
-        }
-        $this->clients_model->confirm_registration($client_id);
-        set_alert('success', _l('customer_registration_successfully_confirmed'));
-        redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
-    }
-
-    public function update_file_share_visibility()
-    {
-        if ($this->input->post()) {
-            $file_id           = $this->input->post('file_id');
-            $share_contacts_id = [];
-
-            if ($this->input->post('share_contacts_id')) {
-                $share_contacts_id = $this->input->post('share_contacts_id');
-            }
-
-            $this->db->where('file_id', $file_id);
-            $this->db->delete(db_prefix() . 'shared_customer_files');
-
-            foreach ($share_contacts_id as $share_contact_id) {
-                $this->db->insert(db_prefix() . 'shared_customer_files', [
-                    'file_id'    => $file_id,
-                    'contact_id' => $share_contact_id,
+        } elseif ($group == 'edit_task') {
+            $data['milestones'] = $this->projects_model->get_milestones($id, ['hide_from_customer' => 0]);
+            $data['task']       = $this->tasks_model->get($this->input->get('taskid'), [
+                    'rel_id'                => $project->id,
+                    'rel_type'              => 'project',
+                    'addedfrom'             => get_contact_user_id(),
+                    'is_added_from_contact' => 1,
                 ]);
-            }
-        }
-    }
-
-    public function delete_contact_profile_image($contact_id)
-    {
-        $this->clients_model->delete_contact_profile_image($contact_id);
-    }
-
-    public function mark_as_active($id)
-    {
-        $this->db->where('userid', $id);
-        $this->db->update(db_prefix() . 'clients', [
-            'active' => 1,
-        ]);
-        redirect(admin_url('clients/client/' . $id));
-    }
-
-    public function consents($id)
-    {
-        if (staff_cant('view', 'customers')) {
-            if (!is_customer_admin(get_user_id_by_contact_id($id))) {
-                echo _l('access_denied');
-                die;
-            }
         }
 
-        $this->load->model('gdpr_model');
-        $data['purposes']   = $this->gdpr_model->get_consent_purposes($id, 'contact');
-        $data['consents']   = $this->gdpr_model->get_consents(['contact_id' => $id]);
-        $data['contact_id'] = $id;
-        $this->load->view('admin/gdpr/contact_consent', $data);
+        $data['group']    = $group;
+        $data['currency'] = $this->projects_model->get_currency($id);
+        $data['members']  = $this->projects_model->get_project_members($id);
+
+        $this->data($data);
+        $this->view('project');
+        $this->layout();
     }
 
-    public function update_all_proposal_emails_linked_to_customer($contact_id)
+    public function download_all_project_files($id)
+    {
+        if (!has_contact_permission('projects')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
+        }
+
+        $files = $this->projects_model->get_files($id);
+
+        if (count($files) == 0) {
+            set_alert('warning', _l('no_files_found'));
+            redirect(site_url('clients/project/' . $id . '?group=project_files'));
+        }
+
+        $path = get_upload_path_by_type('project') . $id;
+        $this->load->library('zip');
+
+        foreach ($files as $file) {
+            $this->zip->read_file($path . '/' . $file['file_name']);
+        }
+
+        $this->zip->download(slug_it(get_project_name_by_id($id)) . '-files.zip');
+        $this->zip->clear_data();
+    }
+
+    public function files()
+    {
+        $files_where = 'visible_to_customer = 1 AND id IN (SELECT file_id FROM ' . db_prefix() . 'shared_customer_files WHERE contact_id =' . get_contact_user_id() . ')';
+
+        $files_where = hooks()->apply_filters('customers_area_files_where', $files_where);
+
+        $files = $this->clients_model->get_customer_files(get_client_user_id(), $files_where);
+
+        $data['files'] = $files;
+        $data['title'] = _l('customer_attachments');
+        $this->data($data);
+        $this->view('files');
+        $this->layout();
+    }
+
+    public function upload_files()
     {
         $success = false;
-        $email   = '';
-        if ($this->input->post('update')) {
-            $this->load->model('proposals_model');
-
-            $this->db->select('email,userid');
-            $this->db->where('id', $contact_id);
-            $contact = $this->db->get(db_prefix() . 'contacts')->row();
-
-            $proposals = $this->proposals_model->get('', [
-                'rel_type' => 'customer',
-                'rel_id'   => $contact->userid,
-                'email'    => $this->input->post('original_email'),
-            ]);
-            $affected_rows = 0;
-
-            foreach ($proposals as $proposal) {
-                $this->db->where('id', $proposal['id']);
-                $this->db->update(db_prefix() . 'proposals', [
-                    'email' => $contact->email,
-                ]);
-                if ($this->db->affected_rows() > 0) {
-                    $affected_rows++;
-                }
-            }
-
-            if ($affected_rows > 0) {
-                $success = true;
-            }
-        }
-        echo json_encode([
-            'success' => $success,
-            'message' => _l('proposals_emails_updated', [
-                _l('contact_lowercase'),
-                $contact->email,
-            ]),
-        ]);
-    }
-
-    public function assign_admins($id)
-    {
-        if (staff_cant('create', 'customers') && staff_cant('edit', 'customers')) {
-            access_denied('customers');
-        }
-        $success = $this->clients_model->assign_admins($this->input->post(), $id);
-        if ($success == true) {
-            set_alert('success', _l('updated_successfully', _l('client')));
-        }
-
-        redirect(admin_url('clients/client/' . $id . '?tab=customer_admins'));
-    }
-
-    public function delete_customer_admin($customer_id, $staff_id)
-    {
-        if (staff_cant('create', 'customers') && staff_cant('edit', 'customers')) {
-            access_denied('customers');
-        }
-
-        $this->db->where('customer_id', $customer_id);
-        $this->db->where('staff_id', $staff_id);
-        $this->db->delete(db_prefix() . 'customer_admins');
-        redirect(admin_url('clients/client/' . $customer_id) . '?tab=customer_admins');
-    }
-
-    public function delete_contact($customer_id, $id)
-    {
-        if (staff_cant('delete', 'customers')) {
-            if (!is_customer_admin($customer_id)) {
-                access_denied('customers');
-            }
-        }
-        $contact      = $this->clients_model->get_contact($id);
-        $hasProposals = false;
-        if ($contact && is_gdpr()) {
-            if (total_rows(db_prefix() . 'proposals', ['email' => $contact->email]) > 0) {
-                $hasProposals = true;
-            }
-        }
-
-        $this->clients_model->delete_contact($id);
-        if ($hasProposals) {
-            $this->session->set_flashdata('gdpr_delete_warning', true);
-        }
-        redirect(admin_url('clients/client/' . $customer_id . '?group=contacts'));
-    }
-
-    public function contacts($client_id)
-    {
-        $this->app->get_table_data('contacts', [
-            'client_id' => $client_id,
-        ]);
-    }
-
-    public function upload_attachment($id)
-    {
-        handle_client_attachments_upload($id);
-    }
-
-    public function add_external_attachment()
-    {
-        if ($this->input->post()) {
-            $insert_id = $this->misc_model->add_attachment_to_database($this->input->post('clientid'), 'customer', $this->input->post('files'), $this->input->post('external'));
-        }
-    }
-
-    public function delete_attachment($customer_id, $id)
-    {
-        if (staff_can('delete',  'customers') || is_customer_admin($customer_id)) {
-            $this->clients_model->delete_attachment($id);
-        }
-         set_alert('success','Deleted Successfully');
-        
-        redirect(admin_url('clients/client/'.$customer_id.'?group=attachments'));
-
-    }
-
-    /* Delete client */
-    public function delete($id)
-    {        
-        if (staff_cant('delete', 'customers')) {
-            access_denied('customers');
-        }
-        if (!$id) {
-            redirect(admin_url('clients'));
-        }
-        $response = $this->clients_model->delete($id);
-        if (is_array($response) && isset($response['referenced'])) {
-            set_alert('warning', _l('customer_delete_transactions_warning', _l('invoices') . ', ' . _l('estimates') . ', ' . _l('credit_notes')));
-        } elseif ($response == true) {
-            set_alert('success', _l('deleted', _l('client')));
+        if ($this->input->post('external')) {
+            $file                        = $this->input->post('files');
+            $file[0]['staffid']          = 0;
+            $file[0]['contact_id']       = get_contact_user_id();
+            $file['visible_to_customer'] = 1;
+            $success                     = $this->misc_model->add_attachment_to_database(
+                get_client_user_id(),
+                'customer',
+                $file,
+                $this->input->post('external')
+            );
         } else {
-            set_alert('warning', _l('problem_deleting', _l('client_lowercase')));
+            $success = handle_client_attachments_upload(get_client_user_id(), true);
         }
-        redirect(admin_url('clients'));
+
+        if ($success) {
+            $this->clients_model->send_notification_customer_profile_file_uploaded_to_responsible_staff(
+                get_contact_user_id(),
+                get_client_user_id()
+            );
+        }
     }
 
-    /* Staff can login as client */
-    public function login_as_client($id)
+    public function delete_file($id, $type = '')
     {
-        if (is_admin()) {
-            login_as_client($id);
+        if (get_option('allow_contact_to_delete_files') == 1) {
+            if ($type == 'general') {
+                $file = $this->misc_model->get_file($id);
+                if ($file->contact_id == get_contact_user_id()) {
+                    $this->clients_model->delete_attachment($id);
+                    set_alert('success', _l('deleted', _l('file')));
+                }
+                redirect(site_url('clients/files'));
+            } elseif ($type == 'project') {
+                $this->load->model('projects_model');
+                $file = $this->projects_model->get_file($id);
+                if ($file->contact_id == get_contact_user_id()) {
+                    $this->projects_model->remove_file($id);
+                    set_alert('success', _l('deleted', _l('file')));
+                }
+                redirect(site_url('clients/project/' . $file->project_id . '?group=project_files'));
+            } elseif ($type == 'task') {
+                $file = $this->misc_model->get_file($id);
+                if ($file->contact_id == get_contact_user_id()) {
+                    $this->tasks_model->remove_task_attachment($id);
+                    set_alert('success', _l('deleted', _l('file')));
+                }
+                redirect(site_url('clients/project/' . $this->input->get('project_id') . '?group=project_tasks&taskid=' . $file->rel_id));
+            }
         }
-        hooks()->do_action('after_contact_login');
         redirect(site_url());
     }
 
-    public function get_customer_billing_and_shipping_details($id)
+    public function remove_task_comment($id)
     {
-        echo json_encode($this->clients_model->get_customer_billing_and_shipping_details($id));
+        echo json_encode([
+            'success' => $this->tasks_model->remove_comment($id),
+        ]);
     }
 
-    /* Change client status / active / inactive */
-    public function change_contact_status($id, $status)
+    public function edit_comment()
     {
-        if (staff_can('edit',  'customers') || is_customer_admin(get_user_id_by_contact_id($id))) {
-            if ($this->input->is_ajax_request()) {
-                $this->clients_model->change_contact_status($id, $status);
-            }
-        }
-    }
-
-    /* Change client status / active / inactive */
-    public function change_client_status($id, $status)
-    {
-        if ($this->input->is_ajax_request()) {
-            $this->clients_model->change_client_status($id, $status);
-        }
-    }
-
-    /* Zip function for credit notes */
-    public function zip_credit_notes($id)
-    {
-        $has_permission_view = staff_can('view',  'credit_notes');
-
-        if (!$has_permission_view && staff_cant('view_own', 'credit_notes')) {
-            access_denied('Zip Customer Credit Notes');
-        }
-
         if ($this->input->post()) {
-            $this->load->library('app_bulk_pdf_export', [
-                'export_type'       => 'credit_notes',
-                'status'            => $this->input->post('credit_note_zip_status'),
-                'date_from'         => $this->input->post('zip-from'),
-                'date_to'           => $this->input->post('zip-to'),
-                'redirect_on_error' => admin_url('clients/client/' . $id . '?group=credit_notes'),
-            ]);
-
-            $this->app_bulk_pdf_export->set_client_id($id);
-            $this->app_bulk_pdf_export->in_folder($this->input->post('file_name'));
-            $this->app_bulk_pdf_export->export();
-        }
-    }
-
-    public function zip_invoices($id)
-    {
-        $has_permission_view = staff_can('view',  'invoices');
-        if (!$has_permission_view && staff_cant('view_own', 'invoices')
-            && get_option('allow_staff_view_invoices_assigned') == '0') {
-            access_denied('Zip Customer Invoices');
-        }
-
-        if ($this->input->post()) {
-            $this->load->library('app_bulk_pdf_export', [
-                'export_type'       => 'invoices',
-                'status'            => $this->input->post('invoice_zip_status'),
-                'date_from'         => $this->input->post('zip-from'),
-                'date_to'           => $this->input->post('zip-to'),
-                'redirect_on_error' => admin_url('clients/client/' . $id . '?group=invoices'),
-            ]);
-
-            $this->app_bulk_pdf_export->set_client_id($id);
-            $this->app_bulk_pdf_export->in_folder($this->input->post('file_name'));
-            $this->app_bulk_pdf_export->export();
-        }
-    }
-
-    /* Since version 1.0.2 zip client estimates */
-    public function zip_estimates($id)
-    {
-        $has_permission_view = staff_can('view',  'estimates');
-        if (!$has_permission_view && staff_cant('view_own', 'estimates')
-            && get_option('allow_staff_view_estimates_assigned') == '0') {
-            access_denied('Zip Customer Estimates');
-        }
-
-        if ($this->input->post()) {
-            $this->load->library('app_bulk_pdf_export', [
-                'export_type'       => 'estimates',
-                'status'            => $this->input->post('estimate_zip_status'),
-                'date_from'         => $this->input->post('zip-from'),
-                'date_to'           => $this->input->post('zip-to'),
-                'redirect_on_error' => admin_url('clients/client/' . $id . '?group=estimates'),
-            ]);
-
-            $this->app_bulk_pdf_export->set_client_id($id);
-            $this->app_bulk_pdf_export->in_folder($this->input->post('file_name'));
-            $this->app_bulk_pdf_export->export();
-        }
-    }
-
-    public function zip_payments($id)
-    {
-        $has_permission_view = staff_can('view',  'payments');
-
-        if (!$has_permission_view && staff_cant('view_own', 'invoices')
-            && get_option('allow_staff_view_invoices_assigned') == '0') {
-            access_denied('Zip Customer Payments');
-        }
-
-        $this->load->library('app_bulk_pdf_export', [
-                'export_type'       => 'payments',
-                'payment_mode'      => $this->input->post('paymentmode'),
-                'date_from'         => $this->input->post('zip-from'),
-                'date_to'           => $this->input->post('zip-to'),
-                'redirect_on_error' => admin_url('clients/client/' . $id . '?group=payments'),
-            ]);
-
-        $this->app_bulk_pdf_export->set_client_id($id);
-        $this->app_bulk_pdf_export->set_client_id_column(db_prefix() . 'clients.userid');
-        $this->app_bulk_pdf_export->in_folder($this->input->post('file_name'));
-        $this->app_bulk_pdf_export->export();
-    }
-
-    public function import()
-    {
-        if (staff_cant('create', 'customers')) {
-            access_denied('customers');
-        }
-
-        $dbFields = $this->db->list_fields(db_prefix() . 'contacts');
-        foreach ($dbFields as $key => $contactField) {
-            if ($contactField == 'phonenumber') {
-                $dbFields[$key] = 'contact_phonenumber';
+            $data            = $this->input->post();
+            $data['content'] = nl2br($data['content']);
+            $success         = $this->tasks_model->edit_comment($data);
+            if ($success) {
+                set_alert('success', _l('task_comment_updated'));
             }
-        }
-
-        $dbFields = array_merge($dbFields, $this->db->list_fields(db_prefix() . 'clients'));
-
-        $dbFields = array_merge($dbFields, $this->db->list_fields(db_prefix() . 'medical_history'));
-
-        $this->load->library('import/import_customers', [], 'import');
-
-        $this->import->setDatabaseFields($dbFields)
-                     ->setCustomFields(get_custom_fields('customers'));
-
-        if ($this->input->post('download_sample') === 'true') {
-            $this->import->downloadSample();
-        }
-
-        if ($this->input->post()
-            && isset($_FILES['file_csv']['name']) && $_FILES['file_csv']['name'] != '') {
-            $this->import->setSimulation($this->input->post('simulate'))
-                          ->setTemporaryFileLocation($_FILES['file_csv']['tmp_name'])
-                          ->setFilename($_FILES['file_csv']['name'])
-                          ->perform();
-
-
-            $data['total_rows_post'] = $this->import->totalRows();
-
-            if (!$this->import->isSimulation()) {
-                set_alert('success', _l('import_total_imported', $this->import->totalImported()));
-            }
-        }
-
-        $data['groups']    = $this->clients_model->get_groups();
-        $data['title']     = _l('import');
-        $data['bodyclass'] = 'dynamic-create-groups';
-        $this->load->view('admin/clients/import', $data);
-    }
-
-    public function groups()
-    {
-        if (!is_admin()) {
-            access_denied('Customer Groups');
-        }
-        if ($this->input->is_ajax_request()) {
-            $this->app->get_table_data('customers_groups');
-        }
-        $data['title'] = _l('customer_groups');
-        $this->load->view('admin/clients/groups_manage', $data);
-    }
-
-    public function group()
-    {
-        if (!is_admin() && get_option('staff_members_create_inline_customer_groups') == '0') {
-            access_denied('Customer Groups');
-        }
-
-        if ($this->input->is_ajax_request()) {
-            $data = $this->input->post();
-
-            
-            if ($data['id'] == '') {
-                $id      = $this->clients_model->add_group($data);
-                $message = $id ? _l('added_successfully', _l('customer_group')) : '';
-                echo json_encode([
-                    'success' => $id ? true : false,
-                    'message' => $message,
-                    'id'      => $id,
-                    'name'    => $data['name'],
-                ]);
-            } else {
-                $success = $this->clients_model->edit_group($data);
-                $message = '';
-                if ($success == true) {
-                    $message = _l('updated_successfully', _l('customer_group'));
-                }
-                echo json_encode([
-                    'success' => $success,
-                    'message' => $message,
-                ]);
-            }
+            echo json_encode([
+                'success' => $success,
+            ]);
         }
     }
 
-    public function delete_group($id)
+    public function tickets($status = '')
     {
-        if (!is_admin()) {
-            access_denied('Delete Customer Group');
+        if (!has_contact_permission('support')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
         }
-        if (!$id) {
-            redirect(admin_url('clients/groups'));
+
+        $where = db_prefix() . 'tickets.userid=' . get_client_user_id();
+        if (!can_logged_in_contact_view_all_tickets()) {
+            $where .= ' AND ' . db_prefix() . 'tickets.contactid=' . get_contact_user_id();
         }
-        $response = $this->clients_model->delete_group($id);
-        if ($response == true) {
-            set_alert('success', _l('deleted', _l('customer_group')));
+
+        $data['show_submitter_on_table'] = show_ticket_submitter_on_clients_area_table();
+
+        $defaultStatuses = hooks()->apply_filters('customers_area_list_default_ticket_statuses', [1, 2, 3, 4]);
+        // By default only open tickets
+        if (!is_numeric($status)) {
+            $where .= ' AND status IN (' . implode(', ', $defaultStatuses) . ')';
         } else {
-            set_alert('warning', _l('problem_deleting', _l('customer_group_lowercase')));
+            $where .= ' AND status=' . $this->db->escape_str($status);
         }
-        redirect(admin_url('clients/groups'));
+
+        $data['list_statuses'] = is_numeric($status) ? [$status] : $defaultStatuses;
+        $data['bodyclass']     = 'tickets';
+        $data['tickets']       = $this->tickets_model->get('', $where);
+        $data['title']         = _l('clients_tickets_heading');
+        $this->data($data);
+        $this->view('tickets');
+        $this->layout();
     }
 
-    public function bulk_action()
+    public function change_ticket_status()
     {
-        hooks()->do_action('before_do_bulk_action_for_customers');
-        $total_deleted = 0;
-        if ($this->input->post()) {
-            $ids    = $this->input->post('ids');
-            $groups = $this->input->post('groups');
+        if (has_contact_permission('support')) {
+            $post_data = $this->input->post();
+            if (can_change_ticket_status_in_clients_area($post_data['status_id'])) {
+                $response = $this->tickets_model->change_ticket_status($post_data['ticket_id'], $post_data['status_id']);
+                set_alert($response['alert'], $response['message']);
+            }
+        }
+    }
 
-            if (is_array($ids)) {
-                foreach ($ids as $id) {
-                    if ($this->input->post('mass_delete')) {
-                        if ($this->clients_model->delete($id)) {
-                            $total_deleted++;
-                        }
-                    } else {
-                        if (!is_array($groups)) {
-                            $groups = false;
-                        }
-                        $this->client_groups_model->sync_customer_groups($id, $groups);
-                    }
+    public function proposals()
+    {
+        if (!has_contact_permission('proposals')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
+        }
+
+        $where = 'rel_id =' . get_client_user_id() . ' AND rel_type ="customer"';
+
+        $client = $this->clients_model->get(get_client_user_id());
+
+        if (!is_null($client->leadid)) {
+            $where .= ' OR rel_type="lead" AND rel_id=' . $client->leadid;
+        }
+
+        if (get_option('exclude_proposal_from_client_area_with_draft_status') == 1) {
+            $where .= ' AND status != 6';
+        }
+
+        $data['proposals'] = $this->proposals_model->get('', $where);
+        $data['title']     = _l('proposals');
+        $this->data($data);
+        $this->view('proposals');
+        $this->layout();
+    }
+
+    public function open_ticket()
+    {
+        if (!has_contact_permission('support')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
+        }
+        if ($this->input->post()) {
+            $this->form_validation->set_rules('subject', _l('customer_ticket_subject'), 'required');
+            $this->form_validation->set_rules('department', _l('clients_ticket_open_departments'), 'required');
+            $this->form_validation->set_rules('priority', _l('priority'), 'required');
+            $custom_fields = get_custom_fields('tickets', [
+                'show_on_client_portal' => 1,
+                'required'              => 1,
+            ]);
+            foreach ($custom_fields as $field) {
+                $field_name = 'custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']';
+                if ($field['type'] == 'checkbox' || $field['type'] == 'multiselect') {
+                    $field_name .= '[]';
+                }
+                $this->form_validation->set_rules($field_name, $field['name'], 'required');
+            }
+            if ($this->form_validation->run() !== false) {
+                $data = $this->input->post();
+
+                $id = $this->tickets_model->add([
+                    'subject'    => $data['subject'],
+                    'department' => $data['department'],
+                    'priority'   => $data['priority'],
+                    'service'    => isset($data['service']) && is_numeric($data['service'])
+                    ? $data['service']
+                    : null,
+                    'project_id' => isset($data['project_id']) && is_numeric($data['project_id'])
+                    ? $data['project_id']
+                    : 0,
+                    'custom_fields' => isset($data['custom_fields']) && is_array($data['custom_fields'])
+                    ? $data['custom_fields']
+                    : [],
+                    'message'   => $data['message'],
+                    'contactid' => get_contact_user_id(),
+                    'userid'    => get_client_user_id(),
+                ]);
+
+                if ($id) {
+                    set_alert('success', _l('new_ticket_added_successfully', $id));
+                    redirect(site_url('clients/ticket/' . $id));
                 }
             }
         }
-
-        if ($this->input->post('mass_delete')) {
-            set_alert('success', _l('total_clients_deleted', $total_deleted));
-        }
+        $data             = [];
+        $data['projects'] = $this->projects_model->get_projects_for_ticket(get_client_user_id());
+        $data['title']    = _l('new_ticket');
+        $this->data($data);
+        $this->view('open_ticket');
+        $this->layout();
     }
 
-    public function vault_entry_create($customer_id)
+    public function ticket($id)
     {
-        $data = $this->input->post();
+        if (!has_contact_permission('support')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
+        }
 
+        if (!$id) {
+            redirect(site_url());
+        }
+
+        $data['ticket'] = $this->tickets_model->get_ticket_by_id($id, get_client_user_id());
+        if (!$data['ticket'] || $data['ticket']->userid != get_client_user_id()) {
+            show_404();
+        }
+
+        if ($data['ticket']->merged_ticket_id != null) {
+            redirect(site_url('clients/ticket/' . $data['ticket']->merged_ticket_id));
+        }
+
+        if ($this->input->post()) {
+            $this->form_validation->set_rules('message', _l('ticket_reply'), 'required');
+
+            if ($this->form_validation->run() !== false) {
+                $data = $this->input->post();
+
+                $replyid = $this->tickets_model->add_reply([
+                    'message'   => $data['message'],
+                    'contactid' => get_contact_user_id(),
+                    'userid'    => get_client_user_id(),
+                ], $id);
+                if ($replyid) {
+                    set_alert('success', _l('replied_to_ticket_successfully', $id));
+                }
+                redirect(site_url('clients/ticket/' . $id));
+            }
+        }
+
+        $data['ticket_replies'] = $this->tickets_model->get_ticket_replies($id);
+        $data['title']          = $data['ticket']->subject;
+        $this->data($data);
+        $this->view('single_ticket');
+        $this->layout();
+    }
+
+    public function contracts()
+    {
+        if (!has_contact_permission('contracts')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
+        }
+        $data['contracts'] = $this->contracts_model->get('', [
+            'client'                => get_client_user_id(),
+            'not_visible_to_client' => 0,
+            'trash'                 => 0,
+        ]);
+
+        $data['contracts_by_type_chart'] = json_encode($this->contracts_model->get_contracts_types_chart_data());
+        $data['title']                   = _l('clients_contracts');
+        $this->data($data);
+        $this->view('contracts');
+        $this->layout();
+    }
+
+    public function invoices($status = false)
+    {
+        if (!has_contact_permission('invoices')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
+        }
+
+        $where = [
+            'clientid' => get_client_user_id(),
+        ];
+
+        if (is_numeric($status)) {
+            $where['status'] = $status;
+        }
+
+        if (isset($where['status'])) {
+            if ($where['status'] == Invoices_model::STATUS_DRAFT
+                && get_option('exclude_invoice_from_client_area_with_draft_status') == 1) {
+                unset($where['status']);
+                $where['status !='] = Invoices_model::STATUS_DRAFT;
+            }
+        } else {
+            if (get_option('exclude_invoice_from_client_area_with_draft_status') == 1) {
+                $where['status !='] = Invoices_model::STATUS_DRAFT;
+            }
+        }
+
+        $data['invoices'] = $this->invoices_model->get('', $where);
+        $data['title']    = _l('clients_my_invoices');
+        $this->data($data);
+        $this->view('invoices');
+        $this->layout();
+    }
+
+    public function statement()
+    {
+        if (!has_contact_permission('invoices')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
+        }
+
+        $data = [];
         
+        // Default to this month
+        $from = _d(date('Y-m-01'));
+        $to   = _d(date('Y-m-t'));
 
-        if (isset($data['fakeusernameremembered'])) {
-            unset($data['fakeusernameremembered']);
-        }
-
-        if (isset($data['fakepasswordremembered'])) {
-            unset($data['fakepasswordremembered']);
-        }
-
-        unset($data['id']);
-        $data['creator']      = get_staff_user_id();
-        $data['creator_name'] = get_staff_full_name($data['creator']);
-        $data['description']  = nl2br($data['description']);
-        $data['password']     = $this->encryption->encrypt($this->input->post('password', false));
-
-        if (empty($data['port'])) {
-            unset($data['port']);
-        }
-
-        $this->clients_model->vault_entry_create($data, $customer_id);
-        set_alert('success', _l('added_successfully', _l('vault_entry')));
-        redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
-    }
-
-    public function vault_entry_update($entry_id)
-    {
-        $entry = $this->clients_model->get_vault_entry($entry_id);
-
-        if ($entry->creator == get_staff_user_id() || is_admin()) {
-            $data = $this->input->post();
-
-            
-            if (isset($data['fakeusernameremembered'])) {
-                unset($data['fakeusernameremembered']);
-            }
-            if (isset($data['fakepasswordremembered'])) {
-                unset($data['fakepasswordremembered']);
+        if ($this->input->get('from') && $this->input->get('to')) {
+            if(!is_string($this->input->get('from')) || !is_string($this->input->get('from'))) {
+                redirect(site_url('clients/statement'));
             }
 
-            $data['last_updated_from'] = get_staff_full_name(get_staff_user_id());
-            $data['description']       = nl2br($data['description']);
-
-            if (!empty($data['password'])) {
-                $data['password'] = $this->encryption->encrypt($this->input->post('password', false));
-            } else {
-                unset($data['password']);
-            }
-
-            if (empty($data['port'])) {
-                unset($data['port']);
-            }
-
-            $this->clients_model->vault_entry_update($entry_id, $data);
-            set_alert('success', _l('updated_successfully', _l('vault_entry')));
-        }
-        redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
-    }
-
-    public function vault_entry_delete($id)
-    {
-        $entry = $this->clients_model->get_vault_entry($id);
-        if ($entry->creator == get_staff_user_id() || is_admin()) {
-            $this->clients_model->vault_entry_delete($id);
-        }
-        redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
-    }
-
-    public function vault_encrypt_password()
-    {
-        $id            = $this->input->post('id');
-        $user_password = $this->input->post('user_password', false);
-        $user          = $this->staff_model->get(get_staff_user_id());
-
-        if (!app_hasher()->CheckPassword($user_password, $user->password)) {
-            header('HTTP/1.1 401 Unauthorized');
-            echo json_encode(['error_msg' => _l('vault_password_user_not_correct')]);
-            die;
+            $from = $this->input->get('from');
+            $to   = $this->input->get('to');
         }
 
-        $vault    = $this->clients_model->get_vault_entry($id);
-        $password = $this->encryption->decrypt($vault->password);
+        $data['statement'] = $this->clients_model->get_statement(get_client_user_id(), to_sql_date($from), to_sql_date($to));
 
-        $password = html_escape($password);
+        $data['from'] = $from;
+        $data['to']   = $to;
 
-        // Failed to decrypt
-        if (!$password) {
-            header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad error');
-            echo json_encode(['error_msg' => _l('failed_to_decrypt_password')]);
-            die;
-        }
+        $data['period_today'] = json_encode(
+            [
+                     _d(date('Y-m-d')),
+                     _d(date('Y-m-d')),
+                     ]
+        );
+        $data['period_this_week'] = json_encode(
+            [
+                     _d(date('Y-m-d', strtotime('monday this week'))),
+                     _d(date('Y-m-d', strtotime('sunday this week'))),
+                     ]
+        );
+        $data['period_this_month'] = json_encode(
+            [
+                     _d(date('Y-m-01')),
+                     _d(date('Y-m-t')),
+                     ]
+        );
 
-        echo json_encode(['password' => $password]);
-    }
+        $data['period_last_month'] = json_encode(
+            [
+                     _d(date('Y-m-01', strtotime('-1 MONTH'))),
+                     _d(date('Y-m-t', strtotime('-1 MONTH'))),
+                     ]
+        );
 
-    public function get_vault_entry($id)
-    {
-        $entry = $this->clients_model->get_vault_entry($id);
-        unset($entry->password);
-        $entry->description = clear_textarea_breaks($entry->description);
-        echo json_encode($entry);
+        $data['period_this_year'] = json_encode(
+            [
+                     _d(date('Y-m-d', strtotime(date('Y-01-01')))),
+                     _d(date('Y-m-d', strtotime(date('Y-12-31')))),
+                     ]
+        );
+        $data['period_last_year'] = json_encode(
+            [
+                     _d(date('Y-m-d', strtotime(date(date('Y', strtotime('last year')) . '-01-01')))),
+                     _d(date('Y-m-d', strtotime(date(date('Y', strtotime('last year')) . '-12-31')))),
+                     ]
+        );
+
+        $data['period_selected'] = json_encode([$from, $to]);
+
+        $data['custom_period'] = ($this->input->get('custom_period') ? true : false);
+
+        $data['title'] = _l('customer_statement');
+        $this->data($data);
+        $this->view('statement');
+        $this->layout();
     }
 
     public function statement_pdf()
     {
-        $customer_id = $this->input->get('customer_id');
-
-        if (staff_cant('view', 'invoices') && staff_cant('view', 'payments')) {
-            set_alert('danger', _l('access_denied'));
-            redirect(admin_url('clients/client/' . $customer_id));
+        if (!has_contact_permission('invoices')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
         }
 
         $from = $this->input->get('from');
         $to   = $this->input->get('to');
 
-        $data['statement'] = $this->clients_model->get_statement($customer_id, to_sql_date($from), to_sql_date($to));
+        if(!is_string($from) && !is_string($to)) {
+            show_404();
+        }
+
+        $data['statement'] = $this->clients_model->get_statement(
+            get_client_user_id(),
+            to_sql_date($from),
+            to_sql_date($to)
+        );
 
         try {
             $pdf = statement_pdf($data['statement']);
         } catch (Exception $e) {
-            $message = $e->getMessage();
-            echo $message;
-            if (strpos($message, 'Unable to get the size of the image') !== false) {
-                show_pdf_unable_to_get_image_size_error();
-            }
+            echo $e->getMessage();
             die;
         }
 
@@ -1402,56 +950,574 @@ class Clients extends AdminController
             $type = 'I';
         }
 
-        $pdf->Output(slug_it(_l('customer_statement') . '-' . $data['statement']['client']->company) . '.pdf', $type);
+        $pdf_name = slug_it(_l('customer_statement') . '_' . get_option('companyname'));
+        $pdf->Output($pdf_name . '.pdf', $type);
     }
 
-    public function send_statement()
+    public function estimates($status = '')
     {
-        $customer_id = $this->input->get('customer_id');
-
-        if (staff_cant('view', 'invoices') && staff_cant('view', 'payments')) {
-            set_alert('danger', _l('access_denied'));
-            redirect(admin_url('clients/client/' . $customer_id));
+        if (!has_contact_permission('estimates')) {
+            set_alert('warning', _l('access_denied'));
+            redirect(site_url());
         }
-
-        $from = $this->input->get('from');
-        $to   = $this->input->get('to');
-
-        $send_to = $this->input->post('send_to');
-        $cc      = $this->input->post('cc');
-
-        $success = $this->clients_model->send_statement_to_email($customer_id, $send_to, $from, $to, $cc);
-        // In case client use another language
-        load_admin_language();
-        if ($success) {
-            set_alert('success', _l('statement_sent_to_client_success'));
+        $where = [
+            'clientid' => get_client_user_id(),
+        ];
+        if (is_numeric($status)) {
+            $where['status'] = $status;
+        }
+        if (isset($where['status'])) {
+            if ($where['status'] == 1 && get_option('exclude_estimate_from_client_area_with_draft_status') == 1) {
+                unset($where['status']);
+                $where['status !='] = 1;
+            }
         } else {
-            set_alert('danger', _l('statement_sent_to_client_fail'));
+            if (get_option('exclude_estimate_from_client_area_with_draft_status') == 1) {
+                $where['status !='] = 1;
+            }
         }
-
-        redirect(admin_url('clients/client/' . $customer_id . '?group=statement'));
+        $data['estimates'] = $this->estimates_model->get('', $where);
+        $data['title']     = _l('clients_my_estimates');
+        $this->data($data);
+        $this->view('estimates');
+        $this->layout();
     }
 
-    public function statement()
+    public function company()
     {
-        if (staff_cant('view', 'invoices') && staff_cant('view', 'payments')) {
-            header($_SERVER['SERVER_PROTOCOL'] . ' 400 Bad error');
-            echo _l('access_denied');
-            die;
+        if ($this->input->post() && is_primary_contact()) {
+            if (get_option('company_is_required') == 1) {
+                $this->form_validation->set_rules('company', _l('clients_company'), 'required');
+            }
+
+            if (active_clients_theme() == 'perfex') {
+                // Fix for custom fields checkboxes validation
+                $this->form_validation->set_rules('company_form', '', 'required');
+            }
+
+            $custom_fields = get_custom_fields('customers', [
+                'show_on_client_portal'  => 1,
+                'required'               => 1,
+                'disalow_client_to_edit' => 0,
+            ]);
+
+            foreach ($custom_fields as $field) {
+                $field_name = 'custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']';
+                if ($field['type'] == 'checkbox' || $field['type'] == 'multiselect') {
+                    $field_name .= '[]';
+                }
+                $this->form_validation->set_rules($field_name, $field['name'], 'required');
+            }
+
+            if ($this->form_validation->run() !== false) {
+                $data['company'] = $this->input->post('company');
+
+                if (!is_null($this->input->post('vat'))) {
+                    $data['vat'] = $this->input->post('vat');
+                }
+
+                if (!is_null($this->input->post('default_language'))) {
+                    $data['default_language'] = $this->input->post('default_language');
+                }
+
+                if (!is_null($this->input->post('custom_fields'))) {
+                    $data['custom_fields'] = $this->input->post('custom_fields');
+                }
+
+                $data['phonenumber'] = $this->input->post('phonenumber');
+                $data['website']     = $this->input->post('website');
+                $data['country']     = $this->input->post('country');
+                $data['city']        = $this->input->post('city');
+                $data['address']     = $this->input->post('address');
+                $data['zip']         = $this->input->post('zip');
+                $data['state']       = $this->input->post('state');
+
+                if (get_option('allow_primary_contact_to_view_edit_billing_and_shipping') == 1
+                    && is_primary_contact()) {
+
+                    // Dynamically get the billing and shipping values from $_POST
+                    for ($i = 0; $i < 2; $i++) {
+                        $prefix = ($i == 0 ? 'billing_' : 'shipping_');
+                        foreach (['street', 'city', 'state', 'zip', 'country'] as $field) {
+                            $data[$prefix . $field] = $this->input->post($prefix . $field);
+                        }
+                    }
+                }
+
+                $success = $this->clients_model->update_company_details($data, get_client_user_id());
+                if ($success == true) {
+                    set_alert('success', _l('clients_profile_updated'));
+                }
+
+                redirect(site_url('clients/company'));
+            }
+        }
+        $data['title'] = _l('client_company_info');
+        $this->data($data);
+        $this->view('company_profile');
+        $this->layout();
+    }
+
+    public function profile()
+    {
+        if ($this->input->post('profile')) {
+            $this->form_validation->set_rules('firstname', _l('client_firstname'), 'required');
+            $this->form_validation->set_rules('lastname', _l('client_lastname'), 'required');
+
+            $this->form_validation->set_message('contact_email_profile_unique', _l('form_validation_is_unique'));
+            $this->form_validation->set_rules('email', _l('clients_email'), 'required|valid_email|callback_contact_email_profile_unique');
+
+            $custom_fields = get_custom_fields('contacts', [
+                'show_on_client_portal'  => 1,
+                'required'               => 1,
+                'disalow_client_to_edit' => 0,
+            ]);
+            foreach ($custom_fields as $field) {
+                $field_name = 'custom_fields[' . $field['fieldto'] . '][' . $field['id'] . ']';
+                if ($field['type'] == 'checkbox' || $field['type'] == 'multiselect') {
+                    $field_name .= '[]';
+                }
+                $this->form_validation->set_rules($field_name, $field['name'], 'required');
+            }
+            if ($this->form_validation->run() !== false) {
+                handle_contact_profile_image_upload();
+
+                $data = $this->input->post();
+
+                $contact = $this->clients_model->get_contact(get_contact_user_id());
+
+                if (has_contact_permission('invoices')) {
+                    $data['invoice_emails']     = isset($data['invoice_emails']) ? 1 : 0;
+                    $data['credit_note_emails'] = isset($data['credit_note_emails']) ? 1 : 0;
+                } else {
+                    $data['invoice_emails']     = $contact->invoice_emails;
+                    $data['credit_note_emails'] = $contact->credit_note_emails;
+                }
+
+                if (has_contact_permission('estimates')) {
+                    $data['estimate_emails'] = isset($data['estimate_emails']) ? 1 : 0;
+                } else {
+                    $data['estimate_emails'] = $contact->estimate_emails;
+                }
+
+                if (has_contact_permission('support')) {
+                    $data['ticket_emails'] = isset($data['ticket_emails']) ? 1 : 0;
+                } else {
+                    $data['ticket_emails'] = $contact->ticket_emails;
+                }
+
+                if (has_contact_permission('contracts')) {
+                    $data['contract_emails'] = isset($data['contract_emails']) ? 1 : 0;
+                } else {
+                    $data['contract_emails'] = $contact->contract_emails;
+                }
+
+                if (has_contact_permission('projects')) {
+                    $data['project_emails'] = isset($data['project_emails']) ? 1 : 0;
+                    $data['task_emails']    = isset($data['task_emails']) ? 1 : 0;
+                } else {
+                    $data['project_emails'] = $contact->project_emails;
+                    $data['task_emails']    = $contact->task_emails;
+                }
+
+                $success = $this->clients_model->update_contact([
+                    'firstname'          => $this->input->post('firstname'),
+                    'lastname'           => $this->input->post('lastname'),
+                    'title'              => $this->input->post('title'),
+                    'email'              => $this->input->post('email'),
+                    'phonenumber'        => $this->input->post('phonenumber'),
+                    'direction'          => $this->input->post('direction'),
+                    'invoice_emails'     => $data['invoice_emails'],
+                    'credit_note_emails' => $data['credit_note_emails'],
+                    'estimate_emails'    => $data['estimate_emails'],
+                    'ticket_emails'      => $data['ticket_emails'],
+                    'contract_emails'    => $data['contract_emails'],
+                    'project_emails'     => $data['project_emails'],
+                    'task_emails'        => $data['task_emails'],
+                    'custom_fields'      => isset($data['custom_fields']) && is_array($data['custom_fields']) ? $data['custom_fields'] : [],
+                ], get_contact_user_id(), true);
+
+                if ($success == true) {
+                    set_alert('success', _l('clients_profile_updated'));
+                }
+
+                redirect(site_url('clients/profile'));
+            }
+        } elseif ($this->input->post('change_password')) {
+            $this->form_validation->set_rules('oldpassword', _l('clients_edit_profile_old_password'), 'required');
+            $this->form_validation->set_rules('newpassword', _l('clients_edit_profile_new_password'), 'required');
+            $this->form_validation->set_rules('newpasswordr', _l('clients_edit_profile_new_password_repeat'), 'required|matches[newpassword]');
+            if ($this->form_validation->run() !== false) {
+                $success = $this->clients_model->change_contact_password(
+                    get_contact_user_id(),
+                    $this->input->post('oldpassword', false),
+                    $this->input->post('newpasswordr', false)
+                );
+
+                if (is_array($success) && isset($success['old_password_not_match'])) {
+                    set_alert('danger', _l('client_old_password_incorrect'));
+                } elseif ($success == true) {
+                    set_alert('success', _l('client_password_changed'));
+                }
+
+                redirect(site_url('clients/profile'));
+            }
+        }
+        $data['title'] = _l('clients_profile_heading');
+        $this->data($data);
+        $this->view('profile');
+        $this->layout();
+    }
+
+    public function remove_profile_image()
+    {
+        $id = get_contact_user_id();
+
+        hooks()->do_action('before_remove_contact_profile_image', $id);
+
+        if (file_exists(get_upload_path_by_type('contact_profile_images') . $id)) {
+            delete_dir(get_upload_path_by_type('contact_profile_images') . $id);
         }
 
-        $customer_id = $this->input->get('customer_id');
-        $from        = $this->input->get('from');
-        $to          = $this->input->get('to');
+        $this->db->where('id', $id);
+        $this->db->update(db_prefix() . 'contacts', [
+            'profile_image' => null,
+        ]);
 
-        $data['statement'] = $this->clients_model->get_statement($customer_id, to_sql_date($from), to_sql_date($to));
+        if ($this->db->affected_rows() > 0) {
+            redirect(site_url('clients/profile'));
+        }
+    }
 
-        $data['from'] = $from;
-        $data['to']   = $to;
+    public function dismiss_announcement($id)
+    {
+        $this->misc_model->dismiss_announcement($id, false);
+        redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
+    }
 
-        $viewData['html'] = $this->load->view('admin/clients/groups/_statement', $data, true);
+    public function update_credit_card()
+    {
+        if (!can_logged_in_contact_update_credit_card()) {
+            redirect(site_url());
+        }
 
-        echo json_encode($viewData);
+        $this->load->library('stripe_subscriptions');
+        $this->load->library('stripe_core');
+        $this->load->model('subscriptions_model');
+
+        $sessionData = [
+              'payment_method_types' => ['card'],
+              'mode'                 => 'setup',
+              'setup_intent_data'    => [
+                'metadata' => [
+                  'customer_id' => $this->clients_model->get(get_client_user_id())->stripe_id,
+                ],
+              ],
+              'success_url' => site_url('clients/success_update_card?session_id={CHECKOUT_SESSION_ID}'),
+              'cancel_url'  => $cancelUrl = site_url('clients/credit_card'),
+            ];
+
+        $contact = $this->clients_model->get_contact(get_contact_user_id());
+
+        if ($contact->email) {
+            $sessionData['customer_email'] = $contact->email;
+        }
+
+        $sessionData = hooks()->apply_filters('stripe_update_credit_card_session_data', $sessionData, $contact);
+
+        try {
+            $session = $this->stripe_core->create_session($sessionData);
+            redirect_to_stripe_checkout($session->id);
+        } catch (Exception $e) {
+            set_alert('warning', $e->getMessage());
+            redirect($cancelUrl);
+        }
+    }
+
+    public function success_update_card()
+    {
+        if (!can_logged_in_contact_update_credit_card()) {
+            redirect(site_url());
+        }
+
+        $this->load->library('stripe_core');
+
+        try {
+            $session = $this->stripe_core->retrieve_session([
+                'id'     => $this->input->get('session_id'),
+                'expand' => ['setup_intent.payment_method'],
+            ]);
+
+            $session->setup_intent->payment_method->attach(['customer' => $session->setup_intent->metadata->customer_id]);
+
+            $this->stripe_core->update_customer($session->setup_intent->metadata->customer_id, [
+                'invoice_settings' => [
+                    'default_payment_method' => $session->setup_intent->payment_method->id,
+                  ],
+              ]);
+
+            set_alert('success', _l('updated_successfully', _l('credit_card')));
+        } catch (Exception $e) {
+            set_alert('warning', $e->getMessage());
+        }
+
+        redirect(site_url('clients/credit_card'));
+    }
+
+    public function credit_card()
+    {
+        if (!can_logged_in_contact_update_credit_card()) {
+            redirect(site_url());
+        }
+
+        $this->load->library('stripe_core');
+        $client = $this->clients_model->get(get_client_user_id());
+
+        $data['stripe_customer'] = $this->stripe_core->get_customer($client->stripe_id);
+        $data['payment_method']  = null;
+
+        if (!empty($data['stripe_customer']->invoice_settings->default_payment_method)) {
+            $data['payment_method'] = $this->stripe_core->retrieve_payment_method($data['stripe_customer']->invoice_settings->default_payment_method);
+        }
+
+        $data['bodyclass'] = 'customer-credit-card';
+        $data['title']     = _l('credit_card');
+
+        $this->data($data);
+        $this->view('credit_card');
+        $this->layout();
+    }
+
+    public function delete_credit_card()
+    {
+        if (customer_can_delete_credit_card()) {
+            $client = $this->clients_model->get(get_client_user_id());
+
+            $this->load->library('stripe_core');
+
+            $stripeCustomer = $this->stripe_core->get_customer($client->stripe_id);
+
+            try {
+                $payment_method = $this->stripe_core->retrieve_payment_method($stripeCustomer->invoice_settings->default_payment_method);
+                $payment_method->detach();
+
+                set_alert('success', _l('credit_card_successfully_deleted'));
+            } catch (Exception $e) {
+                set_alert('warning', $e->getMessage());
+            }
+        }
+
+        redirect(site_url('clients/credit_card'));
+    }
+
+    public function subscriptions()
+    {
+        if (!can_logged_in_contact_view_subscriptions()) {
+            redirect(site_url());
+        }
+
+        $this->load->model('subscriptions_model');
+        $data['subscriptions'] = $this->subscriptions_model->get(['clientid' => get_client_user_id()]);
+
+        $data['show_projects'] = total_rows(db_prefix() . 'subscriptions', 'project_id != 0 AND clientid=' . get_client_user_id()) > 0 && has_contact_permission('projects');
+
+        $data['title']     = _l('subscriptions');
+        $data['bodyclass'] = 'subscriptions';
+        $this->data($data);
+        $this->view('subscriptions');
+        $this->layout();
+    }
+
+    public function cancel_subscription($id)
+    {
+        if (!is_primary_contact(get_contact_user_id())
+            || get_option('show_subscriptions_in_customers_area') != '1') {
+            redirect(site_url());
+        }
+
+        $this->load->model('subscriptions_model');
+        $this->load->library('stripe_subscriptions');
+        $subscription = $this->subscriptions_model->get_by_id($id, ['clientid' => get_client_user_id()]);
+
+        if (!$subscription) {
+            show_404();
+        }
+
+        try {
+            $type    = $this->input->get('type');
+            $ends_at = time();
+            if ($type == 'immediately') {
+                $this->stripe_subscriptions->cancel($subscription->stripe_subscription_id);
+            } elseif ($type == 'at_period_end') {
+                $ends_at = $this->stripe_subscriptions->cancel_at_end_of_billing_period($subscription->stripe_subscription_id);
+            } else {
+                throw new Exception('Invalid Cancelation Type', 1);
+            }
+
+            $update = ['ends_at' => $ends_at];
+            if ($type == 'immediately') {
+                $update['status'] = 'canceled';
+            }
+            $this->subscriptions_model->update($id, $update);
+
+            set_alert('success', _l('subscription_canceled'));
+        } catch (Exception $e) {
+            set_alert('danger', $e->getMessage());
+        }
+
+        redirect(site_url('clients/subscriptions'));
+    }
+
+    public function resume_subscription($id)
+    {
+        if (!is_primary_contact(get_contact_user_id())
+            || get_option('show_subscriptions_in_customers_area') != '1') {
+            redirect(site_url());
+        }
+
+        $this->load->model('subscriptions_model');
+        $this->load->library('stripe_subscriptions');
+        $subscription = $this->subscriptions_model->get_by_id($id, ['clientid' => get_client_user_id()]);
+
+        if (!$subscription) {
+            show_404();
+        }
+
+        try {
+            $this->stripe_subscriptions->resume($subscription->stripe_subscription_id, $subscription->stripe_plan_id);
+            $this->subscriptions_model->update($id, ['ends_at' => null]);
+            set_alert('success', _l('subscription_resumed'));
+        } catch (Exception $e) {
+            set_alert('danger', $e->getMessage());
+        }
+
+        redirect(site_url('clients/subscriptions'));
+    }
+
+    public function gdpr()
+    {
+        $this->load->model('gdpr_model');
+
+        if (is_gdpr()
+            && $this->input->post('removal_request')
+            && get_option('gdpr_contact_enable_right_to_be_forgotten') == '1') {
+            $success = $this->gdpr_model->add_removal_request([
+                'description'  => nl2br($this->input->post('removal_description')),
+                'request_from' => get_contact_full_name(get_contact_user_id()),
+                'contact_id'   => get_contact_user_id(),
+                'clientid'     => get_client_user_id(),
+            ]);
+            if ($success) {
+                send_gdpr_email_template('gdpr_removal_request_by_customer', get_contact_user_id());
+                set_alert('success', _l('data_removal_request_sent'));
+            }
+            redirect(site_url('clients/gdpr'));
+        }
+
+        $data['title'] = _l('gdpr');
+        $this->data($data);
+        $this->view('gdpr');
+        $this->layout();
+    }
+
+    public function change_language($lang = '')
+    {
+        if (is_language_disabled()) {
+            redirect(site_url());
+        }
+
+        set_contact_language($lang);
+
+        redirect(previous_url() ?: $_SERVER['HTTP_REFERER']);
+    }
+
+    public function export()
+    {
+        if (is_gdpr()
+            && get_option('gdpr_data_portability_contacts') == '0'
+            || !is_gdpr()) {
+            show_error('This page is currently disabled, check back later.');
+        }
+
+        $this->load->library('gdpr/gdpr_contact');
+        $this->gdpr_contact->export(get_contact_user_id());
+    }
+
+    /**
+     * Client home chart
+     * @return mixed
+     */
+    public function client_home_chart()
+    {
+        $statuses = [
+                1,
+                2,
+                4,
+                3,
+            ];
+        $months          = [];
+        $months_original = [];
+        for ($m = 1; $m <= 12; $m++) {
+            array_push($months, _l(date('F', mktime(0, 0, 0, $m, 1))));
+            array_push($months_original, date('F', mktime(0, 0, 0, $m, 1)));
+        }
+        $chart = [
+                'labels'   => $months,
+                'datasets' => [],
+            ];
+        foreach ($statuses as $status) {
+            $this->db->select('total as amount, date');
+            $this->db->from(db_prefix() . 'invoices');
+            $this->db->where('clientid', get_client_user_id());
+            $this->db->where('status', $status);
+            $by_currency = $this->input->post('report_currency');
+            if ($by_currency) {
+                $this->db->where('currency', $by_currency);
+            }
+            if ($this->input->post('year')) {
+                $this->db->where('YEAR(' . db_prefix() . 'invoices.date)', $this->input->post('year'));
+            }
+            $payments      = $this->db->get()->result_array();
+            $data          = [];
+            $data['temp']  = $months_original;
+            $data['total'] = [];
+            $i             = 0;
+            foreach ($months_original as $month) {
+                $data['temp'][$i] = [];
+                foreach ($payments as $payment) {
+                    $_month = date('F', strtotime($payment['date']));
+                    if ($_month == $month) {
+                        $data['temp'][$i][] = round($payment['amount'], get_decimal_places());
+                    }
+                }
+                $data['total'][] = round(array_sum($data['temp'][$i]), get_decimal_places());
+                $i++;
+            }
+
+            if ($status == 1) {
+                $borderColor = '#fc142b';
+            } elseif ($status == 2) {
+                $borderColor = '#84c529';
+            } elseif ($status == 4 || $status == 3) {
+                $borderColor = '#ff6f00';
+            }
+
+            $backgroundColor = 'rgba(' . implode(',', hex2rgb($borderColor)) . ',0.3)';
+
+            array_push($chart['datasets'], [
+                    'label'           => format_invoice_status($status, '', false, true),
+                    'backgroundColor' => $backgroundColor,
+                    'borderColor'     => $borderColor,
+                    'borderWidth'     => 1,
+                    'tension'         => false,
+                    'data'            => $data['total'],
+                ]);
+        }
+        echo json_encode($chart);
+    }
+
+    public function contact_email_profile_unique($email)
+    {
+        return total_rows(db_prefix() . 'contacts', 'id !=' . get_contact_user_id() . ' AND email="' . get_instance()->db->escape_str($email) . '"') > 0 ? false : true;
     }
 }
-

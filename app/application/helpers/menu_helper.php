@@ -1,10 +1,115 @@
 <?php
 
 defined('BASEPATH') or exit('No direct script access allowed');
+if (!function_exists('app_has_branch_context')) {
+    /**
+     * Determine whether the current staff session is working inside a branch database.
+     * Branch logins set the branch cookie, while the main admin area leaves it empty.
+     */
+    function app_has_branch_context()
+    {
+        $CI = &get_instance();
+        $branch = isset($CI->input) ? (string) $CI->input->cookie('branch') : '';
+
+        if ($branch === '' && isset($_COOKIE['branch'])) {
+            $branch = (string) $_COOKIE['branch'];
+        }
+
+        return trim($branch) !== '';
+    }
+}
+
+if (!function_exists('app_is_admin_branch_context')) {
+    /**
+     * The admin branch uses the main database. Other branch logins store their
+     * database name in the branch cookie, so only an empty/main branch cookie
+     * should be treated as the admin branch.
+     */
+    function app_is_admin_branch_context()
+    {
+        $CI = &get_instance();
+        $branch = isset($CI->input) ? (string) $CI->input->cookie('branch') : '';
+
+        if ($branch === '' && isset($_COOKIE['branch'])) {
+            $branch = (string) $_COOKIE['branch'];
+        }
+
+        $branch = trim($branch);
+
+        return $branch === '' || $branch === 'u614622744_main_db';
+    }
+}
+
+
+if (!function_exists('app_staff_has_branch_menu_access')) {
+    /**
+     * Branch staff should see the same main sidebar as admins/managers.
+     */
+    function app_staff_has_branch_menu_access($staff_id = null)
+    {
+        $isCurrentStaff = empty($staff_id) || (string) $staff_id === (string) get_staff_user_id();
+
+        return is_admin($staff_id) || is_manager_staff($staff_id) || ($isCurrentStaff && is_staff_logged_in() && app_has_branch_context());
+    }
+}
+
+if (!function_exists('app_branch_staff_can')) {
+    /**
+     * Keep branch sidebar visibility and controller access checks in sync.
+     */
+    function app_branch_staff_can($can, $capability, $feature, $staff_id)
+    {
+        if ($feature === 'branch' && app_has_branch_context()) {
+            return false;
+        }
+        if ($feature === 'festival' && !app_is_admin_branch_context()) {
+            return false;
+        }
+        if ($can || !app_staff_has_branch_menu_access($staff_id)) {
+            return $can;
+        }
+
+        $allowedFeatures = [
+            'appointments',
+            'branch',
+            'currencies',
+            'customers',
+            'generalreport',
+            'items',
+            'invoices',
+            'leads',
+            'payment',
+            'paymentmodes',
+            'payments',
+            'reports',
+            'roles',
+            'settings',
+            'staff',
+            'taxes',
+        ];
+
+        $allowedCapabilities = [
+            'view',
+            'view_own',
+            'view-timesheets',
+            'create',
+            'edit',
+            'delete',
+            'view_all_templates',
+        ];
+
+        return in_array($feature, $allowedFeatures, true) && in_array($capability, $allowedCapabilities, true);
+    }
+}
+
+hooks()->add_filter('staff_can', 'app_branch_staff_can', 10, 4);
+
 
 function app_init_admin_sidebar_menu_items()
 {
     $CI = &get_instance();
+    $branchMenuAccess = app_staff_has_branch_menu_access();
+    $isDoctorStaff = function_exists('is_doctor_staff') && is_doctor_staff();
 
     $CI->app_menu->add_sidebar_menu_item('dashboard', [
         'name'     => _l('als_dashboard'),
@@ -14,55 +119,31 @@ function app_init_admin_sidebar_menu_items()
         'badge'    => [],
     ]);
 
- $CI->app_menu->add_sidebar_menu_item('appointly', [
-        'collapse' => true,
-        'name'     => 'Appointments',
-        'href'     => admin_url('appointly/appointments'),
-        'position' => 10,
-        'icon'     => 'fa-regular fa-calendar',
-        'badge'    => [],
-    ]);
-    
- if (!defined('APPOINTLY_MODULE_NAME')) {
-        $CI->app_menu->add_sidebar_menu_item('appointly', [
-            'collapse' => true,
-            'name'     => 'Appointments',
-            'href'     => admin_url('appointly/appointments'),
-            'position' => 10,
-            'icon'     => 'fa-regular fa-calendar',
-            'badge'    => [],
-        ]);
-
-        $CI->app_menu->add_sidebar_children_item('appointly', [
-            'slug'     => 'appointly-user-dashboard',
-            'name'     => 'All Appointments',
-            'href'     => admin_url('appointly/appointments'),
-            'position' => 5,
-            'icon'     => 'fa fa-th-list',
-            'badge'    => [],
-        ]);
-    }
-
-    $CI->app_menu->add_sidebar_menu_item('customers', [
-           'name'     => 'Patients',
+    if ($branchMenuAccess || (
+        staff_can('view',  'customers')
+        || (have_assigned_customers()
+            || (!have_assigned_customers() && staff_can('create',  'customers')))
+        )) {
+        $CI->app_menu->add_sidebar_menu_item('customers', [
+            'name'     => _l('als_clients'),
             'href'     => admin_url('clients'),
             'position' => 15,
             'icon'     => 'fa-regular fa-user',
             'badge'    => [],
         ]);
-
-         $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
+        $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
             'name'     => 'Patient Search',
             'href'     => admin_url('clients/branch_wise_patients'),
             'position' => 16,
             'icon'     => 'fa-solid fa-magnifying-glass',
             'badge'    => [],
         ]);
+    }
 
     $CI->app_menu->add_sidebar_menu_item('sales', [
         'collapse' => true,
-        'name'     => 'Payments',
-        'position' => 20,
+        'name'     => _l('payments'),
+        'position' => 25,
         'icon'     => 'fa-solid fa-receipt',
         'badge'    => [],
     ]);
@@ -91,22 +172,30 @@ function app_init_admin_sidebar_menu_items()
     //     ]);
     // }
 
-      $CI->app_menu->add_sidebar_children_item('sales', [
-        'slug'     => 'invoices',
-        'name'     => _l('invoices'),
-        'href'     => admin_url('invoices'),
-        'position' => 15,
-        'badge'    => [],
-    ]);
+    if ($branchMenuAccess || (staff_can('view',  'invoices') || staff_can('view_own',  'invoices'))
+        || (staff_has_assigned_invoices() && get_option('allow_staff_view_invoices_assigned') == 1)
+    ) {
+        $CI->app_menu->add_sidebar_children_item('sales', [
+            'slug'     => 'invoices',
+            'name'     => _l('invoices'),
+            'href'     => admin_url('invoices'),
+            'position' => 15,
+            'badge'    => [],
+        ]);
+    }
 
-    $CI->app_menu->add_sidebar_children_item('sales', [
-        'slug'     => 'payments',
-        'name'     => _l('payments'),
-        'href'     => admin_url('payments'),
-        'position' => 20,
-        'badge'    => [],
-    ]);
-
+    if ($branchMenuAccess || (
+        staff_can('view',  'payments') || staff_can('view_own',  'invoices')
+        || (get_option('allow_staff_view_invoices_assigned') == 1 && staff_has_assigned_invoices())
+    )) {
+        $CI->app_menu->add_sidebar_children_item('sales', [
+            'slug'     => 'payments',
+            'name'     => _l('payments'),
+            'href'     => admin_url('payments'),
+            'position' => 20,
+            'badge'    => [],
+        ]);
+    }
 
     // if (staff_can('view',  'credit_notes') || staff_can('view_own',  'credit_notes')) {
     //     $CI->app_menu->add_sidebar_children_item('sales', [
@@ -118,7 +207,7 @@ function app_init_admin_sidebar_menu_items()
     //     ]);
     // }
 
-    if (staff_can('view',  'items')) {
+    if ($branchMenuAccess || staff_can('view',  'items')) {
         $CI->app_menu->add_sidebar_children_item('sales', [
             'slug'     => 'items',
             'name'     => _l('items'),
@@ -297,7 +386,8 @@ function app_init_admin_sidebar_menu_items()
     //     ]);
     // }
 
-    $CI->app_menu->add_sidebar_menu_item('reports', [
+            if (!$isDoctorStaff && ($branchMenuAccess || staff_can('view-timesheets', 'reports') || staff_can('view', 'reports'))) {
+        $CI->app_menu->add_sidebar_menu_item('reports', [
             'collapse' => true,
             'name'     => _l('als_reports'),
             'href'     => admin_url('reports'),
@@ -305,7 +395,7 @@ function app_init_admin_sidebar_menu_items()
             'position' => 60,
             'badge'    => [],
         ]);
-    
+    }
 
     // if (staff_can('view-timesheets', 'reports')) {
     //     $CI->app_menu->add_sidebar_children_item('reports', [
@@ -317,13 +407,28 @@ function app_init_admin_sidebar_menu_items()
     //     ]);
     // }
 
-    $CI->app_menu->add_sidebar_children_item('reports', [
+    if (!$isDoctorStaff && ($branchMenuAccess || staff_can('view',  'reports'))) {
+        $CI->app_menu->add_sidebar_children_item('reports', [
             'slug'     => 'sales-reports',
             'name'     => _l('als_sales'),
             'href'     => admin_url('reports/sales'),
             'position' => 5,
             'badge'    => [],
         ]);
+        // $CI->app_menu->add_sidebar_children_item('reports', [
+        //     'slug'     => 'expenses-reports',
+        //     'name'     => _l('als_reports_expenses'),
+        //     'href'     => admin_url('reports/expenses'),
+        //     'position' => 10,
+        //     'badge'    => [],
+        // ]);
+        // $CI->app_menu->add_sidebar_children_item('reports', [
+        //     'slug'     => 'expenses-vs-income-reports',
+        //     'name'     => _l('als_expenses_vs_income'),
+        //     'href'     => admin_url('reports/expenses_vs_income'),
+        //     'position' => 15,
+        //     'badge'    => [],
+        // ]);
         $CI->app_menu->add_sidebar_children_item('reports', [
             'slug'     => 'leads-reports',
             'name'     => _l('als_reports_leads_submenu'),
@@ -331,22 +436,35 @@ function app_init_admin_sidebar_menu_items()
             'position' => 20,
             'badge'    => [],
         ]);
-        $CI->app_menu->add_sidebar_children_item('reports', [
-            'slug'     => 'reports-doctor-treatment',
-            'name'     => 'Doctor Treatment Report',
-            'href'     => admin_url('generalreport?repo_type=doctor_treatment'),
-            'position' => 99,
-            // 'icon'     => 'fa fa-user-md',
-        ]);
+        if (!empty($_COOKIE['branch'])) {
+             $CI->app_menu->add_sidebar_children_item('reports', [
+                'slug'     => 'reports-doctor-treatment',
+                'name'     => 'Doctor Treatment Report',
+                'href'     => admin_url('generalreport?repo_type=doctor_treatment'),
+                'position' => 99,
+                // 'icon'     => 'fa fa-user-md',
+            ]);
+        }
+        // $CI->app_menu->add_sidebar_children_item('reports', [
+        //     'slug'     => 'knowledge-base-reports',
+        //     'name'     => _l('als_kb_articles_submenu'),
+        //     'href'     => admin_url('reports/knowledge_base_articles'),
+        //     'position' => 30,
+        //     'badge'    => [],
+        // ]);
+    }
+
+    // Setup menu
+     if (!$isDoctorStaff && ($branchMenuAccess || staff_can('view',  'staff'))) {
         $CI->app_menu->add_setup_menu_item('staff', [
             'name'     => _l('als_staff'),
             'href'     => admin_url('staff'),
             'position' => 5,
             'badge'    => [],
         ]);
-           
+    }
 
-    if (is_admin()) {
+    if (!$isDoctorStaff && $branchMenuAccess) {
         $CI->app_menu->add_setup_menu_item('customers', [
             'collapse' => true,
             'name'     => _l('clients'),
@@ -541,7 +659,7 @@ function app_init_admin_sidebar_menu_items()
                   ]);*/
     }
 
-    if (staff_can('view',  'settings')) {
+    if (!$isDoctorStaff && ($branchMenuAccess || staff_can('view',  'settings'))) {
         $CI->app_menu->add_setup_menu_item('settings', [
             'href'     => admin_url('settings'),
             'name'     => _l('acs_settings'),
