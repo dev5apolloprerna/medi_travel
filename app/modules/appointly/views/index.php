@@ -94,7 +94,7 @@ $edit_appointment_id = ($this->session->userdata('from_view_id')) ? $this->sessi
                         <?php endif; ?>
 
                         <div class="_buttons">
-                            <?php if (staff_can('create', 'appointments') || staff_appointments_responsible()) { ?>
+                            <?php if (is_staff_logged_in() && (is_staff_member() || is_admin())) { ?>
                                 <div class="dropdown pull-left">
                                     <button class="btn btn-primary display-block " type="button"
                                             onClick="return false;"

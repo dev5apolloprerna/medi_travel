@@ -4,13 +4,22 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Clients extends AdminController
 {
+    /**
+     * Patients are now accessed by the logged-in staff/doctor account, not by a
+     * branch permission gate. Any authenticated staff member may open the
+     * patient screens; row-level assignment filters still apply inside the
+     * table/model where configured.
+     */
+    private function can_access_patient_screens()
+    {
+        return is_staff_logged_in() && (is_staff_member() || is_admin());
+    }
+
     /* List all clients */
     public function index()
     {
-        if (staff_cant('view', 'customers')) {
-            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
-                access_denied('customers');
-            }
+     if (!is_staff_logged_in() || (!is_staff_member() && !is_admin())) {
+            access_denied('customers');
         }
               
 
@@ -49,11 +58,8 @@ class Clients extends AdminController
 
     public function table()
     {
-        if (staff_cant('view', 'customers')) {
-            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
-                ajax_access_denied();
-            }
-           
+        if (!$this->can_access_patient_screens()) {
+            ajax_access_denied();
         }
 
        $_POST['order'][0]['column'] = 1;
@@ -70,13 +76,11 @@ class Clients extends AdminController
 
    public function branch_wise_patients()
     {
-        if (staff_cant('view', 'customers')) {
-            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
-                access_denied('customers');
-            }
+         if (!is_staff_logged_in() || (!is_staff_member() && !is_admin())) {
+            access_denied('customers');
         }
 
-        $data['title'] = 'Branch Wise Patient Search';
+        $data['title'] = 'Patient Search';
 
         $this->load->view('admin/clients/branch_wise_patients', $data);
     }
@@ -89,10 +93,8 @@ class Clients extends AdminController
 
      public function branch_wise_patients_table()
     {
-        if (staff_cant('view', 'customers')) {
-            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
-                ajax_access_denied();
-            }
+        if (!is_staff_logged_in() || (!is_staff_member() && !is_admin())) {
+            ajax_access_denied();
         }
 
         $draw   = (int) $this->input->post('draw');
@@ -155,6 +157,7 @@ class Clients extends AdminController
                 continue;
             }
 
+
             $dbName      = $branch['branch_db'];
             $branchLabel = isset($branch['branch_label']) ? $branch['branch_label'] : $dbName;
 
@@ -164,10 +167,15 @@ class Clients extends AdminController
                 . 'WHERE 1=1';
 
             $binds = [];
+            if (!is_admin()) {
+                $sql .= ' AND (c.addedfrom = ? OR c.userid IN (SELECT customer_id FROM `' . $dbName . '`.`' . db_prefix() . 'customer_admins` WHERE staff_id = ?))';
+                $binds[] = get_staff_user_id();
+                $binds[] = get_staff_user_id();
+            }
             if ($searchValue !== '') {
                 $sql .= ' AND (ct.uid LIKE ? OR c.phonenumber LIKE ? OR c.company LIKE ? OR ct.firstname LIKE ? OR ct.lastname LIKE ?)';
                 $like = '%' . $searchValue . '%';
-                $binds = [$like, $like, $like, $like, $like];
+                $binds = array_merge($binds, [$like, $like, $like, $like, $like]);
             }
 
             try {
@@ -361,8 +369,10 @@ class Clients extends AdminController
     public function client($id = '')
     {          
 
-        if (staff_cant('view', 'customers')) {
-            if ($id != '' && !is_customer_admin($id)) {
+        if (!is_admin() && $id != '') {
+            $client = $this->clients_model->get($id);
+            $addedFrom = $client && isset($client->addedfrom) ? (int) $client->addedfrom : 0;
+            if (!is_customer_admin($id) && $addedFrom !== (int) get_staff_user_id()) {
                 access_denied('customers');
             }
             
@@ -370,7 +380,7 @@ class Clients extends AdminController
 
         if ($this->input->post() && !$this->input->is_ajax_request()) {       
             if ($id == '') {
-                if (staff_cant('create', 'customers')) {
+                if (!is_staff_logged_in() || (!is_staff_member() && !is_admin())) {
                     access_denied('customers');
                 }
 
@@ -393,7 +403,7 @@ class Clients extends AdminController
                             
                         }
                         $id = $this->clients_model->add($data);
-                        if (staff_cant('view', 'customers')) {
+                        if (!is_admin()) {
                             $assign['customer_admins']   = [];
                             $assign['customer_admins'][] = get_staff_user_id();
                             $this->clients_model->assign_admins($assign, $id);

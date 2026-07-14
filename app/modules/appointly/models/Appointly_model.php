@@ -704,10 +704,8 @@ class Appointly_model extends App_Model
         $date = new DateTime();
         $today = $date->format('Y-m-d');
 
-        $staff_has_permissions = ! staff_can('view', 'appointments') || ! staff_can('view_own', 'appointments');
-
-        if ($staff_has_permissions) {
-            $this->db->where('id IN (SELECT appointment_id FROM ' . db_prefix() . 'appointly_attendees WHERE staff_id=' . get_staff_user_id() . ')');
+        if (!is_admin()) {
+            $this->db->where('(created_by=' . get_staff_user_id() . ' OR id IN (SELECT appointment_id FROM ' . db_prefix() . 'appointly_attendees WHERE staff_id=' . get_staff_user_id() . '))');
         }
 
         $this->db->where('date', $today);

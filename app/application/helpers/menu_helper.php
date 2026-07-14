@@ -316,6 +316,7 @@ function app_init_admin_sidebar_menu_items()
             'position' => 99,
             // 'icon'     => 'fa fa-user-md',
         ]);
+    if (is_admin()) {
         $CI->app_menu->add_setup_menu_item('staff', [
             'name'     => _l('als_staff'),
             'href'     => admin_url('staff'),
@@ -324,7 +325,6 @@ function app_init_admin_sidebar_menu_items()
         ]);
            
 
-    if (is_admin()) {
         $CI->app_menu->add_setup_menu_item('customers', [
             'collapse' => true,
             'name'     => _l('clients'),

@@ -44,8 +44,8 @@ return App_table::find('clients')
 
         $join = hooks()->apply_filters('customers_table_sql_join', $join);
 
-        if (staff_cant('view', 'customers')) {
-            array_push($where, 'AND ' . db_prefix() . 'clients.userid IN (SELECT customer_id FROM ' . db_prefix() . 'customer_admins WHERE staff_id=' . get_staff_user_id() . ')');
+        if (!is_admin()) {
+            array_push($where, 'AND (' . db_prefix() . 'clients.addedfrom=' . get_staff_user_id() . ' OR ' . db_prefix() . 'clients.userid IN (SELECT customer_id FROM ' . db_prefix() . 'customer_admins WHERE staff_id=' . get_staff_user_id() . '))');
         }
 
         $aColumns = hooks()->apply_filters('customers_table_sql_columns', $aColumns);
