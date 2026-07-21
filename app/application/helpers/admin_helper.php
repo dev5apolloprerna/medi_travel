@@ -81,6 +81,28 @@ function staff_cant($capability, $feature = null, $staff_id = '')
 }
 
 /**
+ * Branch manager/role-1 staff should be able to manage the Setup area.
+ *
+ * @param mixed $staff_id
+ * @return bool
+ */
+function staff_has_full_setup_access($staff_id = '')
+{
+    $staff_id = empty($staff_id) ? get_staff_user_id() : $staff_id;
+
+    if (!$staff_id) {
+        return false;
+    }
+
+    if (is_admin($staff_id)) {
+        return true;
+    }
+
+    $staff = get_staff($staff_id);
+
+    return $staff && (int) $staff->role === 1;
+}
+/**
  * @since  2.3.3
  * Helper function for checking staff capabilities, this function should be used instead of has_permission
  * Can be used e.q. staff_can('view', 'invoices');
@@ -117,6 +139,15 @@ function staff_can($capability, $feature = null, $staff_id = '')
      */
     if (is_admin($staff_id)) {
         return true;
+    }
+
+    if (staff_has_full_setup_access($staff_id)) {
+        $setupFeatures = ['staff', 'customers', 'leads', 'settings', 'roles'];
+        $setupCapabilities = ['view', 'create', 'edit', 'delete'];
+
+        if (in_array($feature, $setupFeatures) && in_array($capability, $setupCapabilities)) {
+            return hooks()->apply_filters('staff_can', true, $capability, $feature, $staff_id);
+        }
     }
 
     $CI = &get_instance();

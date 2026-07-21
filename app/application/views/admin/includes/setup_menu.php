@@ -15,13 +15,13 @@
                 continue;
             }
             $totalSetupMenuItems++; ?>
-        <li class="menu-item-<?php echo e($item['slug']); ?>">
-            <a href="<?php echo count($item['children']) > 0 ? '#' : $item['href']; ?>" aria-expanded="false">
+        <li class="menu-item-<?php echo e($item['slug']); ?><?php echo $hasChildren ? ' active' : ''; ?>">
+            <a href="<?php echo $hasChildren ? '#' : $item['href']; ?>" aria-expanded="<?php echo $hasChildren ? 'true' : 'false'; ?>">
                 <i class="<?php echo e($item['icon']); ?> menu-icon"></i>
                 <span class="menu-text">
                     <?php echo e(_l($item['name'], '', false)); ?>
                 </span>
-                <?php if (count($item['children']) > 0) { ?>
+                <?php if ($hasChildren) { ?>
                 <span class="fa arrow"></span>
                 <?php } ?>
                 <?php if (isset($item['badge'], $item['badge']['value']) && !empty($item['badge'])) {?>
@@ -33,8 +33,8 @@
                 </span>
                 <?php } ?>
             </a>
-            <?php if (count($item['children']) > 0) { ?>
-            <ul class="nav nav-second-level collapse" aria-expanded="false">
+            <?php if ($hasChildren) { ?>
+            <ul class="nav nav-second-level collapse in" aria-expanded="true">
                 <?php foreach ($item['children'] as $submenu) { ?>
                 <li class="sub-menu-item-<?php echo e($submenu['slug']); ?>"><a href="<?php echo e($submenu['href']); ?>">
                         <?php if (!empty($submenu['icon'])) { ?>

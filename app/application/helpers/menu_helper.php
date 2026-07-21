@@ -316,7 +316,9 @@ function app_init_admin_sidebar_menu_items()
             'position' => 99,
             // 'icon'     => 'fa fa-user-md',
         ]);
-    if (is_admin()) {
+    $showFullSetupMenu = staff_has_full_setup_access();
+
+    if ($showFullSetupMenu) {
         $CI->app_menu->add_setup_menu_item('staff', [
             'name'     => _l('als_staff'),
             'href'     => admin_url('staff'),
@@ -519,7 +521,7 @@ function app_init_admin_sidebar_menu_items()
                   ]);*/
     }
 
-    if (staff_can('view',  'settings')) {
+    if ($showFullSetupMenu || staff_can('view',  'settings')) {
         $CI->app_menu->add_setup_menu_item('settings', [
             'href'     => admin_url('settings'),
             'name'     => _l('acs_settings'),

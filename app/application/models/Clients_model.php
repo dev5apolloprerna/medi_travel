@@ -198,6 +198,12 @@ class Clients_model extends App_Model
         // $data['prefix'] = get_option('patient_prefix');
 
         $MAIN_DB = $this->load->database('default', TRUE);
+        // In the main branch `$this->db` already uses the default database. Do
+        // not mirror the inserts to the same database, otherwise every new
+        // patient (and their contact and medical history) is created twice.
+        $syncToMainDatabase = $MAIN_DB->database !== $this->db->database
+            || $MAIN_DB->hostname !== $this->db->hostname;
+
         $MAIN_DB->select('value');
         $MAIN_DB->where('name','next_patient_number');
         $uid = $MAIN_DB->get(db_prefix().'options')->row();
@@ -293,12 +299,15 @@ class Clients_model extends App_Model
             unset($data['contact_phonenumber']);
         }
         
-        $MAIN_DB->insert(db_prefix() . 'clients', array_merge($company_data, [
-            'datecreated' => date('Y-m-d H:i:s'),
-            'addedfrom'   => is_staff_logged_in() ? get_staff_user_id() : 0,
-        ]));
-
-        $clientMain_id = $MAIN_DB->insert_id();
+        $clientMain_id = null;
+        if ($syncToMainDatabase) {
+            $MAIN_DB->insert(db_prefix() . 'clients', array_merge($company_data, [
+                'datecreated' => date('Y-m-d H:i:s'),
+                'addedfrom'   => is_staff_logged_in() ? get_staff_user_id() : 0,
+            ]));
+        
+            $clientMain_id = $MAIN_DB->insert_id();
+        }
         
 
         $this->db->insert(db_prefix() . 'clients', array_merge($company_data, [
@@ -310,10 +319,12 @@ class Clients_model extends App_Model
                 
         if ($withContact == false) {
 
-            $MAIN_DB->insert(db_prefix() . 'contacts', array_merge($contact_data, [
-                'datecreated' => date('Y-m-d H:i:s'), 
-                'userid'  => $clientMain_id,
-            ]));
+            if ($syncToMainDatabase) {
+                $MAIN_DB->insert(db_prefix() . 'contacts', array_merge($contact_data, [
+                    'datecreated' => date('Y-m-d H:i:s'),
+                    'userid'      => $clientMain_id,
+                ]));
+            }
 
 
             $this->db->insert(db_prefix() . 'contacts', array_merge($contact_data, [
@@ -377,10 +388,12 @@ class Clients_model extends App_Model
             $medical_history['treatment_plan'] = '';
         }
 
-        $MAIN_DB->insert(db_prefix() . 'medical_history', array_merge($medical_history, [
-            'userid' => $clientMain_id,
-            'datecreated' => date('Y-m-d H:i:s'),
-        ]));
+         if ($syncToMainDatabase) {
+            $MAIN_DB->insert(db_prefix() . 'medical_history', array_merge($medical_history, [
+                'userid'      => $clientMain_id,
+                'datecreated' => date('Y-m-d H:i:s'),
+            ]));
+        }
         
         $this->db->insert(db_prefix() . 'medical_history', array_merge($medical_history, [
             'userid' => $client_id,

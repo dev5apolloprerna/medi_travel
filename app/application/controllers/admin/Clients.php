@@ -167,7 +167,7 @@ class Clients extends AdminController
                 . 'WHERE 1=1';
 
             $binds = [];
-            if (!is_admin()) {
+        if (!staff_has_full_setup_access()) {
                 $sql .= ' AND (c.addedfrom = ? OR c.userid IN (SELECT customer_id FROM `' . $dbName . '`.`' . db_prefix() . 'customer_admins` WHERE staff_id = ?))';
                 $binds[] = get_staff_user_id();
                 $binds[] = get_staff_user_id();
@@ -1198,7 +1198,7 @@ class Clients extends AdminController
 
     public function group()
     {
-        if (!is_admin() && get_option('staff_members_create_inline_customer_groups') == '0') {
+        if (!staff_has_full_setup_access() && get_option('staff_members_create_inline_customer_groups') == '0') {
             access_denied('Customer Groups');
         }
 
@@ -1231,7 +1231,7 @@ class Clients extends AdminController
 
     public function delete_group($id)
     {
-        if (!is_admin()) {
+        if (!staff_has_full_setup_access()) {
             access_denied('Delete Customer Group');
         }
         if (!$id) {
