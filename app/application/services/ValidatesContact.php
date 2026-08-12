@@ -9,8 +9,12 @@ trait ValidatesContact
     protected function validateContact()
     {
         if (!is_client_logged_in()) {
+            if (is_staff_logged_in()) {
+                redirect(admin_url());
+            }
+
             redirect_after_login_to_current_url();
-            redirect(site_url('authentication/login'));
+            redirect(admin_url('authentication'));
         }
 
         if (is_client_logged_in() && !is_contact_email_verified()) {
