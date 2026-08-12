@@ -484,7 +484,7 @@ a.logo.img-responsive.\!tw-mt-0 img {
     /*width: 75px;
     height: auto !important;*/
         width: 100%;
-    height: 130px;
+    height: 100px;
     margin-left: 12px;
     margin-top: 10px;
 }
@@ -797,12 +797,12 @@ textarea[name=checklist-description] {
 }
 
 .login_admin {
-    background-image: url(https://oshreejidental.com/app/assets/images/login-bg.jpg) !important;
+    background-image: url(https://crm.meditravelsolution.in/app/assets/images/login-bg.jpg) !important;
     background-size: 100% auto !important;
 }
 
 .forgot-password{
-    background-image: url(https://oshreejidental.com/app/assets/images/login-bg.jpg) !important;
+    background-image: url(https://crm.meditravelsolution.in/app/assets/images/login-bg.jpg) !important;
     background-size: 100% auto !important;
 }
 

@@ -38,8 +38,18 @@
 
                         <?php if (staff_can('view',  'customers') || have_assigned_customers()) {
                       $where_summary = '';
-                      if (staff_cant('view', 'customers')) {
-                          $where_summary = ' AND userid IN (SELECT customer_id FROM ' . db_prefix() . 'customer_admins WHERE staff_id=' . get_staff_user_id() . ')';
+                        $where_contacts_summary = '';
+                      // Keep the summary in sync with the row-level scope used by
+                      // the patients table. Non-admin staff can only see patients
+                      // they created or patients explicitly assigned to them.
+                      if (!is_admin()) {
+                          $where_summary = ' AND (addedfrom=' . get_staff_user_id()
+                              . ' OR userid IN (SELECT customer_id FROM ' . db_prefix()
+                              . 'customer_admins WHERE staff_id=' . get_staff_user_id() . '))';
+                          $where_contacts_summary = ' AND userid IN (SELECT userid FROM ' . db_prefix()
+                              . 'clients WHERE addedfrom=' . get_staff_user_id()
+                              . ' OR userid IN (SELECT customer_id FROM ' . db_prefix()
+                              . 'customer_admins WHERE staff_id=' . get_staff_user_id() . '))';
                       } ?>
                         <div class="mbot15">
                             <h4 class="tw-mt-0 tw-font-semibold tw-text-lg tw-flex tw-items-center">
@@ -80,7 +90,7 @@
                                 <div
                                     class="md:tw-border-r md:tw-border-solid md:tw-border-neutral-300 tw-flex-1 tw-flex tw-items-center">
                                     <span class="tw-font-semibold tw-mr-3 rtl:tw-ml-3 tw-text-lg">
-                                        <?php echo total_rows(db_prefix() . 'contacts', 'active=1' . $where_summary); ?>
+                                        <?php echo total_rows(db_prefix() . 'contacts', 'active=1' . $where_contacts_summary); ?>
                                     </span>
                                     <span
                                         class="text-info tw-truncate sm:tw-text-clip"><?php echo _l('customers_summary_active'); ?></span>
@@ -88,7 +98,7 @@
                                 <div
                                     class="md:tw-border-r md:tw-border-solid md:tw-border-neutral-300 tw-flex-1 tw-flex tw-items-center">
                                     <span class="tw-font-semibold tw-mr-3 rtl:tw-ml-3 tw-text-lg">
-                                        <?php echo total_rows(db_prefix() . 'contacts', 'active=0' . $where_summary); ?>
+                                        <?php echo total_rows(db_prefix() . 'contacts', 'active=0' . $where_contacts_summary); ?>
                                     </span>
                                     <span
                                         class="text-danger tw-truncate sm:tw-text-clip"><?php echo _l('customers_summary_inactive'); ?></span>
@@ -96,7 +106,7 @@
                                 <div
                                     class="tw-flex tw-items-center md:tw-border-r md:tw-border-solid tw-flex-1 md:tw-border-neutral-300 lg:tw-border-r-0">
                                     <span class="tw-font-semibold tw-mr-3 rtl:tw-ml-3 tw-text-lg">
-                                        <?php echo total_rows(db_prefix() . 'contacts', 'last_login LIKE "' . date('Y-m-d') . '%"' . $where_summary); ?>
+                                        <?php echo total_rows(db_prefix() . 'contacts', 'last_login LIKE "' . date('Y-m-d') . '%"' . $where_contacts_summary); ?>
                                     </span>
                                     <span class="text-muted tw-truncate" data-toggle="tooltip"
                                         data-title="<?php echo _l('customers_summary_logged_in_today'); ?>">
