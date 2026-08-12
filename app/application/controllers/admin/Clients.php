@@ -369,7 +369,7 @@ class Clients extends AdminController
     public function client($id = '')
     {          
 
-        if (!is_admin() && $id != '') {
+        if (staff_cant('view', 'customers') && $id != '') {
             $client = $this->clients_model->get($id);
             $addedFrom = $client && isset($client->addedfrom) ? (int) $client->addedfrom : 0;
             if (!is_customer_admin($id) && $addedFrom !== (int) get_staff_user_id()) {
@@ -1464,4 +1464,3 @@ class Clients extends AdminController
         echo json_encode($viewData);
     }
 }
-
