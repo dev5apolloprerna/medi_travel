@@ -44,22 +44,14 @@ class Appointments extends AdminController
 
         $appointment_id = $this->input->get('appointment_id');
         $data['appointment'] = fetch_appointment_data($appointment_id);
-        $attendees = $this->atm->attendees($appointment_id);
+
         /**
          * If user is assigned to a appointment but have no permissions at all eg. edit or view
          * User will be able to open the url send to mail (But only to view this specific meeting or meetings that the user is assigned to)
          */
 
-        if (!in_array(get_staff_user_id(), $attendees)) {
-            // Global view permissions required
-            $createdBy = isset($data['appointment']['created_by']) ? (int) $data['appointment']['created_by'] : 0;
-            if (
-                $createdBy !== (int) get_staff_user_id()
-                && !staff_appointments_responsible()
-                && !staff_can('view', 'appointments')
-            ) {
-                access_denied('Appointments');
-            }
+        if (!appointly_staff_can_access_appointment($appointment_id)) {
+            access_denied('Appointments');
         }
 
 
