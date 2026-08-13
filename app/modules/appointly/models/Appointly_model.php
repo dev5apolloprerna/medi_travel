@@ -704,8 +704,8 @@ class Appointly_model extends App_Model
         $date = new DateTime();
         $today = $date->format('Y-m-d');
 
-        if (!is_admin()) {
-            $this->db->where('(created_by=' . get_staff_user_id() . ' OR id IN (SELECT appointment_id FROM ' . db_prefix() . 'appointly_attendees WHERE staff_id=' . get_staff_user_id() . '))');
+         if (!is_admin() && !staff_can('view', 'appointments') && !staff_appointments_responsible()) {
+            $this->db->where(appointly_staff_appointment_where());
         }
 
         $this->db->where('date', $today);
@@ -802,8 +802,8 @@ class Appointly_model extends App_Model
 
 
         if ( ! is_client_logged_in()) {
-            if ( ! staff_appointments_responsible()) {
-                $this->db->where('id IN (SELECT appointment_id FROM ' . db_prefix() . 'appointly_attendees WHERE staff_id=' . get_staff_user_id() . ')');
+         if ( ! is_admin() && ! staff_can('view', 'appointments') && ! staff_appointments_responsible()) {
+                $this->db->where(appointly_staff_appointment_where());
             }
         } else {
             $this->db->where('id IN (SELECT appointment_id FROM ' . db_prefix() . 'appointly_attendees WHERE contact_id=' . get_contact_user_id() . ')');

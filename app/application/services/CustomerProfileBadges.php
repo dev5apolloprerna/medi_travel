@@ -230,6 +230,9 @@ class CustomerProfileBadges
 
     public function tasks()
     {
+
+        $canViewAllTasks = !staff_cant('view', 'tasks');
+
         $where = '(';
         $where .= '(rel_id IN (SELECT id FROM ' . db_prefix() . 'invoices WHERE clientid=' . $this->customerId . ') AND rel_type="invoice")';
         $where .= ' OR (rel_id IN (SELECT id FROM ' . db_prefix() . 'estimates WHERE clientid=' . $this->customerId . ') AND rel_type="estimate")';
@@ -244,7 +247,7 @@ class CustomerProfileBadges
         $this->CI->db->where($where);
         $this->CI->db->where('datefinished is NULL');
 
-        if (staff_cant('view', 'tasks')) {
+        if (!$canViewAllTasks) {
             $this->CI->db->where(get_tasks_where_string(false));
         }
 

@@ -38,6 +38,7 @@
 
                         <?php if (staff_can('view',  'customers') || have_assigned_customers()) {
                       $where_summary = '';
+
                         $where_contacts_summary = '';
                       // Keep the summary in sync with the row-level scope used by
                       // the patients table. Non-admin staff can only see patients
@@ -50,8 +51,7 @@
                               . 'clients WHERE addedfrom=' . get_staff_user_id()
                               . ' OR userid IN (SELECT customer_id FROM ' . db_prefix()
                               . 'customer_admins WHERE staff_id=' . get_staff_user_id() . '))';
-                      } ?>
-                        <div class="mbot15">
+                      } ?>                        <div class="mbot15">
                             <h4 class="tw-mt-0 tw-font-semibold tw-text-lg tw-flex tw-items-center">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                                     stroke-width="1.5" stroke="currentColor"
