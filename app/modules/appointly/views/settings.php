@@ -2,7 +2,6 @@
 $appointly_show_clients_schedule_button = get_option('appointly_show_clients_schedule_button');
 $appointly_tab_on_clients_page = get_option('appointly_tab_on_clients_page');
 $appointly_show_summary = get_option('appointly_show_summary');
-$canManageAppointmentSettings = staff_has_full_setup_access();
 ?>
 <div class="horizontal-scrollable-tabs">
     <div class="horizontal-tabs">
@@ -18,9 +17,9 @@ $canManageAppointmentSettings = staff_has_full_setup_access();
 </div>
 <div class="tab-content">
     <div role="tabpanel" class="tab-pane active" id="general">
-        <!-- Only shown for users with full Setup access -->
-        <?php if ($canManageAppointmentSettings) {
-            
+        <!-- Only shown for system admins -->
+        <?php if (is_admin()) {
+
             $google_client_id = get_option('google_client_id');
             $appointly_outlook_client_id = get_option('appointly_outlook_client_id');
             $appointly_google_client_secret = get_option('appointly_google_client_secret');
@@ -295,7 +294,7 @@ $canManageAppointmentSettings = staff_has_full_setup_access();
             <span class="label label-info"><strong><?= get_appointly_version(); ?></strong></span>
         </div>
     </div>
-    <?php if ($canManageAppointmentSettings) { ?>
+    <?php if (is_admin()) { ?>
     <div role="tabpanel" class="tab-pane" id="form">
         <div class="form-group mtop10">
             <label for="callbacks_mode_enabled" class="control-label clearfix">

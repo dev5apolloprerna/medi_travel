@@ -14,14 +14,14 @@ class Settings extends AdminController
     /* View all settings */
     public function index()
     {
-        if (!staff_has_full_setup_access() && staff_cant('view', 'settings')) {
+        if (staff_cant('view', 'settings')) {
             access_denied('settings');
         }
 
         $tab = $this->input->get('group');
 
         if ($this->input->post()) {
-            if (!staff_has_full_setup_access() && staff_cant('edit', 'settings')) {
+            if (staff_cant('edit', 'settings')) {
                 access_denied('settings');
             }
             $logo_uploaded     = (handle_company_logo_upload() ? true : false);
@@ -87,7 +87,7 @@ class Settings extends AdminController
 
         $data['admin_tabs'] = ['update', 'info'];
 
-        if (!$tab || (in_array($tab, $data['admin_tabs']) && !staff_has_full_setup_access())) {
+        if (!$tab || (in_array($tab, $data['admin_tabs']) && !is_admin())) {
             $tab = 'general';
         }
 

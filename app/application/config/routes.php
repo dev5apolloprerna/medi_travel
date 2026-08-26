@@ -51,7 +51,7 @@ defined('BASEPATH') or exit('No direct script access allowed');
 |       my-controller/my-method -> my_controller/my_method
 */
 
-$route['default_controller']   = 'admin/authentication';
+$route['default_controller']   = 'clients';
 $route['404_override']         = '';
 $route['translate_uri_dashes'] = false;
 
@@ -194,3 +194,5 @@ $route['admin/nabh/view/(:num)'] = 'admin/nabh/view_pdf/$1';
 $route['admin/nabh/view-html/(:num)'] = 'admin/nabh/view_html/$1';
 $route['admin/nabh/all-forms-json'] = 'admin/nabh/all_forms_json';
 $route['admin/nabh/patient-history-pdf/(:num)'] = 'admin/nabh/patient_history_pdf/$1';
+
+

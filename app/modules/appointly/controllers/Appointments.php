@@ -8,7 +8,8 @@ class Appointments extends AdminController
     {
         parent::__construct();
 
-        $this->staff_no_view_permissions = !is_staff_logged_in() || (!is_staff_member() && !is_admin());
+        $this->staff_no_view_permissions = !staff_can('view', 'appointments') && !staff_can('view_own', 'appointments');
+
         $this->load->model('appointly_model', 'apm');
         $this->load->model('appointly/Appointly_model', 'appointly_model');
 
@@ -43,18 +44,21 @@ class Appointments extends AdminController
         $this->session->unset_userdata('from_view_id');
 
         $appointment_id = $this->input->get('appointment_id');
-        $data['appointment'] = fetch_appointment_data($appointment_id);
 
+        $attendees = $this->atm->attendees($appointment_id);
         /**
          * If user is assigned to a appointment but have no permissions at all eg. edit or view
          * User will be able to open the url send to mail (But only to view this specific meeting or meetings that the user is assigned to)
          */
 
-        if (!appointly_staff_can_access_appointment($appointment_id)) {
-            access_denied('Appointments');
+        if (!in_array(get_staff_user_id(), $attendees)) {
+            // Global view permissions required
+            if (!staff_can('view', 'appointments')) {
+                access_denied('Appointments');
+            }
         }
 
-
+        $data['appointment'] = fetch_appointment_data($appointment_id);
 
         
         if ($data['appointment']) {
@@ -244,7 +248,7 @@ class Appointments extends AdminController
      */
     public function create()
     {
-        if ($this->staff_no_view_permissions) {
+        if (!staff_can('create', 'appointments') && !staff_appointments_responsible()) {
             access_denied();
         }
 
@@ -267,7 +271,7 @@ class Appointments extends AdminController
      */
     public function create_internal_crm()
     {
-        if ($this->staff_no_view_permissions) {
+        if (!staff_can('create', 'appointments') && !staff_appointments_responsible()) {
             access_denied();
         }
 
@@ -539,7 +543,7 @@ class Appointments extends AdminController
      */
     public function new_appointment_type()
     {
-        if ($this->staff_no_view_permissions) {
+        if (!staff_appointments_responsible() && !staff_can('create', 'appointments')) {
             access_denied();
         }
 

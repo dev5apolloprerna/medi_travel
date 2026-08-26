@@ -633,8 +633,10 @@ if ( ! function_exists('get_appointments_summary')) {
     {
         $CI = &get_instance();
 
-        if ( ! is_admin() && ! staff_can('view', 'appointments') && ! staff_appointments_responsible()) {
-            $CI->db->where(appointly_staff_appointment_where(null, db_prefix() . 'appointly_appointments'));
+        if ( ! is_admin() && ! staff_appointments_responsible()) {
+            $CI->db->where('('.db_prefix().'appointly_appointments.created_by='.get_staff_user_id().')
+        OR '.db_prefix().'appointly_appointments.id
+        IN (SELECT appointment_id FROM '.db_prefix().'appointly_attendees WHERE staff_id='.get_staff_user_id().')');
         }
 
         $appointments = $CI->db->get(db_prefix().'appointly_appointments')->result_array();
@@ -688,42 +690,6 @@ if ( ! function_exists('get_appointments_summary')) {
         }
 
         return $data;
-    }
-}
-
-/**
- * Build the appointment visibility condition for a staff member.
- *
- * Appointments can be assigned through the core attendees table or through the
- * treatment/assignment workflow used by the patient profile. Keep all of those
- * assignment sources in sync wherever an appointment list is filtered.
- */
-if ( ! function_exists('appointly_staff_appointment_where')) {
-    function appointly_staff_appointment_where($staffId = null, $table = null)
-    {
-        $staffId = (int) ($staffId ?: get_staff_user_id());
-        $column  = ($table ? $table . '.' : '') . 'id';
-        $creator = ($table ? $table . '.' : '') . 'created_by';
-
-        return '(' . $creator . '=' . $staffId
-            . ' OR ' . $column . ' IN (SELECT appointment_id FROM ' . db_prefix() . 'appointly_attendees WHERE staff_id=' . $staffId . ')'
-            . ' OR ' . $column . ' IN (SELECT appointment_id FROM ' . db_prefix() . 'appointment_assign_log WHERE staff_id=' . $staffId . ')'
-            . ' OR ' . $column . ' IN (SELECT appointment_id FROM ' . db_prefix() . 'appointment_treatment WHERE staff=' . $staffId . '))';
-    }
-}
-
-if ( ! function_exists('appointly_staff_can_access_appointment')) {
-    function appointly_staff_can_access_appointment($appointmentId, $staffId = null)
-    {
-        if (is_admin() || staff_can('view', 'appointments') || staff_appointments_responsible()) {
-            return true;
-        }
-
-        $CI = &get_instance();
-        $CI->db->where('id', (int) $appointmentId);
-        $CI->db->where(appointly_staff_appointment_where($staffId));
-
-        return $CI->db->count_all_results(db_prefix() . 'appointly_appointments') > 0;
     }
 }
 

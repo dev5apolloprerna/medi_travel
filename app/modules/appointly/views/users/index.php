@@ -33,7 +33,7 @@
                     <div class="row">
                         <div class="col-md-12">
 
-                            <?php if (is_staff_logged_in() && (is_staff_member() || is_admin())) { ?>
+                            <?php if (staff_can('create', 'appointments') || staff_appointments_responsible()) { ?>
                                 <button type="button" class="btn btn-primary pull-right" onclick="openTypeModal()">
                                     <?= _l('appointments_type_add'); ?>
                                 </button>
@@ -69,7 +69,7 @@
                                                             <i class="fa fa-pencil"></i>
                                                         </button>
 
-                                                        <?php if (is_staff_logged_in() && (is_staff_member() || is_admin())) : ?>
+                                                        <?php if (staff_can('delete', 'appointments') || staff_appointments_responsible()) : ?>
                                                             <button type="button" class="btn btn-danger btn-sm" onclick="deleteType(<?= (int)$row['id']; ?>)">
                                                                 <i class="fa fa-trash"></i>
                                                             </button>

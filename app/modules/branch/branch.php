@@ -268,7 +268,6 @@ register_language_files(BRANCH_MODULE_NAME, [BRANCH_MODULE_NAME]);
 */
 function branch_module_init_menu_items()
 {
-        return;
     $CI = &get_instance();
 
     $CI->db->where('module_name', BRANCH_MODULE_NAME);

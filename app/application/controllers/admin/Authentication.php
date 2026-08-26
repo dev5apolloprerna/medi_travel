@@ -21,6 +21,8 @@ class Authentication extends App_Controller
         $this->form_validation->set_message('matches', _l('form_validation_matches'));
 
         hooks()->do_action('admin_auth_init');
+        $this->load->helper('branch');
+        $this->load->model('branch_model');
     }
 
     public function index()
@@ -33,7 +35,7 @@ class Authentication extends App_Controller
         if (is_staff_logged_in()) {
             redirect(admin_url());
         }
-        $this->clear_branch_context();
+        setcookie('branch', '', time() + (86400 * 30), "/"); // 86400 = 
 
         $this->form_validation->set_rules('password', _l('admin_auth_login_password'), 'required');
         $this->form_validation->set_rules('email', _l('admin_auth_login_email'), 'trim|required|valid_email');
@@ -42,9 +44,15 @@ class Authentication extends App_Controller
         }
         if ($this->input->post()) {
 
+            if(isset($_POST['branch']) && !empty($_POST['branch'])){
+                   
+                $branch = $_POST['branch'];   
+                $branch1 = $this->Authentication_model->check_staff_admin($branch,$_POST['email']);
+                $this->session->set_userdata('branch',$branch1->branch_db);
+            }
+
             if ($this->form_validation->run() !== false) {
                 $email    = $this->input->post('email');
-
                 $password = $this->input->post('password', false);
                 $remember = $this->input->post('remember');
                 $data = $this->Authentication_model->login($email, $password, $remember, true);
@@ -74,6 +82,27 @@ class Authentication extends App_Controller
                     set_alert('danger', _l('admin_auth_invalid_email_or_password'));
                     redirect(admin_url('authentication'));
                 }
+
+
+                
+                // if(isset($_POST['branch']) && !empty($_POST['branch'])){
+                   
+                //     $branch = $_POST['branch'];
+                    
+                //     $branch1 = $this->Authentication_model->check_staff_admin($branch,get_staff_user_id());
+
+
+                //     if(empty($branch1)){
+                //         set_alert('danger', _l('Invalid Branch'));
+                //         redirect(admin_url('authentication'));
+                //     }else{
+
+                       
+                //        $this->session->set_userdata('branch',$branch1->branch_db);
+                //     }
+                // }
+              
+               
                 $this->load->model('announcements_model');
                 $this->announcements_model->set_announcements_as_read_except_last_one(get_staff_user_id(), true);
                 
@@ -86,13 +115,99 @@ class Authentication extends App_Controller
         }
         $data['title'] = _l('admin_auth_login_heading');
         $data['login_class'] = 'admin-login';
-        $this->load->view('authentication/login_admin', $data);
+        //$this->load->view('authentication/login_admin', $data);
+        $this->load->view('authentication/select_branch', $data);
     }
 
+    public function redirect_login(){
+
+        if($this->input->get()){
+
+
+            if(isset($_GET['branch']) && !empty($_GET['branch'])){
+                   
+                $branch = $_GET['branch'];   
+                $branch1 = $this->Authentication_model->check_staff_admin($branch,$_GET['email']);
+
+                $cookie_name = "branch";
+                $cookie_value = $branch1->branch_db;
+                setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/"); // 86400 = 1 day
+                
+            }
+            redirect(admin_url('authentication/admin_login'));
+        }
+    }
 
     public function admin_login()
     {
-                $this->admin();
+        if (is_staff_logged_in()) {
+            redirect(admin_url());
+        }
+
+        $this->form_validation->set_rules('password', _l('admin_auth_login_password'), 'required');
+        $this->form_validation->set_rules('email', _l('admin_auth_login_email'), 'trim|required|valid_email');
+        if (show_recaptcha()) {
+            $this->form_validation->set_rules('g-recaptcha-response', 'Captcha', 'callback_recaptcha');
+        }
+        if ($this->input->post()) {
+
+            // if(isset($_POST['branch']) && !empty($_POST['branch'])){
+                   
+            //     $branch = $_POST['branch'];   
+            //     $branch1 = $this->Authentication_model->check_staff_admin($branch,$_POST['email']);
+            //     $this->session->set_userdata('branch',$branch1->branch_db);
+            // }
+
+            if ($this->form_validation->run() !== false) {
+                $email    = $this->input->post('email');
+                $password = $this->input->post('password', false);
+                $remember = $this->input->post('remember');
+                $data = $this->Authentication_model->login($email, $password, $remember, true);
+
+                if (is_array($data) && isset($data['memberinactive'])) {
+                    set_alert('danger', _l('admin_auth_inactive_account'));
+                    redirect(admin_url('authentication'));
+                } elseif (is_array($data) && isset($data['two_factor_auth'])) {
+                    $this->session->set_userdata('_two_factor_auth_established', true);
+                    if ($data['user']->two_factor_auth_enabled == 1) {
+                        $this->Authentication_model->set_two_factor_auth_code($data['user']->staffid);
+                        $sent = send_mail_template('staff_two_factor_auth_key', $data['user']);
+
+                        if (!$sent) {
+                            set_alert('danger', _l('two_factor_auth_failed_to_send_code'));
+                            redirect(admin_url('authentication'));
+                        } else {
+                            $this->session->set_userdata('_two_factor_auth_staff_email', $email);
+                            set_alert('success', _l('two_factor_auth_code_sent_successfully', $email));
+                            redirect(admin_url('authentication/two_factor'));
+                        }
+                    } else {
+                        set_alert('success', _l('enter_two_factor_auth_code_from_mobile'));
+                        redirect(admin_url('authentication/two_factor/app'));
+                    }
+                } elseif ($data == false) {
+                    set_alert('danger', _l('admin_auth_invalid_email_or_password'));
+                    redirect(admin_url('authentication'));
+                }
+
+
+                
+              
+              
+               
+                $this->load->model('announcements_model');
+                $this->announcements_model->set_announcements_as_read_except_last_one(get_staff_user_id(), true);
+                
+                // is logged in
+                maybe_redirect_to_previous_url();
+
+                hooks()->do_action('after_staff_login');
+                redirect(admin_url());
+            }
+        }
+        $data['login_class'] = 'admin-login';
+        $data['title'] = _l('admin_auth_login_heading');
+        $this->load->view('authentication/login_admin', $data);
     }
 
     public function two_factor($type = 'email')
@@ -236,22 +351,14 @@ class Authentication extends App_Controller
     public function logout()
     {
         $this->Authentication_model->logout();
-        $this->clear_branch_context();
+        $cookie_name = "branch";
+        $cookie_value = '';
+        setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/"); // 86400 = 1 day
+        $this->session->set_userdata('branch','');
+
         hooks()->do_action('after_user_logout');
         redirect(admin_url('authentication'));
     }
-
-    
-
-    /**
-     */
-    private function clear_branch_context()
-    {
-        setcookie('branch', '', time() - 3600, '/');
-        unset($_COOKIE['branch']);
-        $this->session->unset_userdata('branch');
-    }
-
 
     public function email_exists($email)
     {
