@@ -29,17 +29,17 @@ if ($this->ci->input->post('custom_view')) {
 }
 
 
-$staff_should_see_only_assigned = !is_admin() && !is_staff_callbacks_responsible();
+$staff_not_has_permissions = !staff_can('view', 'appointments') || !staff_can('view_own', 'appointments');
 
 $join = [];
 
-if ($staff_should_see_only_assigned) {
+if ($staff_not_has_permissions && !is_staff_callbacks_responsible()) {
      array_push(
           $where,
           'AND ' . db_prefix() . 'appointly_callbacks.id IN (SELECT callbackid 
      FROM ' . db_prefix() . 'appointly_callbacks_assignees 
      WHERE ' . db_prefix() . 'appointly_callbacks_assignees.callbackid = ' . db_prefix() . 'appointly_callbacks.id 
-     AND ' . db_prefix() . 'appointly_callbacks_assignees.user_id = ' . get_staff_user_id() . ')'
+     AND ' . db_prefix() . 'appointly_callbacks_assignees.user_id = ' . db_prefix() . 'staff.staffid)'
      );
 
      $join = [
@@ -71,7 +71,7 @@ foreach ($rResult as $aRow) {
 
      $row[] = '<a class="callbacks_phone" href="tel:' . $aRow['phone'] . '">' . $aRow['phone'] . '</a>';
 
-     if (is_staff_logged_in() && (is_staff_member() || is_admin())) {
+     if (staff_can('edit', 'appointments') || staff_can('create', 'appointments') || is_staff_callbacks_responsible()) {
           $outputStatus = '<div class="dropdown inline-block mleft5">';
           $outputStatus .= '<a href="#" style="font-size:14px;vertical-align:middle;" class="dropdown-toggle text-dark" id="tableCallbackStatus-' . $aRow['id'] . '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">';
           $outputStatus .= '<span data-toggle="tooltip" title="' . _l('ticket_single_change_status') . '"><span class="label label-callback-status-' . $aRow['status'] . '">' . fetchCallbackStatusName($aRow['status']) . '</span></span>';
@@ -112,7 +112,7 @@ foreach ($rResult as $aRow) {
      $row[] = format_members_by_ids_and_names($aRow['assignees_ids'], $aRow['assignees']);
 
 
-     if (is_staff_logged_in() && (is_staff_member() || is_admin())) {
+     if (staff_can('view', 'appointments') || staff_can('view_own', 'appointments') || is_staff_callbacks_responsible()) {
           $options = '<button type="button" id="' . $aRow['id'] . '" class="btn btn-primary mleft5 client_options" onclick="viewCallback(' . $aRow['id'] . ')" data-toggle="tooltip" title="' . _l('callbacks_view_label') . '" ><i class="fa fa-eye"></i></button>';
 
           $options .= '<a href="tel:' . $aRow['phone'] . '" class="btn btn-primary mleft5 client_options" data-toggle="tooltip" title="' . _l('callbacks_call_now') . '" ><i class="fa fa-phone"></i></a>';
@@ -120,7 +120,7 @@ foreach ($rResult as $aRow) {
           $options = '';
      }
 
-     if (is_staff_logged_in() && (is_staff_member() || is_admin())) {
+     if (staff_can('delete', 'appointments') || is_staff_callbacks_responsible()) {
           $options .= '<button type="button" class="btn btn-danger mleft5 client_options" onclick="deleteCallback(' . $aRow['id'] . ')" data-toggle="tooltip" title="' . _l('callbacks_delete_record') . '" ><i class="fa fa-trash"></i></button>';
      }
 

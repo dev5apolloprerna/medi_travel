@@ -12,7 +12,7 @@ function get_dashboard_widgets()
 {
     $widgets = [
         [
-            'path'      => 'admin/dashboard/widgets/my_top_stats',
+            'path'      => 'admin/dashboard/widgets/top_stats',
             'container' => 'top-12',
         ],
         [
@@ -90,26 +90,19 @@ function render_dashboard_widgets($container)
         $widgetsContainers = [];
         $widgets           = get_dashboard_widgets();
 
-        $preferredWidgetPaths = [
-            'admin/dashboard/widgets/my_top_stats',
-            'appointly/widgets/today_appointments',
-            'admin/dashboard/widgets/calendar',
-            'admin/dashboard/widgets/user_data',
-        ];
+        $first[] = $widgets[0];
+        $first[] = $widgets[13];
+        $first[] = $widgets[4];
+         $first[] = $widgets[2];
 
-        $first = [];
-        foreach ($preferredWidgetPaths as $preferredPath) {
-            foreach ($widgets as $key => $widget) {
-                if ($widget['path'] === $preferredPath) {
-                    $first[] = $widget;
-                    unset($widgets[$key]);
-                    break;
-                }
-            }
-        }
+        unset($widgets[0]);
+        unset($widgets[4]);
+          unset($widgets[13]);
+           unset($widgets[2]);
 
-        $widgets = array_merge($first, $widgets);
-   
+        $widgets =  array_merge($first,$widgets);
+
+       
         foreach ($widgets as $key => $widget) {
             $html = str_get_html($CI->load->view($widget['path'], [], true));
             if ($html) {

@@ -8,7 +8,7 @@ class Currencies extends AdminController
     {
         parent::__construct();
         $this->load->model('currencies_model');
-        if (!staff_has_full_setup_access()) {
+        if (!is_admin()) {
             access_denied('Currencies');
         }
     }

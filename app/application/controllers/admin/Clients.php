@@ -4,22 +4,13 @@ defined('BASEPATH') or exit('No direct script access allowed');
 
 class Clients extends AdminController
 {
-    /**
-     * Patients are now accessed by the logged-in staff/doctor account, not by a
-     * branch permission gate. Any authenticated staff member may open the
-     * patient screens; row-level assignment filters still apply inside the
-     * table/model where configured.
-     */
-    private function can_access_patient_screens()
-    {
-        return is_staff_logged_in() && (is_staff_member() || is_admin());
-    }
-
     /* List all clients */
     public function index()
     {
-     if (!is_staff_logged_in() || (!is_staff_member() && !is_admin())) {
-            access_denied('customers');
+        if (staff_cant('view', 'customers')) {
+            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
+                access_denied('customers');
+            }
         }
               
 
@@ -58,8 +49,11 @@ class Clients extends AdminController
 
     public function table()
     {
-        if (!$this->can_access_patient_screens()) {
-            ajax_access_denied();
+        if (staff_cant('view', 'customers')) {
+            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
+                ajax_access_denied();
+            }
+           
         }
 
        $_POST['order'][0]['column'] = 1;
@@ -76,11 +70,13 @@ class Clients extends AdminController
 
    public function branch_wise_patients()
     {
-         if (!is_staff_logged_in() || (!is_staff_member() && !is_admin())) {
-            access_denied('customers');
+        if (staff_cant('view', 'customers')) {
+            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
+                access_denied('customers');
+            }
         }
 
-        $data['title'] = 'Patient Search';
+        $data['title'] = 'Branch Wise Patient Search';
 
         $this->load->view('admin/clients/branch_wise_patients', $data);
     }
@@ -93,8 +89,10 @@ class Clients extends AdminController
 
      public function branch_wise_patients_table()
     {
-        if (!is_staff_logged_in() || (!is_staff_member() && !is_admin())) {
-            ajax_access_denied();
+        if (staff_cant('view', 'customers')) {
+            if (!have_assigned_customers() && staff_cant('create', 'customers')) {
+                ajax_access_denied();
+            }
         }
 
         $draw   = (int) $this->input->post('draw');
@@ -142,7 +140,7 @@ class Clients extends AdminController
             if (isset($orderData[0]['dir']) && strtolower((string) $orderData[0]['dir']) === 'asc') {
                 $orderDir = 'asc';
             }
-        }
+
             
         $sortKey = isset($columnMap[$orderIndex]) ? $columnMap[$orderIndex] : 'datecreated';
 
@@ -157,7 +155,6 @@ class Clients extends AdminController
                 continue;
             }
 
-
             $dbName      = $branch['branch_db'];
             $branchLabel = isset($branch['branch_label']) ? $branch['branch_label'] : $dbName;
 
@@ -167,15 +164,10 @@ class Clients extends AdminController
                 . 'WHERE 1=1';
 
             $binds = [];
-        if (!staff_has_full_setup_access()) {
-                $sql .= ' AND (c.addedfrom = ? OR c.userid IN (SELECT customer_id FROM `' . $dbName . '`.`' . db_prefix() . 'customer_admins` WHERE staff_id = ?))';
-                $binds[] = get_staff_user_id();
-                $binds[] = get_staff_user_id();
-            }
             if ($searchValue !== '') {
                 $sql .= ' AND (ct.uid LIKE ? OR c.phonenumber LIKE ? OR c.company LIKE ? OR ct.firstname LIKE ? OR ct.lastname LIKE ?)';
                 $like = '%' . $searchValue . '%';
-                $binds = array_merge($binds, [$like, $like, $like, $like, $like]);
+                $binds = [$like, $like, $like, $like, $like];
             }
 
             try {
@@ -258,25 +250,9 @@ class Clients extends AdminController
         echo json_encode($output);
         exit;
     }
-
-    private function get_global_search_branches($mainDb)
+}
+       private function get_global_search_branches($mainDb)
     {
-         $defaultDbName = isset($mainDb->database) ? (string) $mainDb->database : '';
-        $branches = [];
-        $seenDatabases = [];
-
-        if ($defaultDbName !== '') {
-            $branches[] = [
-                'branch_db'    => $defaultDbName,
-                'branch_label' => 'Main Branch',
-            ];
-            $seenDatabases[$defaultDbName] = true;
-        }
-
-        if (!$mainDb->table_exists(db_prefix() . 'branch')) {
-            return $branches;
-        }
-
         $branchFields = $mainDb->list_fields(db_prefix() . 'branch');
         $select = ['branch_db'];
 
@@ -292,7 +268,18 @@ class Clients extends AdminController
         $mainDb->where('branch_db !=', '');
         $branchRows = $mainDb->get(db_prefix() . 'branch')->result_array();
 
-        
+        $branches = [];
+        $seenDatabases = [];
+
+        $defaultDbName = isset($mainDb->database) ? (string) $mainDb->database : '';
+        if ($defaultDbName !== '') {
+            $branches[] = [
+                'branch_db'    => $defaultDbName,
+                'branch_label' => 'Main Branch',
+            ];
+            $seenDatabases[$defaultDbName] = true;
+        }
+
         foreach ($branchRows as $item) {
             if (!isset($item['branch_db']) || $item['branch_db'] === '') {
                 continue;
@@ -369,10 +356,8 @@ class Clients extends AdminController
     public function client($id = '')
     {          
 
-        if (staff_cant('view', 'customers') && $id != '') {
-            $client = $this->clients_model->get($id);
-            $addedFrom = $client && isset($client->addedfrom) ? (int) $client->addedfrom : 0;
-            if (!is_customer_admin($id) && $addedFrom !== (int) get_staff_user_id()) {
+        if (staff_cant('view', 'customers')) {
+            if ($id != '' && !is_customer_admin($id)) {
                 access_denied('customers');
             }
             
@@ -380,7 +365,7 @@ class Clients extends AdminController
 
         if ($this->input->post() && !$this->input->is_ajax_request()) {       
             if ($id == '') {
-                if (!is_staff_logged_in() || (!is_staff_member() && !is_admin())) {
+                if (staff_cant('create', 'customers')) {
                     access_denied('customers');
                 }
 
@@ -403,7 +388,7 @@ class Clients extends AdminController
                             
                         }
                         $id = $this->clients_model->add($data);
-                        if (!is_admin()) {
+                        if (staff_cant('view', 'customers')) {
                             $assign['customer_admins']   = [];
                             $assign['customer_admins'][] = get_staff_user_id();
                             $this->clients_model->assign_admins($assign, $id);
@@ -1198,7 +1183,7 @@ class Clients extends AdminController
 
     public function group()
     {
-        if (!staff_has_full_setup_access() && get_option('staff_members_create_inline_customer_groups') == '0') {
+        if (!is_admin() && get_option('staff_members_create_inline_customer_groups') == '0') {
             access_denied('Customer Groups');
         }
 
@@ -1231,7 +1216,7 @@ class Clients extends AdminController
 
     public function delete_group($id)
     {
-        if (!staff_has_full_setup_access()) {
+        if (!is_admin()) {
             access_denied('Delete Customer Group');
         }
         if (!$id) {
@@ -1464,3 +1449,5 @@ class Clients extends AdminController
         echo json_encode($viewData);
     }
 }
+
+

@@ -668,30 +668,10 @@ function to_sql_date($date, $datetime = false)
         if (preg_match('/^(\d{4})-(\d{1,2})-(\d{1,2})$/', $date)) {
             return $date;
         }
-        
-        //new code prerna
-        $dateObject = DateTime::createFromFormat($from_format, $date);
 
-        if ($dateObject instanceof DateTime) {
-            return hooks()->apply_filters(
-                'to_sql_date_formatted',
-                $dateObject->format($to_date)
-            );
-        }
-
-        $fixedDate = _simplify_date_fix($date, $from_format);
-        $timestamp = strtotime($fixedDate);
-
-        if ($timestamp === false) {
-            return null;
-        }
-        
-        // new code end prerna
-        
         return hooks()->apply_filters(
             'to_sql_date_formatted',
-           // DateTime::createFromFormat($from_format, $date)->format($to_date)
-            date($to_date, $timestamp)
+            DateTime::createFromFormat($from_format, $date)->format($to_date)
         );
     }
 
