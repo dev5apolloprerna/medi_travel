@@ -28,7 +28,7 @@
     </script>
     <?php app_admin_head(); ?>
     <?php echo $login_class != '' ? '<style>body.login_admin {
-    background-image: url(https://oshreejidental.com/app/assets/images/login-bg.jpg) !important;
+    background-image: url(https://crm.meditravelsolution.in/app/assets/images/login-bg.jpg) !important;
     background-size: 100% auto !important;
 }</style>' : '';?>
 </head>

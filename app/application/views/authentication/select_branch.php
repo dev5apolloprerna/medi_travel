@@ -24,27 +24,22 @@ $this->load->view('authentication/includes/head.php'); ?>
 
             <?php hooks()->do_action('after_admin_login_form_start'); ?>
 
+            <?php
+                // Default branch is "Super Admin" (empty value = Admin / no specific branch).
+                // The branch field is kept in the form but hidden, and the form auto-submits
+                // so the user is taken straight to the login page (page 2) without having
+                // to see or interact with the branch selector.
+                $default_branch = '';
+            ?>
+            <input type="hidden" name="branch" id="branch" value="<?php echo e($default_branch); ?>">
+
+            <noscript>
             <div class="form-group">
-                <label for="email" class="control-label">
-                    <?php echo _l('Select Branch'); ?>
-                </label>
-                <?php  
-                // if(isset($branches)){
-                    $branches         = get_branch();
-                    // printr($branches);
-                ?>
-                <select name="branch" id="branch"
-                        class="form-control selectpicker"
-                        data-none-selected-text="<?php echo _l('dropdown_non_selected_tex'); ?>">
-                        <option value=""><?php echo _l('Super Admin'); ?></option>
-                        <?php foreach ($branches as $branch) {?>
-                        <option value="<?php echo $branch->branchid; ?>">
-                            <?php echo $branch->branch; ?></option>
-                        <?php
-                     } ?>
-                </select>
-                <?php //} ?>
+                <button type="submit" class="btn btn-primary btn-block">
+                    <?php echo _l('Select'); ?>
+                </button>
             </div>
+            </noscript>
 
           <!--   <div class="form-group">
                 <label for="email" class="control-label">
@@ -71,12 +66,6 @@ $this->load->view('authentication/includes/head.php'); ?>
                 </div>
             </div> -->
 
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary btn-block">
-                    <?php echo _l('Select'); ?>
-                </button>
-            </div>
-
            <!--  <div class="form-group">
                 <a href="<?php echo admin_url('authentication/forgot_password'); ?>">
                     <?php echo _l('admin_auth_login_fp'); ?>
@@ -88,6 +77,12 @@ $this->load->view('authentication/includes/head.php'); ?>
             <?php echo form_close(); ?>
         </div>
     </div>
+
+    <script>
+    // Branch is defaulted to Admin (hidden field above) — auto-submit
+    // immediately so the user lands straight on the login page.
+    document.forms[0].submit();
+    </script>
 
 </body>
 
