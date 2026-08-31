@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medi Travel - Care Handover & Billing Reconciliation Form</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 13mm 15mm 13mm 15mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11.5px;
+            line-height: 1.45;
+            color: #33415a;
+        }
+
+        .page,
+        .main-table {
+            width: 100%;
+        }
+
+        .main-table,
+        .purpose-table,
+        .section-heading,
+        .profile-table,
+        .checklist-table,
+        .ledger-table,
+        .status-table,
+        .ack-heading,
+        .ack-table {
+            border-collapse: collapse;
+        }
+
+        .brand {
+            padding: 0 0 8px 0;
+            font-size: 29px;
+            line-height: 1.05;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #24469a;
+        }
+
+        .document-title {
+            padding: 5px 0 14px 0;
+            font-size: 18px;
+            line-height: 1.2;
+            font-weight: bold;
+            color: #182033;
+        }
+
+        .top-rule {
+            width: 100%;
+            height: 12px;
+            margin: 0 0 16px 0;
+            border-bottom: 3px solid #1787c8;
+        }
+
+        .purpose-table {
+            width: 100%;
+            margin: 0 0 14px 0;
+        }
+
+        .purpose-table td {
+            padding: 9px 11px;
+            border-left: 4px solid #1693d0;
+            background: #f5f7fa;
+            color: #4a5870;
+            line-height: 1.5;
+        }
+
+        .purpose-title {
+            font-weight: bold;
+        }
+
+        .section-heading {
+            width: 100%;
+            margin: 8px 0 8px 0;
+        }
+
+        .section-heading td {
+            padding: 3px 0 6px 0;
+            border-bottom: 1px solid #cbd7e5;
+            color: #24469a;
+            font-size: 15px;
+            line-height: 1.2;
+            font-weight: bold;
+            letter-spacing: .1px;
+        }
+
+        .profile-table,
+        .ledger-table {
+            width: 100%;
+            margin: 0 0 13px 0;
+            table-layout: fixed;
+        }
+
+        .profile-table td,
+        .ledger-table td {
+            border: 1px solid #c7d2df;
+            padding: 7px 9px;
+            vertical-align: middle;
+        }
+
+        .profile-label,
+        .ledger-label {
+            background: #f4f6f9;
+            font-weight: bold;
+            color: #354258;
+        }
+
+        .profile-value,
+        .ledger-value {
+            background: #fff;
+        }
+
+        .field-input {
+            display: block;
+            width: 100%;
+            height: 22px;
+            margin: 0;
+            padding: 1px 3px;
+            border: none;
+            border-bottom: 1px solid #66758a;
+            outline: none;
+            background: transparent;
+            color: #182033;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11.5px;
+        }
+
+        .checklist-table {
+            width: 100%;
+            margin: 0 0 12px 0;
+        }
+
+        .checklist-table td {
+            padding: 3px 0;
+            vertical-align: top;
+        }
+
+        .check-cell {
+            width: 24px;
+            padding-top: 2px !important;
+        }
+
+        .check-input {
+            width: 14px;
+            height: 14px;
+            margin: 0;
+            padding: 0;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+        .check-label {
+            cursor: pointer;
+            color: #33415a;
+        }
+
+        .status-table {
+            width: 100%;
+        }
+
+        .status-table td {
+            border: none !important;
+            padding: 0 10px 0 0 !important;
+            background: transparent !important;
+            white-space: nowrap;
+        }
+
+        .status-label {
+            cursor: pointer;
+            font-weight: normal;
+            color: #26334a;
+        }
+
+        .status-label input {
+            width: 14px;
+            height: 14px;
+            margin: 0 6px 0 0;
+            padding: 0;
+            vertical-align: -2px;
+            cursor: pointer;
+        }
+
+        .ack-heading {
+            width: 100%;
+            margin: 10px 0 22px 0;
+        }
+
+        .ack-heading td {
+            padding: 3px 0 6px 0;
+            border-bottom: 1px solid #cbd7e5;
+            color: #24469a;
+            font-size: 15px;
+            line-height: 1.2;
+            font-weight: bold;
+            letter-spacing: .1px;
+        }
+
+        .ack-table {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .ack-table td {
+            padding: 0 0 20px 0;
+            vertical-align: bottom;
+        }
+
+        .ack-left {
+            width: 50%;
+            padding-right: 14px !important;
+        }
+
+        .ack-right {
+            width: 50%;
+            padding-left: 4px !important;
+        }
+
+        .ack-input {
+            display: block;
+            width: 100%;
+            height: 25px;
+            margin: 0;
+            padding: 1px 3px;
+            border: none;
+            border-bottom: 1px solid #56657a;
+            outline: none;
+            background: transparent;
+            color: #182033;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11.5px;
+        }
+
+        .ack-caption {
+            padding-top: 4px;
+            color: #46556c;
+            font-size: 10.5px;
+        }
+
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <form action="" method="post" id="careHandoverBillingForm">
+        <div class="page">
+            <table class="main-table">
+                <tr>
+                    <td>
+
+                        <div class="brand">MEDITRAVEL</div>
+                        <div class="document-title">CARE HANDOVER &amp; BILLING RECONCILIATION FORM</div>
+                        <div class="top-rule"></div>
+
+                        <table class="purpose-table">
+                            <tr>
+                                <td>
+                                    <span class="purpose-title">FORM PURPOSE:</span>
+                                    This document formalizes the operational sign-off and reconciliation phase before
+                                    discharge. It verifies the final handoff of medical documentation to the patient and
+                                    auditing of all accounts, financial packages, deposits, and supplementary expenses.
+                                </td>
+                            </tr>
+                        </table>
+
+                        <table class="section-heading">
+                            <tr>
+                                <td>1. ACCOUNT &amp; CASE PROFILE</td>
+                            </tr>
+                        </table>
+
+                        <table class="profile-table">
+                            <colgroup>
+                                <col style="width:25%;">
+                                <col style="width:25%;">
+                                <col style="width:25%;">
+                                <col style="width:25%;">
+                            </colgroup>
+                            <tr>
+                                <td class="profile-label">Patient Full Name</td>
+                                <td class="profile-value"><input type="text" id="input1" name="input1"
+                                        class="field-input"></td>
+                                <td class="profile-label">Case Reference ID</td>
+                                <td class="profile-value"><input type="text" id="input2" name="input2"
+                                        class="field-input"></td>
+                            </tr>
+                            <tr>
+                                <td class="profile-label">Discharging Facility</td>
+                                <td class="profile-value"><input type="text" id="input3" name="input3"
+                                        class="field-input"></td>
+                                <td class="profile-label">Discharge Date</td>
+                                <td class="profile-value"><input type="date" id="input4" name="input4"
+                                        class="field-input"></td>
+                            </tr>
+                            <tr>
+                                <td class="profile-label">Assigned Lead<br>Coordinator</td>
+                                <td class="profile-value"><input type="text" id="input5" name="input5"
+                                        class="field-input"></td>
+                                <td class="profile-label">Billing Auditor Name</td>
+                                <td class="profile-value"><input type="text" id="input6" name="input6"
+                                        class="field-input"></td>
+                            </tr>
+                        </table>
+
+                        <table class="section-heading">
+                            <tr>
+                                <td>2. POST-OPERATIVE DOCUMENT &amp; CARE HANDOVER CHECKLIST</td>
+                            </tr>
+                        </table>
+
+                        <table class="checklist-table">
+                            <tr>
+                                <td class="check-cell"><input type="checkbox" id="input7" name="input7"
+                                        class="check-input" value="1"></td>
+                                <td><label for="input7" class="check-label">Original Operative Report, Clinical
+                                        Discharge Summary, and Surgeon's Post-Op Notes.</label></td>
+                            </tr>
+                            <tr>
+                                <td class="check-cell"><input type="checkbox" id="input8" name="input8"
+                                        class="check-input" value="1"></td>
+                                <td><label for="input8" class="check-label">Post-operative prescription drugs,
+                                        specialized medications, and clear dosage instructions.</label></td>
+                            </tr>
+                            <tr>
+                                <td class="check-cell"><input type="checkbox" id="input9" name="input9"
+                                        class="check-input" value="1"></td>
+                                <td><label for="input9" class="check-label">Physical or digital copies of radiology
+                                        imaging files (X-Rays, CT scans, MRIs) and lab reports.</label></td>
+                            </tr>
+                            <tr>
+                                <td class="check-cell"><input type="checkbox" id="input10" name="input10"
+                                        class="check-input" value="1"></td>
+                                <td><label for="input10" class="check-label">Completed airline clearance credentials and
+                                        a certified Fit-to-Fly sign-off document.</label></td>
+                            </tr>
+                        </table>
+
+                        <table class="section-heading">
+                            <tr>
+                                <td>3. FINANCIAL LEDGER SUMMARY &amp; RECONCILIATION</td>
+                            </tr>
+                        </table>
+
+                        <table class="ledger-table">
+                            <colgroup>
+                                <col style="width:60%;">
+                                <col style="width:40%;">
+                            </colgroup>
+                            <tr>
+                                <td class="ledger-label">Initial Base Package Quote / Package Estimate Cost</td>
+                                <td class="ledger-value"><input type="text" id="input11" name="input11"
+                                        class="field-input"></td>
+                            </tr>
+                            <tr>
+                                <td class="ledger-label">Hospital Extras / Unforeseen Diagnostic / Facility Add-ons</td>
+                                <td class="ledger-value"><input type="text" id="input12" name="input12"
+                                        class="field-input"></td>
+                            </tr>
+                            <tr>
+                                <td class="ledger-label">Total Advance Deposits Received &amp; Documented</td>
+                                <td class="ledger-value"><input type="text" id="input13" name="input13"
+                                        class="field-input"></td>
+                            </tr>
+                            <tr>
+                                <td class="ledger-label">Logistics/Hotel/Supplementary Transfer Variations</td>
+                                <td class="ledger-value"><input type="text" id="input14" name="input14"
+                                        class="field-input"></td>
+                            </tr>
+                            <tr>
+                                <td class="ledger-label">Final Account Balance Status</td>
+                                <td class="ledger-value">
+                                    <table class="status-table">
+                                        <tr>
+                                            <td><label class="status-label" for="input15"><input type="radio"
+                                                        id="input15" name="final_account_status"
+                                                        value="paid_in_full">PAID IN FULL</label></td>
+                                            <td><label class="status-label" for="input16"><input type="radio"
+                                                        id="input16" name="final_account_status"
+                                                        value="refund_due">REFUND DUE</label></td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <div class="avoid-break">
+                            <table class="ack-heading">
+                                <tr>
+                                    <td>MUTUAL RECONCILIATION ACKNOWLEDGEMENT</td>
+                                </tr>
+                            </table>
+
+                            <table class="ack-table">
+                                <tr>
+                                    <td class="ack-left"><input type="text" id="input17" name="input17"
+                                            class="ack-input">
+                                        <div class="ack-caption">Signature of Patient / Authorized Guardian</div>
+                                    </td>
+                                    <td class="ack-right"><input type="date" id="input18" name="input18"
+                                            class="ack-input">
+                                        <div class="ack-caption">Date</div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="ack-left"><input type="text" id="input19" name="input19"
+                                            class="ack-input">
+                                        <div class="ack-caption">Signature of MEDITRAVEL Auditor</div>
+                                    </td>
+                                    <td class="ack-right"><input type="date" id="input20" name="input20"
+                                            class="ack-input">
+                                        <div class="ack-caption">Date</div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+
+
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </form>
+</body>
+
+</html>

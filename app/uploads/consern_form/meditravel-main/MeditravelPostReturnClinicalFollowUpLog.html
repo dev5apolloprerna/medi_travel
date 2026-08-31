@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDITRAVEL - Post-Return Clinical Follow-Up Log</title>
+    <style>
+        @page { size: A4 portrait; margin: 8mm 12mm; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        body { margin: 0; color: #26364d; background: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 8px; line-height: 1.35; }
+        .page { width: 100%; margin: 0 auto; background: #fff; }
+        .brand { margin: 0; color: #233f8f; font-size: 24px; font-weight: 700; letter-spacing: 4px; line-height: 1; }
+        .form-title { margin: 8px 0 13px; color: #172033; font-size: 12px; font-weight: 700; }
+        .top-rule { height: 2px; margin-bottom: 11px; background: #1784bd; }
+        .purpose-box { margin-bottom: 11px; padding: 6px 8px; border-left: 4px solid #1c7db6; background: #f7f9fc; color: #53627a; font-size: 13px; line-height: 1.45; }
+        .purpose-box strong { color: #34445d; }
+        .section { margin-bottom: 10px; page-break-inside: avoid; }
+        .section-heading { margin: 0 0 6px; color: #20428f; font-size: 15px; font-weight: 700; letter-spacing: .15px; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        td, th { border: 1px solid #aebed5; padding: 4px 6px; vertical-align: top; }
+        .label { width: 25%; background: #f7f9fc; color: #34445d; font-size: 10px; font-weight: 700; }
+        .value { width: 25%; height: 25px; }
+        input[type="text"], textarea
+         {
+             width: 100%; margin: 0;
+              padding: 1px 2px; border: 0;
+               /* border-bottom: 1px solid #7b8799; */
+                border-radius: 0; outline: 0; background: transparent; color: #172033; font: 9px Arial, Helvetica, sans-serif; }
+        textarea { min-height: 31px; resize: vertical; border: 0; }
+        input:focus, textarea:focus { background: #fffbe8; }
+        .matrix th { padding: 5px 4px; background: #244391; color: #fff; font-size: 11px; font-weight: 700; text-align: left; vertical-align: middle; }
+        .matrix td { height: 44px; padding: 4px 5px; vertical-align: middle; }
+        .matrix textarea { min-height: 34px; height: 34px; }
+        .matrix .milestone { background: #fbfcfe; color: #27364b; font-weight: 700;font-size: 11px; }
+        input[type="checkbox"] { width: 10px; height: 10px; margin: 0 5px 0 0; vertical-align: -2px; cursor: pointer; }
+        .check-list { margin: 0; padding: 0; list-style: none; }
+        .check-list li { margin: 0 0 5px; color: #3e4c61; line-height: 1.35;font-size: 12px; }
+        .check-list label { cursor: pointer; }
+        .closure-section { margin-top: 13px; margin-bottom: 0; }
+        .closure-text { margin: 0 0 13px; color: #526077; font-size: 12px; line-height: 1.45; text-align: justify; }
+        .signature-table td { border: 0; padding: 0; vertical-align: bottom; }
+        .signature-table .left { width: 60%; padding-right: 20px; }
+        .signature-table .right { width: 40%; padding-left: 0; }
+        .line-input { height: 19px; border-bottom: 1px solid #56657a !important; }
+        .signature-caption { padding-top: 4px; color: #536176; font-size: 12px; }
+        .print-value { display: inline-block; width: 100%; min-height: 13px; border-bottom: 1px solid #7b8799; white-space: pre-wrap; }
+        .print-textarea { min-height: 31px; border-bottom: 0; }
+        .print-control { display: inline-block; margin-right: 5px; font-family: DejaVu Sans, sans-serif; font-size: 11px; }
+        @media screen {
+            body { background: #e9edf3; }
+            .page { width: 210mm; min-height: 297mm; padding: 8mm 12mm; margin: 12px auto; box-shadow: 0 2px 14px rgba(15,23,42,.15); }
+        }
+        @media print { .page { min-height: 0; padding: 0; margin: 0; } }
+    </style>
+</head>
+<body>
+<form id="meditravelFollowUpForm" autocomplete="on">
+    <div class="page">
+        <h1 class="brand">MEDITRAVEL</h1>
+        <h2 class="form-title">POST-RETURN CLINICAL FOLLOW-UP LOG</h2>
+        <div class="top-rule"></div>
+
+        <div class="purpose-box">
+            <strong>LOG PURPOSE:</strong> This follow-up log is utilized by the MEDITRAVEL post-care team to systematically monitor patient recovery milestones, local healthcare integration, and wound healing progress across the critical 30-60-90 day post-return timeline.
+        </div>
+
+        <div class="section">
+            <h3 class="section-heading">1. PATIENT RECOVERY PROFILE</h3>
+            <table>
+                <tr>
+                    <td class="label">Patient Full Name</td>
+                    <td class="value"><input type="text" id="input1" name="input1" tabindex="1"></td>
+                    <td class="label">Case Reference ID</td>
+                    <td class="value"><input type="text" id="input2" name="input2" tabindex="2"></td>
+                </tr>
+                <tr>
+                    <td class="label">Procedure &amp; Date</td>
+                    <td class="value"><input type="text" id="input3" name="input3" tabindex="3"></td>
+                    <td class="label">Return Date Home</td>
+                    <td class="value"><input type="text" id="input4" name="input4" tabindex="4"></td>
+                </tr>
+                <tr>
+                    <td class="label">Local PCP / Doctor<br>Name</td>
+                    <td class="value"><input type="text" id="input5" name="input5" tabindex="5"></td>
+                    <td class="label">Post-Care Coordinator</td>
+                    <td class="value"><input type="text" id="input6" name="input6" tabindex="6"></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h3 class="section-heading">2. SCHEDULED CHECK-IN &amp; MILESTONE MATRIX</h3>
+            <table class="matrix">
+                <colgroup>
+                    <col style="width:15%">
+                    <col style="width:15%">
+                    <col style="width:22%">
+                    <col style="width:18%">
+                    <col style="width:30%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Milestone</th>
+                        <th>Target Date</th>
+                        <th>Healing &amp; Pain Status<br>(Satisfactory / Escalate)</th>
+                        <th>Local PCP Visit<br>(Completed / [ ])</th>
+                        <th>Coordinator Notes &amp; Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="milestone">Week 2<br>Review</td>
+                        <td><textarea id="input7" name="input7" tabindex="7"></textarea></td>
+                        <td><textarea id="input8" name="input8" tabindex="8"></textarea></td>
+                        <td><textarea id="input9" name="input9" tabindex="9"></textarea></td>
+                        <td><textarea id="input10" name="input10" tabindex="10"></textarea></td>
+                    </tr>
+                    <tr>
+                        <td class="milestone">Day 30<br>Check-in</td>
+                        <td><textarea id="input11" name="input11" tabindex="11"></textarea></td>
+                        <td><textarea id="input12" name="input12" tabindex="12"></textarea></td>
+                        <td><textarea id="input13" name="input13" tabindex="13"></textarea></td>
+                        <td><textarea id="input14" name="input14" tabindex="14"></textarea></td>
+                    </tr>
+                    <tr>
+                        <td class="milestone">Day 90 Final<br>Close</td>
+                        <td><textarea id="input15" name="input15" tabindex="15"></textarea></td>
+                        <td><textarea id="input16" name="input16" tabindex="16"></textarea></td>
+                        <td><textarea id="input17" name="input17" tabindex="17"></textarea></td>
+                        <td><textarea id="input18" name="input18" tabindex="18"></textarea></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h3 class="section-heading">3. CRITICAL CONTINUITY OF CARE VERIFICATION</h3>
+            <ul class="check-list">
+                <li><label><input type="checkbox" id="input19" name="input19" value="PCP handover registration completed" tabindex="19">Patient has completed the local primary healthcare provider (PCP) handover registration.</label></li>
+                <li><label><input type="checkbox" id="input20" name="input20" value="Suture/staple removal completed" tabindex="20">Suture/staple removal was successfully handled and recorded by a licensed practitioner locally.</label></li>
+                <li><label><input type="checkbox" id="input21" name="input21" value="Rehabilitation initiated" tabindex="21">Physiotherapy or specialized physical rehabilitation protocols are initiated (if clinically indicated).</label></li>
+                <li><label><input type="checkbox" id="input22" name="input22" value="Post-op records integrated" tabindex="22">All post-op medical summaries, imaging reports, and lab results are integrated into domestic medical files.</label></li>
+            </ul>
+        </div>
+
+        <div class="section closure-section">
+            <h3 class="section-heading">LOG CLOSURE &amp; CONTINUITY VALIDATION</h3>
+            <p class="closure-text">By signing below, the assigned MEDITRAVEL Post-Care Specialist certifies that the scheduled patient check-ins have been completely executed, milestones have been updated, and any notable recovery complications have been systematically communicated to the international surgical team.</p>
+
+            <table class="signature-table" style="margin-top: 50px;">
+                <tr>
+                    <td class="left"><input class="line-input" type="text" id="input23" name="input23" tabindex="23"></td>
+                    <td class="right"><input class="line-input" type="text" id="input24" name="input24" tabindex="24"></td>
+                </tr>
+                <tr>
+                    <td class="left signature-caption">Signature of Post-Care Specialist</td>
+                    <td class="right signature-caption">Log Closure Date</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</form>
+
+<script>
+/* For mPDF: fill saved values, run prepareForMpdf(), then pass the returned HTML to WriteHTML(). */
+function prepareForMpdf() {
+    document.querySelectorAll('#meditravelFollowUpForm input, #meditravelFollowUpForm textarea').forEach(function (field) {
+        var replacement = document.createElement('span');
+        if (field.type === 'checkbox' || field.type === 'radio') {
+            replacement.className = 'print-control';
+            replacement.textContent = field.checked ? '\u2611' : '\u2610';
+        } else {
+            replacement.className = 'print-value' + (field.tagName === 'TEXTAREA' ? ' print-textarea' : '');
+            replacement.textContent = field.value || '\u00a0';
+        }
+        field.parentNode.replaceChild(replacement, field);
+    });
+    return document.documentElement.outerHTML;
+}
+</script>
+</body>
+</html>

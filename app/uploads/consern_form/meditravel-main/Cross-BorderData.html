@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medi Travel - Cross-Border Data Sharing & Privacy Authorization Form</title>
+
+    <style>
+        @page {
+            size: A4;
+            margin: 13mm 15mm 13mm 15mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11.5px;
+            line-height: 1.45;
+            color: #33415a;
+        }
+
+        .page {
+            width: 100%;
+        }
+
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .brand {
+            padding: 0 0 8px 0;
+            font-size: 29px;
+            line-height: 1.05;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #24469a;
+        }
+
+        .document-title {
+            padding: 5px 0 5px 0;
+            font-size: 18px;
+            line-height: 1.2;
+            font-weight: bold;
+            color: #182033;
+        }
+
+        .subtitle {
+            padding: 0 0 12px 0;
+            font-size: 10.8px;
+            line-height: 1.35;
+            font-weight: bold;
+            color: #4a5870;
+        }
+
+        .top-rule {
+            width: 100%;
+            height: 10px;
+            margin: 0 0 14px 0;
+            border-bottom: 3px solid #1787c8;
+        }
+
+        .section-heading {
+            width: 100%;
+            margin: 8px 0 8px 0;
+            border-collapse: collapse;
+        }
+
+        .section-heading td {
+            padding: 3px 0 6px 0;
+            border-bottom: 1px solid #cbd7e5;
+            color: #24469a;
+            font-size: 15px;
+            line-height: 1.2;
+            font-weight: bold;
+            letter-spacing: .1px;
+        }
+
+        .form-table {
+            width: 100%;
+            margin: 0 0 14px 0;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .form-table td {
+            border: 1px solid #c7d2df;
+            padding: 7px 9px;
+            vertical-align: middle;
+            line-height: 1.35;
+        }
+
+        .label {
+            background: #f4f6f9;
+            font-weight: bold;
+            color: #354258;
+        }
+
+        .input-space {
+            background: #ffffff;
+        }
+
+        .field-input {
+            display: block;
+            width: 100%;
+            height: 24px;
+            margin: 0;
+            padding: 1px 3px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #182033;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11.5px;
+        }
+
+        .checklist-table {
+            width: 100%;
+            margin: 0 0 13px 0;
+            border-collapse: collapse;
+        }
+
+        .checklist-table td {
+            padding: 3px 0;
+            vertical-align: top;
+            line-height: 1.45;
+        }
+
+        .check-cell {
+            width: 24px;
+            padding-top: 3px !important;
+        }
+
+        .check-input {
+            width: 14px;
+            height: 14px;
+            margin: 0;
+            padding: 0;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+
+        .check-label {
+            cursor: pointer;
+            color: #26334a;
+        }
+
+        .legal-text {
+            margin: 0 0 12px 0;
+            color: #33415a;
+            line-height: 1.5;
+            text-align: justify;
+        }
+
+        .legal-text strong {
+            color: #354258;
+        }
+
+        .authorization-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 4px;
+            margin-bottom: 14px;
+        }
+
+        .authorization-table td {
+            padding: 4px 0;
+            vertical-align: top;
+        }
+
+        .authorization-check {
+            width: 25px;
+            padding-top: 4px !important;
+        }
+
+        .authorization-label {
+            font-weight: bold;
+            font-size: 12px;
+            color: #26334a;
+            cursor: pointer;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 80px;
+        }
+
+        .signature-table td {
+            border: none;
+            padding: 0;
+            vertical-align: bottom;
+        }
+
+        .signature-label-cell {
+            width: 28%;
+            padding-right: 12px !important;
+            font-size: 12px;
+            color: #26334a;
+        }
+
+        .signature-line-cell {
+            width: 42%;
+            padding-right: 22px !important;
+        }
+
+        .date-label-cell {
+            width: 10%;
+            padding-right: 8px !important;
+            font-size: 12px;
+            color: #26334a;
+        }
+
+        .date-line-cell {
+            width: 20%;
+        }
+
+        .signature-input {
+            display: block;
+            width: 100%;
+            height: 28px;
+            margin: 0;
+            padding: 1px 3px;
+            border: none;
+            border-bottom: 1px solid #56657a;
+            outline: none;
+            background: transparent;
+            color: #182033;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11.5px;
+        }
+
+      
+
+        @media print {
+            input {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <form action="" method="post" id="crossBorderPrivacyAuthorizationForm">
+
+        <!-- ====================== PAGE 8 ====================== -->
+        <div class="page">
+
+            <table class="main-table">
+                <tr>
+                    <td>
+
+                        <div class="brand">MEDITRAVEL</div>
+
+                        <div class="document-title">
+                            CROSS-BORDER DATA SHARING &amp; PRIVACY AUTHORIZATION FORM
+                        </div>
+
+                        <div class="subtitle">
+                            Compliant with HIPAA (45 CFR § 164.508) &amp; GDPR (Chapter V Article 49 Transfer Consent)
+                        </div>
+
+                        <div class="top-rule"></div>
+
+                        <!-- SECTION 1 -->
+                        <table class="section-heading">
+                            <tr>
+                                <td>1. PATIENT IDENTIFICATION</td>
+                            </tr>
+                        </table>
+
+                        <table class="form-table">
+                            <colgroup>
+                                <col style="width:25%;">
+                                <col style="width:25%;">
+                                <col style="width:25%;">
+                                <col style="width:25%;">
+                            </colgroup>
+
+                            <tr>
+                                <td class="label">Patient Full Name</td>
+                                <td class="input-space">
+                                    <input type="text" id="input1" name="input1" class="field-input">
+                                </td>
+
+                                <td class="label">Date of Birth</td>
+                                <td class="input-space">
+                                    <input type="date" id="input2" name="input2" class="field-input">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="label">Email Address</td>
+                                <td class="input-space">
+                                    <input type="email" id="input3" name="input3" class="field-input">
+                                </td>
+
+                                <td class="label">Phone Number</td>
+                                <td class="input-space">
+                                    <input type="tel" id="input4" name="input4" class="field-input">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="label">
+                                    Passport / ID<br>
+                                    Jurisdiction
+                                </td>
+
+                                <td class="input-space">
+                                    <input type="text" id="input5" name="input5" class="field-input">
+                                </td>
+
+                                <td class="label">Country of Residence</td>
+                                <td class="input-space">
+                                    <input type="text" id="input6" name="input6" class="field-input">
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- SECTION 2 -->
+                        <table class="section-heading">
+                            <tr>
+                                <td>2. SCOPE OF PROTECTED HEALTH INFORMATION (PHI) &amp; PERSONAL DATA</td>
+                            </tr>
+                        </table>
+
+                        <table class="checklist-table">
+                            <tr>
+                                <td class="check-cell">
+                                    <input type="checkbox" id="input7" name="input7" class="check-input" value="1">
+                                </td>
+                                <td>
+                                    <label for="input7" class="check-label">
+                                        Complete Medical History, Diagnoses, Clinical Notes, and Treatment Plans.
+                                    </label>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="check-cell">
+                                    <input type="checkbox" id="input8" name="input8" class="check-input" value="1">
+                                </td>
+                                <td>
+                                    <label for="input8" class="check-label">
+                                        Diagnostic Imaging Reports (including X-Rays, CT/MRI Scans, Panoramic Dental
+                                        Scans, Ophthalmic Photos).
+                                    </label>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="check-cell">
+                                    <input type="checkbox" id="input9" name="input9" class="check-input" value="1">
+                                </td>
+                                <td>
+                                    <label for="input9" class="check-label">
+                                        Laboratory Test Results, Biopsies, Pathology Reports, and Medication
+                                        Formularies.
+                                    </label>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="check-cell">
+                                    <input type="checkbox" id="input10" name="input10" class="check-input" value="1">
+                                </td>
+                                <td>
+                                    <label for="input10" class="check-label">
+                                        Insurance Pre-authorizations, Financial Invoices, and Medical Billing Summaries.
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- SECTION 3 -->
+                        <table class="section-heading">
+                            <tr>
+                                <td>3. AUTHORIZED RECIPIENTS &amp; INTERNATIONAL CLOUD TRANSFERS</td>
+                            </tr>
+                        </table>
+
+                        <table class="checklist-table">
+                            <tr>
+                                <td class="check-cell">
+                                    <input type="checkbox" id="input11" name="input11" class="check-input" value="1">
+                                </td>
+                                <td>
+                                    <label for="input11" class="check-label">
+                                        International Clinical Panels, Medical Directors, and Specialized Surgeons
+                                        associated with MEDITRAVEL.
+                                    </label>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="check-cell">
+                                    <input type="checkbox" id="input12" name="input12" class="check-input" value="1">
+                                </td>
+                                <td>
+                                    <label for="input12" class="check-label">
+                                        Accredited Partner Hospitals and Joint Commission International (JCI) Clinics in
+                                        destination treatment countries.
+                                    </label>
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="check-cell">
+                                    <input type="checkbox" id="input13" name="input13" class="check-input" value="1">
+                                </td>
+                                <td>
+                                    <label for="input13" class="check-label">
+                                        Authorized Medical Concierge Case Coordinators and Logistics Care Management
+                                        Units.
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- SECTION 4 -->
+                        <table class="section-heading">
+                            <tr>
+                                <td>4. MANDATORY LEGAL DISCLOSURES &amp; STATUTORY COMPLIANCE NOTICES</td>
+                            </tr>
+                        </table>
+
+                        <p class="legal-text">
+                            <strong>GDPR Cross-Border Transfer Warning (Art. 49 Consent):</strong>
+                            I acknowledge that certain destination countries outside the EU/EEA may not offer an
+                            equivalent statutory level of data protection as mandated by the GDPR. By signing below, I
+                            explicitly consent to the transfer of my personal medical data...
+                        </p>
+
+                        <p class="legal-text">
+                            <strong>HIPAA Right to Revoke Notice (45 CFR § 164.508):</strong>
+                            I reserve the absolute statutory right to revoke this authorization at any time...
+                        </p>
+
+                        <!-- SECTION 5 -->
+                        <table class="section-heading">
+                            <tr>
+                                <td>5. TERM &amp; EXPIRATION TIMELINE</td>
+                            </tr>
+                        </table>
+
+                        <p class="legal-text">
+                            Unless explicitly revoked in writing sooner, this authorization shall organically expire
+                            exactly One (1) Year from the date of execution...
+                        </p>
+
+                        <!-- SECTION 6 -->
+                        <table class="section-heading">
+                            <tr>
+                                <td>6. FORMAL EXECUTION &amp; PATIENT ATTESTATION</td>
+                            </tr>
+                        </table>
+
+                        <table class="authorization-table">
+                            <tr>
+                                <td class="authorization-check">
+                                    <input type="checkbox" id="input14" name="input14" class="check-input" value="1">
+                                </td>
+                                <td>
+                                    <label for="input14" class="authorization-label">
+                                        I EXPRESSLY AUTHORIZE THE CROSS-BORDER DISCLOSURE AND SHARING OF MY MEDICAL
+                                        RECORDS.
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+
+                      
+
+                    </td>
+                </tr>
+            </table>
+             <table class="main-table">
+                <tr>
+                    <td>
+
+                        <div class="avoid-break">
+
+                            <table class="signature-table">
+                                <tr>
+                                    <td class="signature-label-cell">
+                                        Signature of Patient or Rep:
+                                    </td>
+
+                                    <td class="signature-line-cell">
+                                        <input type="text" id="input15" name="input15" class="signature-input">
+                                    </td>
+
+                                    <td class="date-label-cell">
+                                        Date:
+                                    </td>
+
+                                    <td class="date-line-cell">
+                                        <input type="date" id="input16" name="input16" class="signature-input">
+                                    </td>
+                                </tr>
+                            </table>
+
+                        </div>
+
+                    </td>
+                </tr>
+            </table>
+
+
+        </div>
+
+
+    </form>
+
+</body>
+
+</html>
