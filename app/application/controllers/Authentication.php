@@ -12,7 +12,7 @@ class Authentication extends ClientsController
 
     public function index()
     {
-        $this->login();
+        redirect(admin_url('authentication/admin_login'));
     }
 
     // Added for backward compatibilies

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medi Travel - Daily Patient Rounding Log</title>
+
+    <style>
+        @page {
+            size: A4;
+            margin: 13mm 15mm 13mm 15mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #33415a;
+        }
+
+        .page {
+            width: 100%;
+        }
+
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .brand {
+            padding: 0 0 8px 0;
+            font-size: 29px;
+            line-height: 1.05;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #24469a;
+        }
+
+        .document-title {
+            padding: 5px 0 14px 0;
+            font-size: 18px;
+            line-height: 1.2;
+            font-weight: bold;
+            color: #182033;
+        }
+
+        .top-rule {
+            width: 100%;
+            height: 12px;
+            margin: 0 0 16px 0;
+            border-bottom: 3px solid #1787c8;
+        }
+
+        .profile-table {
+            width: 100%;
+            margin: 0 0 14px 0;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .profile-table td {
+            border: 1px solid #c7d2df;
+            padding: 7px 9px;
+            vertical-align: middle;
+            line-height: 1.35;
+        }
+
+        .profile-label {
+            background: #f4f6f9;
+            font-weight: bold;
+            color: #354258;
+        }
+
+        .profile-value {
+            background: #ffffff;
+        }
+
+        .field-input {
+            display: block;
+            width: 100%;
+            height: 24px;
+            margin: 0;
+            padding: 1px 3px;
+            border: none;
+            border-bottom: 1px solid #66758a;
+            outline: none;
+            background: transparent;
+            color: #182033;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11.5px;
+        }
+
+        .rounding-table {
+            width: 100%;
+            margin: 0 0 24px 0;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        .rounding-table th {
+            border: 1px solid #24469a !important;
+            padding: 8px 7px;
+            background-color: #24469a !important;
+            color: #ffffff !important;
+            text-align: left;
+            font-size: 11.2px;
+            font-weight: bold;
+
+            /* Chrome print fallback */
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            box-shadow: inset 0 0 0 1000px #24469a !important;
+        }
+
+        .rounding-table td {
+            border: 1px solid #c7d2df;
+            height: 42px;
+            padding: 3px 5px;
+            vertical-align: middle;
+            background: #ffffff;
+        }
+
+        .log-input {
+            display: block;
+            width: 100%;
+            height: 30px;
+            margin: 0;
+            padding: 2px 3px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #182033;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11px;
+        }
+
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 30px;
+        }
+
+        .signature-table td {
+            border: none;
+            padding: 0;
+            vertical-align: bottom;
+        }
+
+        .signature-label-cell {
+            width: 25%;
+            padding-right: 12px !important;
+            font-size: 12px;
+            color: #26334a;
+            line-height: 1.45;
+        }
+
+        .signature-line-cell {
+            width: 45%;
+            padding-right: 22px !important;
+        }
+
+        .review-label-cell {
+            width: 10%;
+            padding-right: 8px !important;
+            font-size: 12px;
+            color: #26334a;
+            line-height: 1.45;
+        }
+
+        .review-line-cell {
+            width: 20%;
+        }
+
+        .signature-input {
+            display: block;
+            width: 100%;
+            height: 30px;
+            margin: 0;
+            padding: 1px 3px;
+            border: none;
+            border-bottom: 1px solid #56657a;
+            outline: none;
+            background: transparent;
+            color: #182033;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 11.5px;
+        }
+
+       
+
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .rounding-table th {
+                background-color: #24469a !important;
+                color: #ffffff !important;
+                border-color: #24469a !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+
+                /* This makes the blue area print even when Chrome ignores background-color */
+                box-shadow: inset 0 0 0 1000px #24469a !important;
+            }
+
+            input {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <form action="" method="post" id="dailyPatientRoundingLogForm">
+
+        <div class="page">
+
+            <table class="main-table">
+                <tr>
+                    <td>
+
+                        <div class="brand">MEDITRAVEL</div>
+
+                        <div class="document-title">
+                            DAILY PATIENT ROUNDING LOG
+                        </div>
+
+                        <div class="top-rule"></div>
+
+                        <!-- PATIENT / CASE DETAILS -->
+                        <table class="profile-table">
+                            <colgroup>
+                                <col style="width:25%;">
+                                <col style="width:25%;">
+                                <col style="width:25%;">
+                                <col style="width:25%;">
+                            </colgroup>
+
+                            <tr>
+                                <td class="profile-label">Patient Full Name</td>
+                                <td class="profile-value">
+                                    <input type="text" id="input1" name="input1" class="field-input">
+                                </td>
+
+                                <td class="profile-label">Assigned Coordinator</td>
+                                <td class="profile-value">
+                                    <input type="text" id="input2" name="input2" class="field-input">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="profile-label">Destination/Facility</td>
+                                <td class="profile-value">
+                                    <input type="text" id="input3" name="input3" class="field-input">
+                                </td>
+
+                                <td class="profile-label">Attending Physician</td>
+                                <td class="profile-value">
+                                    <input type="text" id="input4" name="input4" class="field-input">
+                                </td>
+                            </tr>
+
+                            <tr>
+                                <td class="profile-label">Primary Procedure</td>
+                                <td class="profile-value">
+                                    <input type="text" id="input5" name="input5" class="field-input">
+                                </td>
+
+                                <td class="profile-label">Room/Ward Number</td>
+                                <td class="profile-value">
+                                    <input type="text" id="input6" name="input6" class="field-input">
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- DAILY ROUNDING LOG -->
+                        <table class="rounding-table">
+                            <colgroup>
+                                <col style="width:15%;">
+                                <col style="width:15%;">
+                                <col style="width:12%;">
+                                <col style="width:18%;">
+                                <col style="width:18%;">
+                                <col style="width:22%;">
+                            </colgroup>
+
+                            <thead>
+                                <tr>
+                                    <th>Date / Time</th>
+                                    <th>Temp / BP</th>
+                                    <th>Pain Score</th>
+                                    <th>Mobility Status</th>
+                                    <th>Compliance</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr>
+                                    <td><input type="text" id="input7" name="input7" class="log-input"></td>
+                                    <td><input type="text" id="input8" name="input8" class="log-input"></td>
+                                    <td><input type="text" id="input9" name="input9" class="log-input"></td>
+                                    <td><input type="text" id="input10" name="input10" class="log-input"></td>
+                                    <td><input type="text" id="input11" name="input11" class="log-input"></td>
+                                    <td><input type="text" id="input12" name="input12" class="log-input"></td>
+                                </tr>
+
+                                <tr>
+                                    <td><input type="text" id="input13" name="input13" class="log-input"></td>
+                                    <td><input type="text" id="input14" name="input14" class="log-input"></td>
+                                    <td><input type="text" id="input15" name="input15" class="log-input"></td>
+                                    <td><input type="text" id="input16" name="input16" class="log-input"></td>
+                                    <td><input type="text" id="input17" name="input17" class="log-input"></td>
+                                    <td><input type="text" id="input18" name="input18" class="log-input"></td>
+                                </tr>
+
+                                <tr>
+                                    <td><input type="text" id="input19" name="input19" class="log-input"></td>
+                                    <td><input type="text" id="input20" name="input20" class="log-input"></td>
+                                    <td><input type="text" id="input21" name="input21" class="log-input"></td>
+                                    <td><input type="text" id="input22" name="input22" class="log-input"></td>
+                                    <td><input type="text" id="input23" name="input23" class="log-input"></td>
+                                    <td><input type="text" id="input24" name="input24" class="log-input"></td>
+                                </tr>
+
+                                <tr>
+                                    <td><input type="text" id="input25" name="input25" class="log-input"></td>
+                                    <td><input type="text" id="input26" name="input26" class="log-input"></td>
+                                    <td><input type="text" id="input27" name="input27" class="log-input"></td>
+                                    <td><input type="text" id="input28" name="input28" class="log-input"></td>
+                                    <td><input type="text" id="input29" name="input29" class="log-input"></td>
+                                    <td><input type="text" id="input30" name="input30" class="log-input"></td>
+                                </tr>
+
+                                <tr>
+                                    <td><input type="text" id="input31" name="input31" class="log-input"></td>
+                                    <td><input type="text" id="input32" name="input32" class="log-input"></td>
+                                    <td><input type="text" id="input33" name="input33" class="log-input"></td>
+                                    <td><input type="text" id="input34" name="input34" class="log-input"></td>
+                                    <td><input type="text" id="input35" name="input35" class="log-input"></td>
+                                    <td><input type="text" id="input36" name="input36" class="log-input"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- SIGN-OFF -->
+                        <div class="avoid-break">
+                            <table class="signature-table">
+                                <tr>
+                                    <td class="signature-label-cell">
+                                        Signature of Lead Care<br>
+                                        Coordinator:
+                                    </td>
+
+                                    <td class="signature-line-cell">
+                                        <input type="text" id="input37" name="input37" class="signature-input">
+                                    </td>
+
+                                    <td class="review-label-cell">
+                                        Review<br>
+                                        Date/Time:
+                                    </td>
+
+                                    <td class="review-line-cell">
+                                        <input type="text" id="input38" name="input38" class="signature-input">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </form>
+</body>
+</html>

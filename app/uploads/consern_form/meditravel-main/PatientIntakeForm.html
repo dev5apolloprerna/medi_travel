@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Medi Travel - Patient Intake Form</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 14mm 15mm 16mm 15mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+            color: #182033;
+            background: #ffffff;
+        }
+
+        .wrapper {
+            width: 100%;
+        }
+
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .brand {
+            font-size: 30px;
+            font-weight: bold;
+            letter-spacing: 4px;
+            color: #254398;
+            padding-bottom: 8px;
+        }
+
+        .document-title {
+            font-size: 19px;
+            font-weight: bold;
+            color: #182033;
+            padding-bottom: 18px;
+        }
+
+        .blue-line {
+            width: 100%;
+            height: 14px;
+            border-bottom: 3px solid #1684cc;
+            margin-bottom: 18px;
+        }
+
+        .instruction-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+        }
+
+        .instruction-table td {
+            background: #f5f7fa;
+            padding: 12px 14px;
+            border-left: 4px solid #1596d2;
+            color: #45536a;
+            line-height: 1.5;
+        }
+
+        .section-heading {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 11px;
+            margin-bottom: 10px;
+        }
+
+        .section-heading td {
+            color: #234498;
+            font-size: 15px;
+            font-weight: bold;
+            padding: 4px 0 7px 0;
+            border-bottom: 1px solid #bfcde0;
+        }
+
+        .form-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-bottom: 16px;
+        }
+
+        .form-table td {
+            border: 1px solid #c8d3e0;
+            padding: 10px 11px;
+            vertical-align: middle;
+            line-height: 1.4;
+        }
+
+        .label {
+            background: #f4f6f9;
+            font-weight: bold;
+            color: #37445a;
+        }
+
+        .input-space {
+            background: #ffffff;
+        }
+
+        /* Real clickable text/date/email/tel inputs */
+        .form-input {
+            width: 100%;
+            height: 25px;
+            margin: 0;
+            padding: 0 4px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #182033;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+            border-bottom: 1px solid #1684cc;
+        }
+
+        .form-textarea {
+            width: 100%;
+            min-height: 62px;
+            margin: 0;
+            padding: 4px;
+            border: none;
+            outline: none;
+            resize: vertical;
+            background: transparent;
+            color: #182033;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+
+        /* Real browser checkboxes/radios */
+        .choice {
+            display: inline-block;
+            margin-right: 16px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .choice input {
+            width: 14px;
+            height: 14px;
+            margin: 0 5px 0 0;
+            vertical-align: -2px;
+            cursor: pointer;
+        }
+
+        .choice-block {
+            display: block;
+            margin-bottom: 5px;
+            cursor: pointer;
+            font-weight: normal;
+        }
+
+        .choice-block input {
+            width: 14px;
+            height: 14px;
+            margin: 0 5px 0 0;
+            vertical-align: -2px;
+            cursor: pointer;
+        }
+
+        .inner-choice-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .inner-choice-table td {
+            border: none !important;
+            padding: 0 10px 4px 0 !important;
+            height: auto !important;
+            vertical-align: middle !important;
+            white-space: nowrap;
+        }
+
+        .textarea-row td {
+            height: 65px;
+            vertical-align: top;
+        }
+
+        .consent-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 3px;
+        }
+
+        .consent-table td {
+            padding: 8px 0;
+            vertical-align: top;
+            line-height: 1.5;
+        }
+
+        .consent-check {
+            width: 26px;
+        }
+
+        .consent-check input {
+            width: 14px;
+            height: 14px;
+            cursor: pointer;
+        }
+
+        .required {
+            font-weight: bold;
+        }
+
+        .signature-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 32px;
+        }
+
+        .signature-table td {
+            vertical-align: bottom;
+            padding: 4px 0;
+        }
+
+        .signature-input {
+            width: 100%;
+            height: 32px;
+            border: none;
+            border-bottom: 1px solid #59677c;
+            outline: none;
+            padding: 2px 4px;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 13px;
+            background: transparent;
+        }
+
+
+        .avoid-break {
+            page-break-inside: avoid;
+        }
+
+        @media print {
+
+            input,
+            textarea {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            .form-input:focus,
+            .form-textarea:focus {
+                border-bottom: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <form action="" id="patientIntakeForm" method="post">
+        <div class="wrapper">
+            <table class="main-table">
+                <tr>
+                    <td>
+                        <div class="brand">MEDI TRAVEL</div>
+                        <div class="document-title">
+                            PATIENT INTAKE &amp; MEDICAL TOURISM ENQUIRY FORM
+                        </div>
+                        <div class="blue-line"></div>
+                        <table class="instruction-table">
+                            <tr>
+                                <td>
+                                    <strong>Instructions:</strong>
+                                    Please complete this questionnaire to help the Medi Travel
+                                    clinical coordination team review your requirements.
+                                    This data allows us to securely tailor your medical treatment
+                                    options and accommodations.
+                                </td>
+                            </tr>
+                        </table>
+                        <!-- SECTION 1 -->
+                        <table class="section-heading">
+                            <tr>
+                                <td>1. PATIENT &amp; CONTACT INFORMATION</td>
+                            </tr>
+                        </table>
+                        <table class="form-table">
+                            <colgroup>
+                                <col style="width:25%;" />
+                                <col style="width:25%;" />
+                                <col style="width:25%;" />
+                                <col style="width:25%;" />
+                            </colgroup>
+                            <tr>
+                                <td class="label">Full Name *</td>
+                                <td class="input-space" colspan="3"
+                                    style="height:25px !important; padding:0 11px !important;">
+                                    <input autocomplete="name" class="form-input" id="input1" name="input1" required=""
+                                        type="text" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label">Date of Birth *</td>
+                                <td class="input-space" style="height:25px !important; padding:0 11px !important;">
+                                    <input class="form-input" id="input2" name="input2" required="" type="date" />
+                                </td>
+                                <td class="label">Gender *</td>
+                                <td class="input-space">
+                                    <table class="inner-choice-table">
+                                        <tr>
+                                            <td>
+                                                <label class="choice" for="input3">
+                                                    <input id="input3" name="input3" required="" type="radio"
+                                                        value="male" />
+                                                    Male
+                                                </label>
+                                            </td>
+                                            <td>
+                                                <label class="choice" for="input4">
+                                                    <input id="input4" name="input4" type="radio" value="female" />
+                                                    Female
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td colspan="2">
+                                                <label class="choice" for="input5">
+                                                    <input id="input5" name="input5" type="radio" value="other" />
+                                                    Other
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label">Country of Residence *</td>
+                                <td class="input-space" style="height:25px !important; padding:0 11px !important;">
+                                    <input autocomplete="country-name" class="form-input" id="input6" name="input6"
+                                        required="" type="text" />
+                                </td>
+                                <td class="label">Email Address *</td>
+                                <td class="input-space" style="height:25px !important; padding:0 11px !important;">
+                                    <input autocomplete="email" class="form-input" id="input7" name="input7" required=""
+                                        type="email" />
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label">Phone Number *</td>
+                                <td class="input-space" style="height:25px !important; padding:0 11px !important;">
+                                    <input autocomplete="tel" class="form-input" id="input8" name="input8" required=""
+                                        type="tel" />
+                                </td>
+                                <td class="label">Preferred Contact *</td>
+                                <td class="input-space">
+                                    <table class="inner-choice-table">
+                                        <tr>
+                                            <td colspan="2">
+                                                <label class="choice" for="input9">
+                                                    <input id="input9" name="input9" required="" type="radio"
+                                                        value="whatsapp" />
+                                                    WhatsApp
+                                                </label>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>
+                                                <label class="choice" for="input10">
+                                                    <input id="input10" name="input10" type="radio" value="email" />
+                                                    Email
+                                                </label>
+                                            </td>
+                                            <td>
+                                                <label class="choice" for="input11">
+                                                    <input id="input11" name="input11" type="radio" value="call" />
+                                                    Call
+                                                </label>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="label">Best Contact Time</td>
+                                <td class="input-space" colspan="3">
+                                    <label class="choice" for="input12">
+                                        <input id="input12" name="input12" type="radio" value="morning" />
+                                        Morning
+                                    </label>
+                                    <label class="choice" for="input13">
+                                        <input id="input13" name="input13" type="radio" value="afternoon" />
+                                        Afternoon
+                                    </label>
+                                    <label class="choice" for="input14">
+                                        <input id="input14" name="input14" type="radio" value="evening" />
+                                        Evening
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                        <!-- SECTION 2 -->
+                        <table class="section-heading">
+                            <tr>
+                                <td>2. PRIMARY MEDICAL AREAS OF INTEREST</td>
+                            </tr>
+                        </table>
+                        <table class="form-table">
+                            <colgroup>
+                                <col style="width:25%;" />
+                                <col style="width:75%;" />
+                            </colgroup>
+                            <tr>
+                                <td class="label">Treatment Specialty *</td>
+                                <td class="input-space">
+                                    <label class="choice" for="input15">
+                                        <input id="input15" name="input15" type="checkbox" value="dental" />
+                                        Dental Care
+                                    </label>
+                                    <label class="choice" for="input16">
+                                        <input id="input16" name="input16" type="checkbox" value="cosmetic" />
+                                        Cosmetic / Plastic Surgery
+                                    </label>
+                                    <label class="choice" for="input17">
+                                        <input id="input17" name="input17" type="checkbox" value="orthopaedics" />
+                                        Orthopaedics
+                                    </label>
+                                    <br />
+                                    <label class="choice" for="input18">
+                                        <input id="input18" name="input18" type="checkbox" value="ophthalmology" />
+                                        Ophthalmology
+                                    </label>
+                                </td>
+                            </tr>
+                            <tr class="textarea-row">
+                                <td class="label">
+                                    Specific Medical<br />
+                                    Concerns / Symptoms *
+                                </td>
+                                <td class="input-space" style="padding:4px 7px !important;">
+                                    <textarea class="form-textarea" id="input19" name="input19" required=""></textarea>
+                                </td>
+                            </tr>
+                        </table>
+                        <table class="form-table">
+                            <colgroup>
+                                <col style="width:25%;" />
+                                <col style="width:25%;" />
+                                <col style="width:25%;" />
+                                <col style="width:25%;" />
+                            </colgroup>
+                            <tr>
+                                <td class="label">
+                                    Available Reports/<br />
+                                    Scans? *
+                                </td>
+                                <td class="input-space">
+                                    <label class="choice" for="input20">
+                                        <input id="input20" name="input20" required="" type="radio" value="yes" />
+                                        Yes
+                                    </label>
+                                    <label class="choice" for="input21">
+                                        <input id="input21" name="input21" type="radio" value="no" />
+                                        No
+                                    </label>
+                                </td>
+                                <td class="label">Target Country/City</td>
+                                <td class="input-space" style="height:25px !important; padding:0 11px !important;">
+                                    <input class="form-input" id="input22" name="input22" type="text" />
+                                </td>
+                            </tr>
+                        </table>
+                        <!-- SECTION 3 -->
+                        <div class="avoid-break">
+                            <table class="section-heading">
+                                <tr>
+                                    <td>3. ACCOMMODATION &amp; TRAVEL PREFERENCES</td>
+                                </tr>
+                            </table>
+                            <table class="form-table">
+                                <colgroup>
+                                    <col style="width:25%;" />
+                                    <col style="width:25%;" />
+                                    <col style="width:25%;" />
+                                    <col style="width:25%;" />
+                                </colgroup>
+                                <tr>
+                                    <td class="label">Accommodation Type *</td>
+                                    <td class="input-space">
+                                        <label class="choice-block" for="input23">
+                                            <input id="input23" name="input23" required="" type="radio" value="hotel" />
+                                            Hotel
+                                        </label>
+                                        <label class="choice-block" for="input24">
+                                            <input id="input24" name="input24" type="radio" value="airbnb" />
+                                            Airbnb / Rental Apartment
+                                        </label>
+                                    </td>
+                                    <td class="label">
+                                        Accompanying<br />
+                                        Companion?
+                                    </td>
+                                    <td class="input-space">
+                                        <label class="choice" for="input25">
+                                            <input id="input25" name="input25" type="radio" value="yes" />
+                                            Yes
+                                        </label>
+                                        <label class="choice" for="input26">
+                                            <input id="input26" name="input26" type="radio" value="no" />
+                                            No
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="label">
+                                        Estimated Travel<br />
+                                        Window
+                                    </td>
+                                    <td class="input-space">
+                                        <label class="choice-block" for="input27">
+                                            <input id="input27" name="input27" type="radio" value="within_1_month" />
+                                            Within 1 Month
+                                        </label>
+                                        <label class="choice-block" for="input28">
+                                            <input id="input28" name="input28" type="radio" value="2_3_months" />
+                                            2-3 Months
+                                        </label>
+                                        <label class="choice-block" for="input29">
+                                            <input id="input29" name="input29" type="radio" value="6_plus_months" />
+                                            6+ Months
+                                        </label>
+                                    </td>
+                                    <td class="label">
+                                        Require Visa<br />
+                                        Assistance?
+                                    </td>
+                                    <td class="input-space">
+                                        <label class="choice" for="input30">
+                                            <input id="input30" name="input30" type="radio" value="yes" />
+                                            Yes
+                                        </label>
+                                        <label class="choice" for="input31">
+                                            <input id="input31" name="input31" type="radio" value="no" />
+                                            No
+                                        </label>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <!-- SECTION 4 -->
+                        <div class="avoid-break">
+                            <table class="section-heading">
+                                <tr>
+                                    <td>4. HIPAA / DATA PRIVACY CONSENT</td>
+                                </tr>
+                            </table>
+                            <table class="consent-table">
+                                <tr>
+                                    <td class="consent-check">
+                                        <input id="input32" name="input32" required="" type="checkbox" value="1" />
+                                    </td>
+                                    <td>
+                                        <label for="input32" style="cursor:pointer;">
+                                            <span class="required">[REQUIRED]</span>
+                                            I authorize Medi Travel to process my details and share
+                                            medical intake files securely with specialized clinical
+                                            partners for case evaluation.
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="consent-check">
+                                        <input id="input33" name="input33" required="" type="checkbox" value="1" />
+                                    </td>
+                                    <td>
+                                        <label for="input33" style="cursor:pointer;">
+                                            <span class="required">[REQUIRED]</span>
+                                            I agree to the privacy statement and terms of service
+                                            guiding international medical travel coordination.
+                                        </label>
+                                    </td>
+                                </tr>
+                            </table>
+                            <table class="signature-table">
+                                <tr>
+                                    <td style="width:18%;">
+                                        Signature of Patient/<br />
+                                        Guardian:
+                                    </td>
+                                    <td style="width:45%; padding-right:20px;">
+                                        <input class="signature-input" id="input34" name="input34" type="text" />
+                                    </td>
+                                    <td style="width:8%; text-align:right; padding-right:12px;">
+                                        Date:
+                                    </td>
+                                    <td style="width:29%;">
+                                        <input class="signature-input" id="input35" name="input35" type="date" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </form>
+</body>
+
+</html>
