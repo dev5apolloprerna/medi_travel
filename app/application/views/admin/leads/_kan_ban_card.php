@@ -78,6 +78,13 @@ if ($lead['status'] == $status['id']) { ?>
                 </div>
             </div>
             <?php } ?>
+             <div class="col-md-12 mtop10">
+                <a href="#" class="btn btn-default btn-sm"
+                    onclick="show_lead_followup_history(<?php echo e($lead['id']); ?>); return false;">
+                    <i class="fa fa-history tw-mr-1"></i>
+                    <?php echo _l('lead_followup_open'); ?>
+                </a>
+            </div>
             <a href="#" class="pull-right text-muted kan-ban-expand-top"
                 onclick="slideToggle('#kan-ban-expand-<?php echo e($lead['id']); ?>'); return false;">
                 <i class="fa fa-expand" aria-hidden="true"></i>

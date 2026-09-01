@@ -6,6 +6,13 @@
 } ?>>
 
     <?php if (isset($lead)) { ?>
+    <div class="pull-right mleft5">
+        <a href="#lead_followup_history" class="btn btn-primary lead-top-btn lead-view"
+            data-toggle="tab" title="<?php echo _l('lead_followup_open'); ?>">
+            <i class="fa fa-history tw-mr-1"></i>
+            <?php echo _l('lead_followup_open'); ?>
+        </a>
+    </div>
     <div class="btn-group pull-right mleft5" id="lead-more-btn">
         <a href="#" class="btn btn-default dropdown-toggle lead-top-btn" data-toggle="dropdown" aria-haspopup="true"
             aria-expanded="false">

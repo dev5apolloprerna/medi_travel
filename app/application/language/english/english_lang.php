@@ -3940,6 +3940,7 @@ $lang['treatment_details'] = 'Treatment';
 $lang['doctor']   = 'Doctor';
 
 $lang['lead_followup_history'] = 'Lead History';
+$lang['lead_followup_open'] = 'Add Lead History';
 $lang['lead_next_followup_date'] = 'Next Follow-up Date';
 $lang['lead_followup_comment'] = 'Comment';
 $lang['lead_followup_add'] = 'Add Follow-up';
