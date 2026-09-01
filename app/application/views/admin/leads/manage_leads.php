@@ -292,6 +292,10 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="lead-followup-history-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content"></div></div>
+</div>
+
 <script id="hidden-columns-table-leads" type="text/json">
 <?php echo get_staff_meta(get_staff_user_id(), 'hidden-columns-table-leads'); ?>
 </script>
@@ -314,6 +318,14 @@ $(function() {
         }
     });
 });
+function show_lead_followup_history(leadId) {
+    var modal = $('#lead-followup-history-modal');
+    modal.find('.modal-content').load(admin_url + 'leads/followup_history/' + leadId, function() {
+        modal.modal('show');
+        init_selectpicker();
+        init_datepicker();
+    });
+}   
 </script>
 </body>
 

@@ -158,6 +158,7 @@ class Leads extends AdminController
             $data['mail_activity'] = $this->leads_model->get_mail_activity($id);
             $data['notes']         = $this->misc_model->get_notes($id, 'lead');
             $data['activity_log']  = $this->leads_model->get_lead_activity_log($id);
+            $data['followup_history'] = $this->leads_model->get_followup_history($id);
 
             if (is_gdpr() && get_option('gdpr_enable_consent_for_leads') == '1') {
                 $this->load->model('gdpr_model');
@@ -184,6 +185,39 @@ class Leads extends AdminController
             'reminder_data' => $reminder_data,
         ];
     }
+     public function followup_history($id)
+    {
+        if (!is_staff_member() || !$this->leads_model->staff_can_access_lead($id)) {
+            ajax_access_denied();
+        }
+
+        if ($this->input->post()) {
+            $nextDate = $this->input->post('next_followup_date');
+            $comment  = trim((string) $this->input->post('comment'));
+            $statusId = (int) $this->input->post('status_id');
+            $validStatus = $this->leads_model->get_status($statusId);
+
+            if (!$nextDate || !is_date($nextDate) || $comment === '' || !$validStatus) {
+                echo json_encode(['success' => false, 'message' => _l('lead_followup_required_fields')]);
+                return;
+            }
+
+            $success = (bool) $this->leads_model->add_followup_history($id, [
+                'next_followup_date' => $nextDate,
+                'comment'            => $comment,
+                'status_id'          => $statusId,
+            ]);
+
+            echo json_encode(['success' => $success, 'message' => $success ? _l('added_successfully', _l('lead_followup_history')) : _l('problem_adding', _l('lead_followup_history'))]);
+            return;
+        }
+
+        $data['lead']             = $this->leads_model->get($id);
+        $data['statuses']         = $this->leads_model->get_status();
+        $data['followup_history'] = $this->leads_model->get_followup_history($id);
+        $this->load->view('admin/leads/followup_history_modal', $data);
+    }
+
 
     public function leads_kanban_load_more()
     {

@@ -177,6 +177,8 @@ return App_table::find('leads')
                 $nameRow .= ' | <a href="' . admin_url('leads/index/' . $aRow['id'] . '?edit=true') . '" onclick="init_lead(' . $aRow['id'] . ', true);return false;">' . _l('edit') . '</a>';
             }
 
+            $nameRow .= ' | <a href="#" onclick="show_lead_followup_history(' . $aRow['id'] . ');return false;">' . _l('lead_followup_history') . '</a>';
+            
             if ($aRow['addedfrom'] == get_staff_user_id() || $has_permission_delete) {
                 $nameRow .= ' | <a href="' . admin_url('leads/delete/' . $aRow['id']) . '" class="_delete text-danger">' . _l('delete') . '</a>';
             }

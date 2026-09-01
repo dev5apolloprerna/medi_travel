@@ -879,6 +879,40 @@ class Leads_model extends App_Model
 
         return $this->db->get(db_prefix() . 'lead_activity_log')->result_array();
     }
+ public function get_followup_history($leadId)
+    {
+        $this->db->select(db_prefix() . 'lead_followup_history.*, ' . db_prefix() . 'leads_status.name as status_name, ' . db_prefix() . 'leads_status.color as status_color');
+        $this->db->join(db_prefix() . 'leads_status', db_prefix() . 'leads_status.id = ' . db_prefix() . 'lead_followup_history.status_id', 'left');
+        $this->db->where('lead_id', $leadId);
+        $this->db->order_by('created_at', 'DESC');
+
+        return $this->db->get(db_prefix() . 'lead_followup_history')->result_array();
+    }
+
+    public function add_followup_history($leadId, $data)
+    {
+        $entry = [
+            'lead_id'            => $leadId,
+            'next_followup_date' => to_sql_date($data['next_followup_date']),
+            'comment'            => trim($data['comment']),
+            'status_id'          => (int) $data['status_id'],
+            'created_by'         => get_staff_user_id(),
+            'created_at'         => date('Y-m-d H:i:s'),
+        ];
+
+        $this->db->insert(db_prefix() . 'lead_followup_history', $entry);
+        $insertId = $this->db->insert_id();
+
+        if ($insertId) {
+            $this->update_lead_status(['leadid' => $leadId, 'status' => $entry['status_id']]);
+            $this->log_lead_activity($leadId, 'not_lead_activity_followup_added', false, serialize([
+                _d($entry['next_followup_date']),
+                $entry['comment'],
+            ]));
+        }
+
+        return $insertId;
+    }
 
     public function staff_can_access_lead($id, $staff_id = '')
     {
