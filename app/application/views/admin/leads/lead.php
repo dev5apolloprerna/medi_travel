@@ -55,6 +55,11 @@ if (isset($lead)) {
                                 </a>
                             </li>
                             <?php if (isset($lead)) { ?>
+                           <li role="presentation">
+                                <a href="#lead_followup_history" aria-controls="lead_followup_history" role="tab" data-toggle="tab">
+                                    <?php echo _l('lead_followup_history'); ?>
+                                </a>
+                            </li>
                             <?php if (count($mail_activity) > 0 || isset($show_email_activity) && $show_email_activity) { ?>
                             <li role="presentation">
                                 <a href="#tab_email_activity" aria-controls="tab_email_activity" role="tab"
@@ -140,6 +145,10 @@ if (isset($lead)) {
                     <?php $this->load->view('admin/leads/profile'); ?>
                 </div>
                 <?php if (isset($lead)) { ?>
+                <div role="tabpanel" class="tab-pane" id="lead_followup_history">
+                    <?php $this->load->view('admin/leads/followup_history', ['lead' => $lead, 'statuses' => $statuses, 'followup_history' => $followup_history]); ?>
+                </div>
+
                 <?php if (count($mail_activity) > 0 || isset($show_email_activity) && $show_email_activity) { ?>
                 <div role="tabpanel" class="tab-pane" id="tab_email_activity">
                     <?php hooks()->do_action('before_lead_email_activity', ['lead' => $lead, 'email_activity' => $mail_activity]); ?>
