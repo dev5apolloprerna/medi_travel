@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDITRAVEL - Form 14 Patient Experience &amp; NPS</title>
+    <style>
+        @page { size: A4 portrait; margin: 9mm 14mm; }
+        * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        body { margin: 0; color: #26364d; background: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 8px; line-height: 1.4; }
+        .page { width: 100%; margin: 0 auto; background: #fff; }
+        .brand { margin: 0; color: #233f8f; font-size: 25px; font-weight: 700; letter-spacing: 4px; line-height: 1; }
+        .form-title { margin: 9px 0 15px; color: #151d2d; font-size: 15px; font-weight: 700; }
+        .top-rule { height: 2px; margin-bottom: 12px; background: #1685bd; }
+        .feedback-box { margin-bottom: 12px; padding: 7px 9px; border-left: 4px solid #1685bd; background: #f7f9fc; color: #53627a; font-size: 12px; line-height: 1.5; }
+        .feedback-box strong { color: #34445d; }
+        .section { margin-bottom: 11px; page-break-inside: avoid; }
+        .section-heading { margin: 0 0 7px; padding-bottom: 4px; border-bottom: 1px solid #d6deea; color: #20428f; font-size: 15px; font-weight: 700; letter-spacing: .1px; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        td { border: 1px solid #afbed3; padding: 5px 7px; vertical-align: top; }
+        .label { width: 25%; background: #f7f9fc; color: #34445d; font-size: 10px; font-weight: 700; }
+        .value { width: 25%; height: 26px; }
+        input[type="text"], textarea { width: 100%; margin: 0; padding: 1px 2px; border: 0;
+             /* border-bottom: 1px solid #7b8799; */
+              border-radius: 0; outline: 0; background: transparent; color: #172033; font: 12px Arial, Helvetica, sans-serif; }
+        textarea { height: 70px; min-height: 70px; resize: vertical; border: 1px solid #bac7d8; padding: 6px; }
+        input:focus, textarea:focus { background: #fffbe8; }
+        .question { margin: 0 0 7px; color: #3f4d62; font-size: 12px; line-height: 1.45; }
+        .nps-table td { height: 38px; padding: 5px 2px; text-align: center; vertical-align: middle; }
+        .nps-option { display: block; cursor: pointer; font-weight: 700; color: #24334a; }
+        .nps-number { display: block; margin-bottom: 4px; }
+        input[type="radio"] { width: 10px; height: 10px; margin: 0; cursor: pointer; vertical-align: middle; }
+        .nps-scale { width: 100%; margin-top: 3px; color: #718096; font-size: 11px; }
+        .nps-scale td { border: 0; padding: 0; }
+        .nps-scale .right { text-align: right; }
+        .benchmark-intro { margin: 0 0 7px; color: #526077; font-size: 12px; }
+        .benchmark-row { margin-bottom: 6px; page-break-inside: avoid; }
+        .benchmark-label { margin-bottom: 2px; color: #34445d; font-size: 10.7px; font-weight: 700; }
+        .rating-option { display: inline-block; margin-right: 9px; color: #34445d; cursor: pointer; white-space: nowrap; font-size: 12px; }
+        .remarks-label { margin: 0 0 7px; color: #3f4d62; font-size: 12px; }
+        .footer-note { margin: 12px 0 0; color: #56647a; font-size: 11px; font-style: italic; line-height: 1.45; text-align: center; }
+        .print-value { display: inline-block; width: 100%; min-height: 12px; border-bottom: 1px solid #7b8799; white-space: pre-wrap; }
+        .print-textarea { min-height: 70px; border: 1px solid #bac7d8; padding: 6px; }
+        .print-radio { display: inline-block; font-family: DejaVu Sans, sans-serif; font-size: 10px; }
+        @media screen {
+            body { background: #e9edf3; }
+            .page { width: 210mm; min-height: 297mm; padding: 9mm 14mm; margin: 12px auto; box-shadow: 0 2px 14px rgba(15,23,42,.15); }
+        }
+        @media print { .page { padding: 0; margin: 0; } }
+    </style>
+</head>
+<body>
+<form id="meditravelNpsForm" autocomplete="on">
+    <div class="page">
+        <h1 class="brand">MEDITRAVEL</h1>
+        <h2 class="form-title">FORM 14: PATIENT EXPERIENCE &amp; NET PROMOTER SCORE (NPS)</h2>
+        <div class="top-rule"></div>
+
+        <div class="feedback-box">
+            <strong>VALUED PATIENT FEEDBACK:</strong> At MEDITRAVEL, we are committed to providing world-class medical facilitation. Your insights directly influence our quality standards, partner hospital selections, and logistics protocols. Please take a moment to evaluate your international medical travel journey.
+        </div>
+
+        <div class="section">
+            <table>
+                <tr>
+                    <td class="label">Patient Name (Optional)</td>
+                    <td class="value"><input type="text" id="patient_name" name="patient_name" tabindex="1"></td>
+                    <td class="label">Case Reference ID</td>
+                    <td class="value"><input type="text" id="input2" name="input2" tabindex="2"></td>
+                </tr>
+                <tr>
+                    <td class="label">Treating Facility /<br>Destination</td>
+                    <td class="value"><input type="text" id="input3" name="input3" tabindex="3"></td>
+                    <td class="label">Submission Date</td>
+                    <td class="value"><input type="text" id="input4" name="input4" tabindex="4"></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <h3 class="section-heading">1. THE NET PROMOTER SCORE (NPS)</h3>
+            <p class="question">How likely is it that you would recommend MEDITRAVEL services to a family member, colleague, or friend seeking medical care abroad? (Please circle or mark a single value below)</p>
+            <table class="nps-table">
+                <tr>
+                    <td><label class="nps-option"><span class="nps-number">0</span><input type="radio" id="input5" name="nps_score" value="0" tabindex="5"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">1</span><input type="radio" id="input6" name="nps_score" value="1" tabindex="6"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">2</span><input type="radio" id="input7" name="nps_score" value="2" tabindex="7"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">3</span><input type="radio" id="input8" name="nps_score" value="3" tabindex="8"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">4</span><input type="radio" id="input9" name="nps_score" value="4" tabindex="9"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">5</span><input type="radio" id="input10" name="nps_score" value="5" tabindex="10"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">6</span><input type="radio" id="input11" name="nps_score" value="6" tabindex="11"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">7</span><input type="radio" id="input12" name="nps_score" value="7" tabindex="12"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">8</span><input type="radio" id="input13" name="nps_score" value="8" tabindex="13"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">9</span><input type="radio" id="input14" name="nps_score" value="9" tabindex="14"></label></td>
+                    <td><label class="nps-option"><span class="nps-number">10</span><input type="radio" id="input15" name="nps_score" value="10" tabindex="15"></label></td>
+                </tr>
+            </table>
+            <table class="nps-scale"><tr><td>0 - Not Likely at All (Detractor)</td><td class="right">10 - Extremely Likely (Promoter)</td></tr></table>
+        </div>
+
+        <div class="section">
+            <h3 class="section-heading">2. TARGETED JOURNEY EXPERIENCE BENCHMARKS</h3>
+            <p class="benchmark-intro">Please rate your satisfaction across specific operational modules (1 = Very Dissatisfied, 5 = Exceptionally Satisfied):</p>
+
+            <div class="benchmark-row">
+                <div class="benchmark-label">Pre-Departure Coordination &amp; Itinerary Engineering:</div>
+                <label class="rating-option">[ <input type="radio" id="input16" name="benchmark1" value="1" tabindex="16"> ] 1</label>
+                <label class="rating-option">[ <input type="radio" id="input17" name="benchmark1" value="2" tabindex="17"> ] 2</label>
+                <label class="rating-option">[ <input type="radio" id="input18" name="benchmark1" value="3" tabindex="18"> ] 3</label>
+                <label class="rating-option">[ <input type="radio" id="input19" name="benchmark1" value="4" tabindex="19"> ] 4</label>
+                <label class="rating-option">[ <input type="radio" id="input20" name="benchmark1" value="5" tabindex="20"> ] 5</label>
+            </div>
+
+            <div class="benchmark-row">
+                <div class="benchmark-label">Airport Pickup Logistics, Reception, &amp; Secure Chauffeur Transfers:</div>
+                <label class="rating-option">[ <input type="radio" id="input21" name="benchmark2" value="1" tabindex="21"> ] 1</label>
+                <label class="rating-option">[ <input type="radio" id="input22" name="benchmark2" value="2" tabindex="22"> ] 2</label>
+                <label class="rating-option">[ <input type="radio" id="input23" name="benchmark2" value="3" tabindex="23"> ] 3</label>
+                <label class="rating-option">[ <input type="radio" id="input24" name="benchmark2" value="4" tabindex="24"> ] 4</label>
+                <label class="rating-option">[ <input type="radio" id="input25" name="benchmark2" value="5" tabindex="25"> ] 5</label>
+            </div>
+
+            <div class="benchmark-row">
+                <div class="benchmark-label">Hospital Care Quality, Clinical Staff, &amp; Attending Physicians:</div>
+                <label class="rating-option">[ <input type="radio" id="input26" name="benchmark3" value="1" tabindex="26"> ] 1</label>
+                <label class="rating-option">[ <input type="radio" id="input27" name="benchmark3" value="2" tabindex="27"> ] 2</label>
+                <label class="rating-option">[ <input type="radio" id="input28" name="benchmark3" value="3" tabindex="28"> ] 3</label>
+                <label class="rating-option">[ <input type="radio" id="input29" name="benchmark3" value="4" tabindex="29"> ] 4</label>
+                <label class="rating-option">[ <input type="radio" id="input30" name="benchmark3" value="5" tabindex="30"> ] 5</label>
+            </div>
+
+            <div class="benchmark-row">
+                <div class="benchmark-label">Language Translation Services &amp; Care Coordinator On-Site Support:</div>
+                <label class="rating-option">[ <input type="radio" id="input31" name="benchmark4" value="1" tabindex="31"> ] 1</label>
+                <label class="rating-option">[ <input type="radio" id="input32" name="benchmark4" value="2" tabindex="32"> ] 2</label>
+                <label class="rating-option">[ <input type="radio" id="input33" name="benchmark4" value="3" tabindex="33"> ] 3</label>
+                <label class="rating-option">[ <input type="radio" id="input34" name="benchmark4" value="4" tabindex="34"> ] 4</label>
+                <label class="rating-option">[ <input type="radio" id="input35" name="benchmark4" value="5" tabindex="35"> ] 5</label>
+            </div>
+
+            <div class="benchmark-row">
+                <div class="benchmark-label">Hotel Accommodations, Cleanliness, &amp; Post-Op Comfort Parameters:</div>
+                <label class="rating-option">[ <input type="radio" id="input36" name="benchmark5" value="1" tabindex="36"> ] 1</label>
+                <label class="rating-option">[ <input type="radio" id="input37" name="benchmark5" value="2" tabindex="37"> ] 2</label>
+                <label class="rating-option">[ <input type="radio" id="input38" name="benchmark5" value="3" tabindex="38"> ] 3</label>
+                <label class="rating-option">[ <input type="radio" id="input39" name="benchmark5" value="4" tabindex="39"> ] 4</label>
+                <label class="rating-option">[ <input type="radio" id="input40" name="benchmark5" value="5" tabindex="40"> ] 5</label>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3 class="section-heading">3. QUALITATIVE INSIGHTS &amp; REMARKS</h3>
+            <p class="remarks-label">What aspects of your journey exceeded expectations, and what could be optimized to improve future medical travel experiences?</p>
+            <textarea id="input41" name="input41" tabindex="41"></textarea>
+            <p class="footer-note">Thank you for completing the MEDITRAVEL Journey Evaluation Framework. Please submit this form to your coordinator or via<br>email to feedback@meditravel-global.com.</p>
+        </div>
+    </div>
+</form>
+
+<script>
+/* For mPDF: populate values, run prepareForMpdf(), and pass the returned HTML to WriteHTML(). */
+function prepareForMpdf() {
+    document.querySelectorAll('#meditravelNpsForm input, #meditravelNpsForm textarea').forEach(function (field) {
+        var replacement = document.createElement('span');
+        if (field.type === 'radio') {
+            replacement.className = 'print-radio';
+            replacement.textContent = field.checked ? '\u25c9' : '\u25cb';
+        } else {
+            replacement.className = 'print-value' + (field.tagName === 'TEXTAREA' ? ' print-textarea' : '');
+            replacement.textContent = field.value || '\u00a0';
+        }
+        field.parentNode.replaceChild(replacement, field);
+    });
+    return document.documentElement.outerHTML;
+}
+</script>
+</body>
+</html>

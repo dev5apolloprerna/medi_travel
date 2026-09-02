@@ -881,6 +881,34 @@ i.fa.fa-circle.text-danger-glow.blink {
 }
 </style>
 <style>
+/* Make large modal fit in screen and enable scrolling — Consent Forms */
+#consentFormsModal .modal-dialog {
+  width: 90%;
+  max-width: 1100px;      /* optional */
+}
+
+/* Header + footer fixed, only body scroll */
+#consentFormsModal .modal-content {
+  max-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+#consentFormsModal .modal-body {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  max-height: calc(100vh - 200px); /* header+footer space */
+}
+
+/* optional: sticky table header while scrolling */
+#consentFormsModal thead th {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 2;
+}
+</style>
+<style>
   .btn-disabled {
     pointer-events: none;
     opacity: .55;
@@ -1177,6 +1205,17 @@ if (!empty($check_prescription_exists)) { ?>
                                 <button class="btn btn-primary add_free_hand_dental" 
                                     onclick="window.open('<?php echo admin_url('appointly/appointments/patient_signature_form/' . (int)$value['id'] . '/' . (int)$client->userid); ?>', '_blank');"   
                                     style="border-radius: 31px; font-size: 12px; padding: 5px 5px 6px 9px; text-align: end; margin-top: 8px;">Patient Consent
+                                </button>
+
+                                <!--Consent Form Library — tied to THIS appointment, so a
+                                    brand-new patient can actually fill a form (unlike the
+                                    "View Consent Forms" button at the top of the page, which
+                                    only shows forms already filled for a past appointment).
+                                    All consent forms are listed here regardless of appointment
+                                    type — no appointment-type filtering is applied. -->
+                                <button class="btn btn-primary add_free_hand_dental"
+                                    onclick="openConsentFormsModal(<?php echo (int)$value['id']; ?>, <?php echo (int)$client->userid; ?>, <?php echo (int)$staff_id; ?>, <?php echo htmlspecialchars(json_encode((string) $client->company), ENT_QUOTES, 'UTF-8'); ?>, '');"
+                                    style="border-radius: 31px; font-size: 12px; padding: 5px 5px 6px 9px; text-align: end; margin-top: 8px;">Consent Forms
                                 </button>
 
                                 </div>
@@ -1585,6 +1624,12 @@ if (!empty($check_prescription_exists)) { ?>
                         <a class="btn btn-success" target="_blank" href="<?php echo admin_url('nabh/patient-history-pdf/' . (int) $client->userid); ?>">
                             <i class="fa-regular fa-file-pdf"></i> Download PDF
                         </a>
+                        <button type="button" class="btn btn-primary" onclick="openAllConsentFormsModal(<?php echo (int) $client->userid; ?>, <?php echo htmlspecialchars(json_encode((string) $client->company), ENT_QUOTES, 'UTF-8'); ?>);">
+                            <i class="fa-regular fa-file-lines"></i> Consent Forms History
+                        </button>
+                        <a class="btn btn-success" target="_blank" href="<?php echo admin_url('consent_form/patient-history-pdf/' . (int) $client->userid); ?>">
+                            <i class="fa-regular fa-file-pdf"></i> Download Consent History PDF
+                        </a>
                     </div>
                 </div>
             </div>
@@ -1840,6 +1885,102 @@ if (!empty($check_prescription_exists)) { ?>
         <iframe id="nabhPdfFrame" src="about:blank" style="width:100%; height:100%; border:0;"></iframe>
       </div>
       
+    </div>
+  </div>
+</div>
+
+<!-- All Consent Forms Modal (patient-level, all appointments — no appointment-type filtering) -->
+<div class="modal fade" id="allConsentFormsModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document" style="width:95%;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Consent Forms (All Appointments)</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+      </div>
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped">
+            <thead>
+              <tr>
+                <th style="width:60px;">#</th>
+                <th>Form Name</th>
+                <th style="width:110px;">Status</th>
+                <th style="width:370px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="allConsentTbody">
+              <tr><td colspan="7">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+        <!-- Consent Form List Modal (per-appointment; kept for parity with NABH's
+             flow, but consent forms are the same regardless of appointment type) -->
+<div class="modal fade" id="consentFormsModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Consent Forms</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="table-responsive">
+          <table class="table table-bordered table-striped" id="consentFormsTable">
+            <thead>
+              <tr>
+                <th style="width:70px;">#</th>
+                <th>Form Name</th>
+                <th style="width:370px;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="consentFormsTbody">
+              <tr><td colspan="3">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Consent PDF Viewer Modal -->
+<div class="modal fade" id="consentPdfModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog modal-xl" role="document" style="width:95%;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="consentPdfTitle">View PDF</h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      <div class="modal-body" style="height:80vh;">
+        <iframe id="consentPdfFrame" src="about:blank" style="width:100%; height:100%; border:0;"></iframe>
+      </div>
+
+      <div class="modal-footer">
+        <span id="consentSaveStatus" class="pull-left text-muted" style="line-height:34px;"></span>
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-success" onclick="saveConsentForm();" id="consentSaveBtn">
+          <i class="fa fa-save"></i> Save
+        </button>
+      </div>
+
     </div>
   </div>
 </div>
@@ -2278,4 +2419,302 @@ function openNabhViewer(url){
   $('#nabhPdfModal').modal('show');
 }
 
+</script>
+
+<script>
+/* =========================================================
+   CONSENT FORMS — mirrors the NABH block above, with one
+   deliberate difference: consent forms are NOT tied to
+   appointment type, so openConsentFormsModal() takes no
+   appointmentTypeId argument and loadConsentFormList() never
+   sends/filters on one. Every consent form in
+   tblconsent_form_master is always shown.
+========================================================= */
+
+window.__CONSENT_META__ = { appointment_id: 0, patient_id: 0, doctor_id: 0, patient_name: '', doctor_name: '' };
+
+function openConsentFormsModal(appointmentId, patientId, doctorId, patientName, doctorName) {
+  window.__CONSENT_META__ = {
+    appointment_id: parseInt(appointmentId || "0", 10),
+    patient_id: parseInt(patientId || "0", 10),
+    doctor_id: parseInt(doctorId || "0", 10),
+    patient_name: patientName || '',
+    doctor_name: doctorName || ''
+  };
+
+  $('#consentFormsModal').modal('show');
+  loadConsentFormList();
+}
+window.openConsentFormsModal = openConsentFormsModal;
+
+window.__ALL_CONSENT_META__ = { patient_id: 0, patient_name: '' };
+
+window.openAllConsentFormsModal = function(patientId, patientName) {
+  window.__ALL_CONSENT_META__ = {
+    patient_id: parseInt(patientId || '0', 10),
+    patient_name: patientName || ''
+  };
+
+  $('#allConsentFormsModal').modal('show');
+  loadAllConsentForms();
+};
+
+function loadAllConsentForms() {
+  $('#allConsentTbody').html('<tr><td colspan="7" class="text-center">Loading...</td></tr>');
+  var patientId = (window.__ALL_CONSENT_META__ || {}).patient_id || 0;
+  if (!patientId) {
+    $('#allConsentTbody').html('<tr><td colspan="7" class="text-center">Invalid patient.</td></tr>');
+    return;
+  }
+
+  $.post(admin_url + 'consent_form/all_forms_json', { patient_id: patientId }, function(res) {
+    if (!res || !res.status) {
+      $('#allConsentTbody').html('<tr><td colspan="7" class="text-center">No consent form records found.</td></tr>');
+      return;
+    }
+
+    var html = '';
+
+    res.data.forEach(function(row, index) {
+      var doctorId = parseInt(row.doctor_id || '0', 10);
+      var doctorName = row.doctor_name || '';
+      var patientName = row.patient_name || (window.__ALL_CONSENT_META__.patient_name || '');
+      var appointmentId = parseInt(row.appointment_id || '0', 10);
+
+      var formNameHtml = escapeHtml(row.form_name || '-');
+
+      var buildOpenBtn = function(langCode, label, btnClass) {
+        if (!appointmentId) {
+          return '<button class="btn btn-xs ' + btnClass + '" disabled="disabled" title="No appointment found for this patient.">' + label + '</button>';
+        }
+
+        var viewUrl = admin_url + 'consent_form/form/' + row.form_id
+          + '?lang=' + encodeURIComponent(langCode)
+          + '&consent_pdf_id=' + encodeURIComponent(row.form_id)
+          + '&appointment_id=' + encodeURIComponent(appointmentId)
+          + '&patient_id=' + encodeURIComponent(patientId)
+          + '&doctor_id=' + encodeURIComponent(doctorId)
+          + '&patient_name=' + encodeURIComponent(patientName)
+          + '&doctor_name=' + encodeURIComponent(doctorName);
+        return '<button class="btn btn-xs ' + btnClass + '" onclick="openConsentViewer(\'' + viewUrl + '\')">' + label + '</button>';
+      };
+
+      var buildPdfBtn = function(langCode, label) {
+        if (!appointmentId) {
+          return '<button class="btn btn-xs btn-default" disabled="disabled" title="No appointment found for this patient."><i class="fa-regular fa-file-pdf"></i> ' + label + '</button>';
+        }
+
+        var pdfUrl = admin_url + 'consent_form/print_pdf'
+          + '?consent_pdf_id=' + encodeURIComponent(row.form_id)
+          + '&lang=' + encodeURIComponent(langCode)
+          + '&appointment_id=' + encodeURIComponent(appointmentId)
+          + '&patient_id=' + encodeURIComponent(patientId)
+          + '&doctor_id=' + encodeURIComponent(doctorId)
+          + '&patient_name=' + encodeURIComponent(patientName)
+          + '&doctor_name=' + encodeURIComponent(doctorName);
+        return '<button class="btn btn-xs btn-default" onclick="window.open(\'' + pdfUrl + '\', \'_blank\')"><i class="fa-regular fa-file-pdf"></i> ' + label + '</button>';
+      };
+
+      var actionBtns = '';
+      if (row.has_en) {
+        actionBtns += buildOpenBtn('en', 'View ENG', 'btn-primary') + ' ' + buildPdfBtn('en', 'PDF ENG') + ' ';
+      }
+      if (row.has_gu) {
+        actionBtns += buildOpenBtn('gu', 'View GUJ', 'btn-success') + ' ' + buildPdfBtn('gu', 'PDF GUJ');
+      }
+      if (!actionBtns) {
+        actionBtns = '<span class="text-muted">File not uploaded</span>';
+      }
+
+      var statusBadge = row.is_filled
+        ? '<span class="label label-success">Filled</span>'
+        : '<span class="label label-default">Not Filled</span>';
+
+      html += '<tr>'
+        + '<td>' + (index + 1) + '</td>'
+        + '<td>' + formNameHtml + '</td>'
+        + '<td>' + statusBadge + '</td>'
+        + '<td>' + actionBtns + '</td>'
+        + '</tr>';
+    });
+
+    if (!html) {
+      html = '<tr><td colspan="7" class="text-center">No consent forms found for this patient.</td></tr>';
+    }
+
+    $('#allConsentTbody').html(html);
+  }, 'json');
+}
+
+function loadConsentFormList() {
+  // Intentionally no appointment_type_id — consent forms are
+  // never filtered by appointment type.
+  $.post(admin_url + 'consent_form/list_json', {}, function(res){
+
+    if(!res.status){ return; }
+
+    var html = '';
+
+    res.data.forEach(function(r, i){
+
+      var hasEn = !!r.has_en;
+      var hasGu = !!r.has_gu;
+
+      var buildViewUrl = function(langCode) {
+        return admin_url + 'consent_form/form/' + r.id
+          + '?lang=' + encodeURIComponent(langCode)
+          + '&consent_pdf_id=' + encodeURIComponent(r.id)
+          + '&appointment_id=' + encodeURIComponent(window.__CONSENT_META__.appointment_id)
+          + '&patient_id=' + encodeURIComponent(window.__CONSENT_META__.patient_id)
+          + '&doctor_id=' + encodeURIComponent(window.__CONSENT_META__.doctor_id)
+          + '&patient_name=' + encodeURIComponent(window.__CONSENT_META__.patient_name)
+          + '&doctor_name=' + encodeURIComponent(window.__CONSENT_META__.doctor_name);
+      };
+
+      // Labels are kept plain ("View" / "PDF") since only English
+      // exists today. The langCode/title still distinguish the
+      // button if Gujarati templates are added later.
+      var makeActionButtons = function(langCode, langTitle, styleClass) {
+        var viewUrl = buildViewUrl(langCode);
+        var viewBtn = '<button class="btn btn-xs ' + styleClass + '" title="' + langTitle + '" onclick="openConsentViewer(\'' + viewUrl + '\')">View</button>';
+        var printBtn = '<button class="btn btn-xs btn-default" title="' + langTitle + '" onclick="printConsentPdf('+ r.id +', \'' + langCode + '\')"><i class="fa-regular fa-file-pdf"></i> PDF</button>';
+        return viewBtn + ' ' + printBtn;
+      };
+
+      var actionBtns = '';
+      if (hasEn) {
+        actionBtns += makeActionButtons('en', 'English', 'btn-primary') + ' ';
+      }
+      if (hasGu) {
+        actionBtns += makeActionButtons('gu', 'Gujarati', 'btn-success');
+      }
+      if (!actionBtns) {
+        actionBtns = '<button class="btn btn-sm btn-disabled" disabled="disabled" onclick="return showConsentMissingTemplateMsg();">File not uploaded</button>';
+      }
+
+      html += '<tr>'
+        + '<td>'+(i+1)+'</td>'
+        + '<td>'+escapeHtml(r.title_en)+'</td>'
+        + '<td>' + actionBtns + '</td>'
+        + '</tr>';
+    });
+
+    $('#consentFormsTbody').html(html);
+  }, 'json');
+}
+
+function showConsentMissingTemplateMsg(){
+  alert('File not exist for this language');
+  return false;
+}
+
+function printConsentPdf(consentPdfId, lang){
+  lang = lang || 'en';
+  var meta = window.__CONSENT_META__ || {};
+
+  var url = admin_url + 'consent_form/print_pdf'
+    + '?consent_pdf_id=' + encodeURIComponent(consentPdfId)
+    + '&lang=' + encodeURIComponent(lang)
+    + '&appointment_id=' + encodeURIComponent(meta.appointment_id || 0)
+    + '&patient_id=' + encodeURIComponent(meta.patient_id || 0)
+    + '&doctor_id=' + encodeURIComponent(meta.doctor_id || 0)
+    + '&patient_name=' + encodeURIComponent(meta.patient_name || '')
+    + '&doctor_name=' + encodeURIComponent(meta.doctor_name || '');
+
+  window.open(url, '_blank');
+}
+
+function openConsentViewer(url){
+  $('#consentSaveStatus').text('');
+  $('#consentPdfFrame').attr('src',url);
+  $('#consentPdfModal').modal('show');
+}
+
+/* =========================================================
+   Save button for the Consent Form popup.
+   ---------------------------------------------------------
+   Consent_form.php's form() endpoint returns the raw template
+   HTML loaded into #consentPdfFrame, with window.__CONSENT_CTX
+   and window.__CONSENT_SAVED injected into that iframe's own
+   window (see inject_global() in the controller). This reads
+   every named field straight out of the iframe's document,
+   builds the exact payload consent_form/save_submission expects,
+   and posts it — no dependency on a separate global JS file
+   living inside the form template itself.
+========================================================= */
+function saveConsentForm(){
+  var iframe = document.getElementById('consentPdfFrame');
+  var win = iframe ? iframe.contentWindow : null;
+  var doc = win ? win.document : null;
+
+  if (!win || !doc || !win.__CONSENT_CTX) {
+    alert('Form is still loading. Please wait a moment and try again.');
+    return;
+  }
+
+  var ctx = win.__CONSENT_CTX;
+
+  // Collect every named field from the loaded form.
+  var formData = {};
+  var elements = doc.querySelectorAll('[name]');
+  elements.forEach(function(el){
+    var name = el.getAttribute('name');
+    if (!name) return;
+
+    var tag = (el.tagName || '').toUpperCase();
+    var type = (el.getAttribute('type') || '').toLowerCase();
+
+    if (tag === 'INPUT' && type === 'checkbox') {
+      if (name.slice(-2) === '[]') {
+        var key = name.slice(0, -2);
+        if (!formData[key]) formData[key] = [];
+        if (el.checked) formData[key].push(el.value);
+      } else {
+        formData[name] = el.checked ? (el.value || 'on') : '';
+      }
+      return;
+    }
+
+    if (tag === 'INPUT' && type === 'radio') {
+      if (el.checked) formData[name] = el.value;
+      return;
+    }
+
+    formData[name] = el.value;
+  });
+
+  var payload = {
+    consent_pdf_id: ctx.pdf_id,
+    appointment_id: ctx.appointment_id,
+    appointment_type_id: ctx.appointment_type_id,
+    patient_id: ctx.patient_id,
+    doctor_id: ctx.doctor_id,
+    lang: ctx.lang,
+    patient_name: ctx.patient_name,
+    doctor_name: ctx.doctor_name,
+    form_data: formData
+  };
+
+  var postData = { payload: JSON.stringify(payload) };
+  if (ctx.csrf_name && ctx.csrf_hash) {
+    postData[ctx.csrf_name] = ctx.csrf_hash;
+  }
+
+  var $btn = $('#consentSaveBtn');
+  var $status = $('#consentSaveStatus');
+  $btn.prop('disabled', true);
+  $status.removeClass('text-danger text-success').addClass('text-muted').text('Saving...');
+
+  $.post(admin_url + 'consent_form/save_submission', postData, function(res){
+    $btn.prop('disabled', false);
+    if (res && res.status) {
+      $status.removeClass('text-muted text-danger').addClass('text-success').text(res.message || 'Saved');
+    } else {
+      $status.removeClass('text-muted text-success').addClass('text-danger').text((res && res.message) || 'Save failed');
+    }
+  }, 'json').fail(function(){
+    $btn.prop('disabled', false);
+    $status.removeClass('text-muted text-success').addClass('text-danger').text('Save failed. Please check your connection and try again.');
+  });
+}
 </script>
