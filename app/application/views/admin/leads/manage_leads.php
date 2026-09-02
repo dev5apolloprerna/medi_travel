@@ -256,6 +256,10 @@
                                 'name'     => _l('leads_dt_datecreated'),
                                 'th_attrs' => ['class' => 'date-created toggleable', 'id' => 'th-date-created'],
                               ];
+                              $_table_data[] = [
+                                'name'     => _l('lead_followup_history'),
+                                'th_attrs' => ['class' => 'not-export', 'id' => 'th-followup-history'],
+                              ];
                               foreach ($_table_data as $_t) {
                                   array_push($table_data, $_t);
                               }
