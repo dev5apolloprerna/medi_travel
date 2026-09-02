@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEDITRAVEL - Patient Tele-Triage &amp; Clinical Intake Form</title>
+    <style>
+        @page {
+            size: A4 portrait;
+            margin: 10mm 14mm 12mm;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            color: #1d2939;
+            background: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 10px;
+            line-height: 1.35;
+        }
+
+        .page {
+            width: 100%;
+            min-height: 272mm;
+            margin: 0 auto;
+            background: #fff;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .brand {
+            margin: 0;
+            color: #233f8f;
+            font-size: 23px;
+            font-weight: 700;
+            letter-spacing: 4px;
+            line-height: 1;
+        }
+
+        .form-title {
+            margin: 11px 0 19px;
+            color: #172033;
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .top-rule {
+            height: 2px;
+            margin-bottom: 17px;
+            background: #187db7;
+        }
+
+        .section {
+            margin-bottom: 17px;
+            page-break-inside: avoid;
+        }
+
+        .section-heading {
+            margin: 0 0 11px;
+            color: #20428f;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: .15px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        td {
+            border: 1px solid #aebed5;
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+
+        .label {
+            width: 25%;
+            background: #f7f9fc;
+            color: #34445d;
+            font-size: 8.7px;
+            font-weight: 700;
+        }
+
+        .value {
+            width: 25%;
+            min-height: 28px;
+        }
+
+        .h32 td {
+            height: 32px;
+        }
+
+        .h48 td {
+            height: 48px;
+        }
+
+        .h58 td {
+            height: 58px;
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="date"],
+        textarea {
+            width: 100%;
+            margin: 0;
+            padding: 1px 2px;
+            border: 0;
+            /* border-bottom: 1px solid #7a8797; */
+            border-radius: 0;
+            outline: 0;
+            background: transparent;
+            color: #172033;
+            font: 10px Arial, Helvetica, sans-serif;
+        }
+
+        textarea {
+            min-height: 38px;
+            resize: vertical;
+            border: 0;
+        }
+
+        input:focus,
+        textarea:focus {
+            background: #fffbe8;
+        }
+
+        .options {
+            line-height: 1.65;
+        }
+
+        .option {
+            display: inline-block;
+            margin-right: 13px;
+            white-space: nowrap;
+            cursor: pointer;
+        }
+
+        .option.block {
+            display: block;
+            margin-right: 0;
+        }
+
+        input[type="checkbox"],
+        input[type="radio"] {
+            width: 11px;
+            height: 11px;
+            margin: 0 5px 0 0;
+            vertical-align: -1px;
+            cursor: pointer;
+        }
+
+        .consent {
+            margin: 0 0 12px;
+            color: #293447;
+            font-size: 9px;
+            line-height: 1.55;
+        }
+
+        .consent label {
+            cursor: pointer;
+        }
+
+        .consent strong {
+            font-weight: 700;
+        }
+
+        .signature-table {
+            margin-top: 24px;
+        }
+
+        .signature-table td {
+            border: 0;
+            padding: 0;
+            vertical-align: bottom;
+        }
+
+        .signature-label {
+            width: 22%;
+            line-height: 1.45;
+        }
+
+        .signature-line {
+            width: 43%;
+            padding-right: 28px !important;
+        }
+
+        .date-label {
+            width: 7%;
+        }
+
+        .date-line {
+            width: 28%;
+        }
+
+        .line-input {
+            height: 27px;
+            border-bottom: 1px solid #334155 !important;
+        }
+
+        .continued-space {
+            height: 7mm;
+        }
+
+        .screen-actions {
+            width: 210mm;
+            margin: 14px auto;
+            text-align: right;
+        }
+
+        .screen-actions button {
+            padding: 8px 14px;
+            border: 0;
+            border-radius: 4px;
+            background: #233f8f;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .print-value {
+            display: inline-block;
+            width: 100%;
+            min-height: 13px;
+            border-bottom: 1px solid #7a8797;
+            white-space: pre-wrap;
+        }
+
+        .print-textarea {
+            border-bottom: 0;
+            min-height: 38px;
+        }
+
+        .print-check {
+            display: inline-block;
+            margin-right: 5px;
+            font-family: DejaVu Sans, sans-serif;
+            font-size: 11px;
+        }
+
+        @media screen {
+            body {
+                background: #e9edf3;
+            }
+
+            .page {
+                width: 210mm;
+                min-height: 297mm;
+                padding: 10mm 14mm 12mm;
+                margin: 12px auto;
+                box-shadow: 0 2px 14px rgba(15, 23, 42, .15);
+            }
+        }
+
+        @media print {
+            .screen-actions {
+                display: none;
+            }
+
+            .page {
+                min-height: 0;
+                padding: 0;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- <div class="screen-actions">
+    <button type="button" onclick="window.print()">Print / Save PDF</button>
+</div> -->
+
+    <form id="meditravelForm" autocomplete="on">
+        <div class="page">
+            <h1 class="brand">MEDITRAVEL</h1>
+            <h2 class="form-title">PATIENT TELE-TRIAGE &amp; CLINICAL INTAKE FORM</h2>
+            <div class="top-rule"></div>
+
+            <div class="section">
+                <h3 class="section-heading">1. PATIENT IDENTIFICATION &amp; DEMOGRAPHICS</h3>
+                <table>
+                    <tr class="h32">
+                        <td class="label">Patient Name *</td>
+                        <td class="value"><input type="text" id="patient_name" name="patient_name" tabindex="1" required></td>
+                        <td class="label">Date of Birth *</td>
+                        <td class="value"><input type="text" id="input2" name="input2" tabindex="2" required></td>
+                    </tr>
+                    <tr class="h48">
+                        <td class="label">Gender Identity</td>
+                        <td class="value options">
+                            <label class="option"><input type="radio" id="input3" name="gender_identity" value="M"
+                                    tabindex="3">M</label>
+                            <label class="option"><input type="radio" id="input4" name="gender_identity" value="F"
+                                    tabindex="4">F</label>
+                            <label class="option block"><input type="radio" id="input5" name="gender_identity" value="Other"
+                                    tabindex="5">Other</label>
+                        </td>
+                        <td class="label">Legal Sex</td>
+                        <td class="value options">
+                            <label class="option"><input type="radio" id="input6" name="legal_sex" value="M"
+                                    tabindex="6">M</label>
+                            <label class="option"><input type="radio" id="input7" name="legal_sex" value="F"
+                                    tabindex="7">F</label>
+                        </td>
+                    </tr>
+                    <tr class="h32">
+                        <td class="label">Phone Number *</td>
+                        <td class="value"><input type="text" id="input8" name="input8" tabindex="8" required></td>
+                        <td class="label">Email Address *</td>
+                        <td class="value"><input type="email" id="input9" name="input9" tabindex="9" required></td>
+                    </tr>
+                    <tr class="h32">
+                        <td class="label">Current Location</td>
+                        <td class="value"><input type="text" id="input10" name="input10" tabindex="10"></td>
+                        <td class="label">Local Time Zone</td>
+                        <td class="value"><input type="text" id="input11" name="input11" tabindex="11"></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h3 class="section-heading">
+                    2. CHIEF COMPLAINT &amp; TRIAGE EVALUATION
+                </h3>
+
+                <table>
+                    <colgroup>
+                        <!-- Left-side label column -->
+                        <col style="width: 30%;">
+
+                        <!-- Left-side value column -->
+                        <col style="width: 20%;">
+
+                        <!-- Right-side label column -->
+                        <col style="width: 25%;">
+
+                        <!-- Right-side value column -->
+                        <col style="width: 25%;">
+                    </colgroup>
+
+                    <tr class="h32">
+                        <td class="label">Target Specialty *</td>
+
+                        <td class="value options" colspan="3">
+                            <label class="option">
+                                <input type="radio" id="input12" name="target_specialty" value="Dental Care" tabindex="12">
+                                Dental Care
+                            </label>
+
+                            <label class="option">
+                                <input type="radio" id="input13" name="target_specialty" value="Cosmetic/Plastic"
+                                    tabindex="13">
+                                Cosmetic/Plastic
+                            </label>
+
+                            <label class="option">
+                                <input type="radio" id="input14" name="target_specialty" value="Orthopaedics" tabindex="14">
+                                Orthopaedics
+                            </label>
+
+                            <label class="option">
+                                <input type="radio" id="input15" name="target_specialty" value="Ophthalmology" tabindex="15">
+                                Ophthalmology
+                            </label>
+                        </td>
+                    </tr>
+
+                    <tr class="h58">
+                        <td class="label">
+                            Primary Symptoms &amp;<br>
+                            History of Present<br>
+                            Illness *
+                        </td>
+
+                        <td class="value" colspan="3">
+                            <textarea id="input16" name="input16" tabindex="16" required></textarea>
+                        </td>
+                    </tr>
+
+                    <tr class="h58">
+                        <td class="label">Symptom Onset</td>
+
+                        <td class="value options">
+                            <label class="option block">
+                                <input type="radio" id="input17" name="symptom_onset" value="Acute (&lt;24h)"
+                                    tabindex="17">
+                                Acute (&lt;24h)
+                            </label>
+
+                            <label class="option block">
+                                <input type="radio" id="input18" name="symptom_onset" value="Subacute (Weeks)"
+                                    tabindex="18">
+                                Subacute (Weeks)
+                            </label>
+
+                            <label class="option block">
+                                <input type="radio" id="input19" name="symptom_onset" value="Chronic" tabindex="19">
+                                Chronic
+                            </label>
+                        </td>
+
+                        <td class="label">Symptom Severity</td>
+
+                        <td class="value options">
+                            <label class="option block">
+                                <input type="radio" id="input20" name="symptom_severity" value="Mild" tabindex="20">
+                                Mild
+                            </label>
+
+                            <label class="option block">
+                                <input type="radio" id="input21" name="symptom_severity" value="Moderate" tabindex="21">
+                                Moderate
+                            </label>
+
+                            <label class="option block">
+                                <input type="radio" id="input22" name="symptom_severity" value="Severe" tabindex="22">
+                                Severe
+                            </label>
+                        </td>
+                    </tr>
+
+                    <tr class="h48">
+                        <td class="label">
+                            Alleviating / Aggravating<br>
+                            Factors
+                        </td>
+
+                        <td class="value">
+                            <textarea id="input23" name="input23" tabindex="23"></textarea>
+                        </td>
+
+                        <td class="label">
+                            Current Vital Signs (If<br>
+                            known)
+                        </td>
+
+                        <td class="value">
+                            <textarea id="input24" name="input24" tabindex="24"></textarea>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <h3 class="section-heading">3. MEDICAL BACKGROUND &amp; RISK STRATIFICATION</h3>
+                <table>
+                    <tr class="h32">
+                        <td class="label">Known Allergies *</td>
+                        <td class="value"><input type="text" id="input25" name="input25" tabindex="25" required></td>
+                        <td class="label">Current Medications</td>
+                        <td class="value"><input type="text" id="input26" name="input26" tabindex="26"></td>
+                    </tr>
+                    <tr class="h48">
+                        <td class="label">Relevant Co-morbidities</td>
+                        <td class="value options" colspan="3">
+                            <label class="option"><input type="checkbox" id="input27" name="input27" value="Diabetes"
+                                    tabindex="27">Diabetes</label>
+                            <label class="option"><input type="checkbox" id="input28" name="input28"
+                                    value="Hypertension" tabindex="28">Hypertension</label>
+                            <label class="option"><input type="checkbox" id="input29" name="input29"
+                                    value="Cardiac Disease" tabindex="29">Cardiac Disease</label>
+                            <label class="option"><input type="checkbox" id="input30" name="input30"
+                                    value="Bleeding Disorder" tabindex="30">Bleeding Disorder</label>
+                            <label class="option block"><input type="checkbox" id="input31" name="input31" value="None"
+                                    tabindex="31">None</label>
+                        </td>
+                    </tr>
+                    <tr class="h48">
+                        <td class="label">Prior Surgeries /<br>Interventions</td>
+                        <td class="value"><textarea id="input32" name="input32" tabindex="32"></textarea></td>
+                        <td class="label">Implants / Hardware<br>Present?</td>
+                        <td class="value options">
+                            <label class="option"><input type="radio" id="input33" name="implants_hardware" value="Yes"
+                                    tabindex="33">Yes</label>
+                            <label class="option"><input type="radio" id="input34" name="implants_hardware" value="No"
+                                    tabindex="34">No</label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="section" style="margin-bottom: 0px;">
+                <h3 class="section-heading">4. CROSS-BORDER TELE-CONSULTATION LOGISTICS</h3>
+                <table>
+                    <tr class="h58">
+                        <td class="label">Preferred Lodging *</td>
+                        <td class="value options">
+                            <label class="option block"><input type="radio" id="input35" name="preferred_lodging" value="Hotel"
+                                    tabindex="35">Hotel</label>
+                            <label class="option block"><input type="radio" id="input36" name="preferred_lodging"
+                                    value="Airbnb / Rental" tabindex="36">Airbnb / Rental</label>
+                        </td>
+                        <td class="label">Companion Status</td>
+                        <td class="value options">
+                            <label class="option block"><input type="radio" id="input37" name="companion_status"
+                                    value="Traveling Alone" tabindex="37">Traveling Alone</label>
+                            <label class="option block"><input type="radio" id="input38" name="companion_status"
+                                    value="1 Companion" tabindex="38">1 Companion</label>
+                            <label class="option block"><input type="radio" id="input39" name="companion_status"
+                                    value="2+ Companions" tabindex="39">2+ Companions</label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <table>
+                    <tr class="h58">
+                        <td class="label">Urgency Window</td>
+                        <td class="value options">
+                            <label class="option block"><input type="radio" id="input40" name="urgency_window"
+                                    value="Immediate" tabindex="40">Immediate</label>
+                            <label class="option block"><input type="radio" id="input41" name="urgency_window"
+                                    value="Next 30 Days" tabindex="41">Next 30 Days</label>
+                            <label class="option block"><input type="radio" id="input42" name="urgency_window"
+                                    value="Next 90 Days" tabindex="42">Next 90 Days</label>
+                        </td>
+                        <td class="label">Digital Diagnostic Files<br>Ready?</td>
+                        <td class="value options">
+                            <label class="option block"><input type="radio" id="input43" name="diagnostic_files_ready"
+                                    value="Yes (X-Rays/Scans)" tabindex="43">Yes (X-Rays/Scans)</label>
+                            <label class="option block"><input type="radio" id="input44" name="diagnostic_files_ready" value="No"
+                                    tabindex="44">No</label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            
+        </div>
+
+        <div class="page page-break">
+            <div class="continued-space"></div>
+            <!-- <div class="section">
+                <table>
+                    <tr class="h58">
+                        <td class="label">Urgency Window</td>
+                        <td class="value options">
+                            <label class="option block"><input type="radio" id="input40" name="urgency_window"
+                                    value="Immediate" tabindex="40">Immediate</label>
+                            <label class="option block"><input type="radio" id="input41" name="urgency_window"
+                                    value="Next 30 Days" tabindex="41">Next 30 Days</label>
+                            <label class="option block"><input type="radio" id="input42" name="urgency_window"
+                                    value="Next 90 Days" tabindex="42">Next 90 Days</label>
+                        </td>
+                        <td class="label">Digital Diagnostic Files<br>Ready?</td>
+                        <td class="value options">
+                            <label class="option block"><input type="radio" id="input43" name="diagnostic_files_ready"
+                                    value="Yes (X-Rays/Scans)" tabindex="43">Yes (X-Rays/Scans)</label>
+                            <label class="option block"><input type="radio" id="input44" name="diagnostic_files_ready" value="No"
+                                    tabindex="44">No</label>
+                        </td>
+                    </tr>
+                </table>
+            </div> -->
+
+            <div class="section">
+                <h3 class="section-heading">5. TELE-TRIAGE INFORMED CONSENT &amp; PRIVACY NOTICE</h3>
+                <p class="consent">
+                    <label><input type="checkbox" id="input45" name="input45" value="Accepted" tabindex="45" required>
+                        <strong>[REQUIRED]</strong> MEDICAL DISCLAIMER: I understand that tele-triage provides a
+                        preliminary coordination assessment and does not replace diagnostic medical evaluations,
+                        hands-on clinical examinations, or emergency healthcare services.</label>
+                </p>
+                <p class="consent">
+                    <label><input type="checkbox" id="input46" name="input46" value="Accepted" tabindex="46" required>
+                        <strong>[REQUIRED]</strong> DATA &amp; PRIVACY TRANSMISSION CONSENT: I expressly authorize
+                        MEDITRAVEL to transmit my clinical profile, symptoms, and diagnostic reports to overseas
+                        clinical panels securely for remote triage review.</label>
+                </p>
+
+                <table class="signature-table">
+                    <tr>
+                        <td class="signature-label">Signature of Patient /<br>Disponent:</td>
+                        <td class="signature-line">                                    <img name="patient_signature_image" id="patient_signature_image" alt="Patient Signature" style="width:180px;height:40px;" class="line-input" /></td>
+                        <td class="date-label">Date:</td>
+                        <td class="date-line"><input class="line-input" type="text" id="input48" name="input48"
+                                tabindex="48"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </form>
+
+    <script>
+        /*
+         * mPDF usage:
+         * 1. Fill this HTML with saved values.
+         * 2. Run prepareForMpdf() in the browser before capturing HTML, OR perform the
+         *    same conversion server-side. This produces stable printable controls.
+         * 3. $mpdf = new \\Mpdf\\Mpdf(['mode'=>'utf-8','format'=>'A4','orientation'=>'P',
+         *    'margin_left'=>14,'margin_right'=>14,'margin_top'=>10,'margin_bottom'=>12,
+         *    'default_font'=>'dejavusans']);
+         *    $mpdf->WriteHTML($html); $mpdf->Output();
+         */
+        function prepareForMpdf() {
+            document.querySelectorAll('#meditravelForm input, #meditravelForm textarea').forEach(function (field) {
+                var replacement = document.createElement('span');
+                if (field.type === 'checkbox' || field.type === 'radio') {
+                    replacement.className = 'print-check';
+                    replacement.textContent = field.checked ? '\u2611' : '\u2610';
+                } else {
+                    replacement.className = 'print-value' + (field.tagName === 'TEXTAREA' ? ' print-textarea' : '');
+                    replacement.textContent = field.value || '\u00a0';
+                }
+                field.parentNode.replaceChild(replacement, field);
+            });
+            return document.documentElement.outerHTML;
+        }
+    </script>
+</body>
+
+</html>
