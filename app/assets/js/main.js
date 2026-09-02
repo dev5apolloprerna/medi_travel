@@ -1743,9 +1743,16 @@ $(function () {
   table_leads = $("table.table-leads");
   if (table_leads.length) {
     var tableLeadsConsentHeading = table_leads.find("#th-consent");
+    var tableLeadsFollowupHistoryHeading = table_leads.find(
+      "#th-followup-history"
+    );
     var leadsTableNotSortable = [0];
     var leadsTableNotSearchable = [0, table_leads.find("#th-assigned").index()];
 
+    if (tableLeadsFollowupHistoryHeading.length > 0) {
+      leadsTableNotSortable.push(tableLeadsFollowupHistoryHeading.index());
+      leadsTableNotSearchable.push(tableLeadsFollowupHistoryHeading.index());
+    }
     if (tableLeadsConsentHeading.length > 0) {
       leadsTableNotSortable.push(tableLeadsConsentHeading.index());
       leadsTableNotSearchable.push(tableLeadsConsentHeading.index());

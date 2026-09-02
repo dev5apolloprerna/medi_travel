@@ -1179,19 +1179,6 @@ if (!empty($check_prescription_exists)) { ?>
                                     style="border-radius: 31px; font-size: 12px; padding: 5px 5px 6px 9px; text-align: end; margin-top: 8px;">Patient Consent
                                 </button>
 
-                                <button class="btn btn-primary add_free_hand_dental"
-                                  onclick="openNabhFormsModal(
-                                    <?php echo (int)$value['type_id']; ?>,
-                                    <?php echo (int)$value['id']; ?>,
-                                    <?php echo (int)$client->userid; ?>,
-                                    <?php echo (int)$staff_id; ?>,
-                                    '<?php echo addslashes($client->company); ?>',
-                                    '<?php echo addslashes(trim(($value['firstname'] ?? '').' '.($value['lastname'] ?? ''))); ?>'
-                                  )"
-                                  style="border-radius: 31px; font-size: 12px; padding: 5px 5px 6px 9px; text-align: end; margin-top: 8px;">
-                                  NABH FORMS
-                                </button>
-                                  
                                 </div>
 
                                 <!-- <div class="col-xl-2 col-lg-2 appo-div">-->
@@ -1595,9 +1582,6 @@ if (!empty($check_prescription_exists)) { ?>
             <div class="row">
                 <div class="col-lg-12">
                     <div class="table_summary_section" style="display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:flex-end; margin-bottom:12px;">
-                        <button type="button" class="btn btn-info" onclick="openAllNabhFormsModal(<?php echo (int) $client->userid; ?>, '<?php echo addslashes($client->company ?? ''); ?>');">
-                            View All NABH Forms
-                        </button>
                         <a class="btn btn-success" target="_blank" href="<?php echo admin_url('nabh/patient-history-pdf/' . (int) $client->userid); ?>">
                             <i class="fa-regular fa-file-pdf"></i> Download PDF
                         </a>
@@ -2295,5 +2279,3 @@ function openNabhViewer(url){
 }
 
 </script>
-
-

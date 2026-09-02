@@ -102,6 +102,7 @@ return App_table::find('leads')
             db_prefix() . 'leads_sources.name as source_name',
             'lastcontact',
             'dateadded',
+            1,
         ]);
 
         $sIndexColumn = 'id';
@@ -176,8 +177,6 @@ return App_table::find('leads')
             if (!$locked) {
                 $nameRow .= ' | <a href="' . admin_url('leads/index/' . $aRow['id'] . '?edit=true') . '" onclick="init_lead(' . $aRow['id'] . ', true);return false;">' . _l('edit') . '</a>';
             }
-
-            $nameRow .= ' | <a href="#" onclick="show_lead_followup_history(' . $aRow['id'] . ');return false;">' . _l('lead_followup_history') . '</a>';
             
             if ($aRow['addedfrom'] == get_staff_user_id() || $has_permission_delete) {
                 $nameRow .= ' | <a href="' . admin_url('leads/delete/' . $aRow['id']) . '" class="_delete text-danger">' . _l('delete') . '</a>';
@@ -260,6 +259,8 @@ return App_table::find('leads')
 
             $row[] = '<span data-toggle="tooltip" data-title="' . e(_dt($aRow['dateadded'])) . '" class="text-has-action is-date">' . e(time_ago($aRow['dateadded'])) . '</span>';
 
+            $row[] = '<a href="#" class="btn btn-default btn-sm table-export-exclude" onclick="show_lead_followup_history(' . (int) $aRow['id'] . '); return false;">'
+                . '<i class="fa fa-history tw-mr-1" aria-hidden="true"></i>' . _l('lead_followup_history') . '</a>';
             // Custom fields add values
             foreach ($customFieldsColumns as $customFieldColumn) {
                 $row[] = (strpos($customFieldColumn, 'date_picker_') !== false ? _d($aRow[$customFieldColumn]) : $aRow[$customFieldColumn]);

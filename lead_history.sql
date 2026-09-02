@@ -11,3 +11,14 @@ CREATE TABLE IF NOT EXISTS `lead_followup_history` (
     KEY `status_id` (`status_id`),
     KEY `next_followup_date` (`next_followup_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+lead created date to and lead created from search 
+
+
+lead entry che ama ma start and end date mukvanu che 
+lead edit pachi main page ma avi jay che filter jata rhe che
+deal done ma amount batave che amount amuk jagya a nathi avta 
+
+
+ 
