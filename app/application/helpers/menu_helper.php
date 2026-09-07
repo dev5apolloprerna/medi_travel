@@ -26,13 +26,13 @@ function app_init_admin_sidebar_menu_items()
             'icon'     => 'fa-regular fa-user',
             'badge'    => [],
         ]);
-        $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
+       /* $CI->app_menu->add_sidebar_menu_item('global-patient-search', [
             'name'     => 'Patient Search',
             'href'     => admin_url('clients/branch_wise_patients'),
             'position' => 16,
             'icon'     => 'fa-solid fa-magnifying-glass',
             'badge'    => [],
-        ]);
+        ]);*/
     }
 
     $CI->app_menu->add_sidebar_menu_item('sales', [
@@ -331,7 +331,7 @@ function app_init_admin_sidebar_menu_items()
             'position' => 20,
             'badge'    => [],
         ]);
-        if (!empty($_COOKIE['branch'])) {
+        /*if (!empty($_COOKIE['branch'])) {
              $CI->app_menu->add_sidebar_children_item('reports', [
                 'slug'     => 'reports-doctor-treatment',
                 'name'     => 'Doctor Treatment Report',
@@ -339,7 +339,7 @@ function app_init_admin_sidebar_menu_items()
                 'position' => 99,
                 // 'icon'     => 'fa fa-user-md',
             ]);
-        }
+        }*/
         // $CI->app_menu->add_sidebar_children_item('reports', [
         //     'slug'     => 'knowledge-base-reports',
         //     'name'     => _l('als_kb_articles_submenu'),
