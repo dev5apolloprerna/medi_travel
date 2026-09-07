@@ -257,7 +257,9 @@ return App_table::find('leads')
             $row[] = ($aRow['lastcontact'] == '0000-00-00 00:00:00' || !is_date($aRow['lastcontact']) ? '' : '<span data-toggle="tooltip" data-title="' . e(_dt($aRow['lastcontact'])) . '" class="text-has-action is-date">' . e(time_ago($aRow['lastcontact'])) . '</span>');
 
             $row[] = '<span data-toggle="tooltip" data-title="' . e(_dt($aRow['dateadded'])) . '" class="text-has-action is-date">' . e(time_ago($aRow['dateadded'])) . '</span>';
-
+            $row[] = '<a href="#" class="btn btn-default btn-sm table-export-exclude" onclick="show_lead_followup_history(' . (int) $aRow['id'] . '); return false;">'
+                . '<i class="fa fa-history tw-mr-1" aria-hidden="true"></i>' . _l('lead_followup_history') . '</a>';
+                
             // Custom fields add values
             foreach ($customFieldsColumns as $customFieldColumn) {
                 $row[] = (strpos($customFieldColumn, 'date_picker_') !== false ? _d($aRow[$customFieldColumn]) : $aRow[$customFieldColumn]);
