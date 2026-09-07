@@ -256,6 +256,10 @@
                                 'name'     => _l('leads_dt_datecreated'),
                                 'th_attrs' => ['class' => 'date-created toggleable', 'id' => 'th-date-created'],
                               ];
+                              $_table_data[] = [
+                                'name'     => _l('lead_followup_history'),
+                                'th_attrs' => ['class' => 'not-export', 'id' => 'th-followup-history'],
+                              ];
                               foreach ($_table_data as $_t) {
                                   array_push($table_data, $_t);
                               }
@@ -292,6 +296,10 @@
         </div>
     </div>
 </div>
+<div class="modal fade" id="lead-followup-history-modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document"><div class="modal-content"></div></div>
+</div>
+
 <script id="hidden-columns-table-leads" type="text/json">
 <?php echo get_staff_meta(get_staff_user_id(), 'hidden-columns-table-leads'); ?>
 </script>
@@ -314,6 +322,15 @@ $(function() {
         }
     });
 });
+function show_lead_followup_history(leadId) {
+    var modal = $('#lead-followup-history-modal');
+    modal.find('.modal-content').load(admin_url + 'leads/followup_history/' + leadId, function() {
+        modal.modal('show');
+        init_selectpicker();
+        init_datepicker();
+    });
+}
+
 </script>
 </body>
 
