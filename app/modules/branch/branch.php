@@ -15,7 +15,7 @@ define('BRANCH_SQL_FOLDER', FCPATH .'modules/branch/sql' . '/');
 define('BRANCH_DOC_FOLDER', FCPATH .'uploads/branch_images' . '/');
 define('BRANCHDOC_DOC_FOLDER', base_url().'uploads/branch_images' . '/');
 hooks()->add_action('after_cron_run', 'branch_db_cron_run');
-hooks()->add_action('admin_init', 'branch_module_init_menu_items');
+// hooks()->add_action('admin_init', 'branch_module_init_menu_items');
 hooks()->add_action('staff_member_deleted', 'branch_staff_member_deleted');
 hooks()->add_action('admin_init', 'branch_permissions');
 
@@ -253,38 +253,6 @@ function after_module_activate($module)
 
 $CI = &get_instance();
 $CI->load->helper(BRANCH_MODULE_NAME . '/module_installer');
-
-
-
-
-/**
-* Register language files, must be registered if the module is using languages
-*/
-register_language_files(BRANCH_MODULE_NAME, [BRANCH_MODULE_NAME]);
-
-/**
-* Init branch module menu items in setup in admin_init hook
-* @return null
-*/
-function branch_module_init_menu_items()
-{
-    $CI = &get_instance();
-
-    $CI->db->where('module_name', BRANCH_MODULE_NAME);
-    $CI->db->where('active', 1);
-    $module_exists_in_database = $CI->db->get(db_prefix() . 'modules')->row();
-    
-    if(!empty($module_exists_in_database)){
-
-        $CI->app_menu->add_sidebar_menu_item('branch', [
-            'name'     => _l('branch'),
-            'href'     => admin_url('branch'),
-            'icon'     => 'fa fa-hospital',
-            'position' => 45,
-            'badge'    => [],
-        ]);
-    }
-}
 
 
 /**
