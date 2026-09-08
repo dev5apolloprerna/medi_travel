@@ -148,10 +148,18 @@ $(function () {
   });
 
   // ✅ save add/edit
-  $('#appointmentTypeForm').on('submit', function(e){
+  $('#appointmentTypeForm').off('submit.appointmentType').on('submit.appointmentType', function(e){
     e.preventDefault();
 
-    $.post('<?= admin_url('appointly/appointments/save_appointment_type'); ?>', $(this).serialize(), function(resp){
+    var $form = $(this);
+    var $submitButton = $form.find('button[type="submit"]');
+
+    if ($form.data('submitting')) return;
+
+    $form.data('submitting', true);
+    $submitButton.prop('disabled', true);
+
+    $.post('<?= admin_url('appointly/appointments/save_appointment_type'); ?>', $form.serialize(), function(resp){
       var r = resp;
       if (typeof resp === 'string') {
         try { r = JSON.parse(resp); } catch (e) { r = null; }
@@ -167,6 +175,11 @@ $(function () {
         return;
       }
       window.location.reload();
+       }).fail(function(){
+      alert('Save failed');
+    }).always(function(){
+      $form.data('submitting', false);
+      $submitButton.prop('disabled', false);
     });
   });
 

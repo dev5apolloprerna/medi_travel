@@ -77,25 +77,7 @@ if($_SESSION['message-error'] != ''){
                     </div>
 
                      <div class="col-md-6">
-                         <?php if (count($branches) > 0) { ?>
-                        <div class="form-group appointment_type_holder">
-                             <small class="req text-danger">* </small>
-                            <label for=""
-                                   class="control-label"><?= _l('select_branch'); ?></label>
-
-                            <select class="form-control selectpicker" name="branch" id="branch" data-live-search="true">
-                                <option value=""><?= _l('dropdown_non_selected_tex'); ?></option>
-                                <?php foreach ($branches as $branch) { ?>
-                                    <option class="form-control" 
-                                            value="<?= $branch['branchid']; ?>"><?= $branch['branch']; ?>
-                                    </option>
-                                <?php } ?>
-                            </select>
-                        </div>
-                        <div class=" clearfix mtop15"></div>
-                    <?php } ?>
-                     <br>
-
+                    <input type="hidden" name="branch" value="">
                          <?php $appointment_types = get_appointment_types();
 
                     if (count($appointment_types) > 0) { ?>
@@ -104,8 +86,10 @@ if($_SESSION['message-error'] != ''){
                             <label for="appointment_select_type"
                                    class="control-label"><?= _l('appointments_type_heading'); ?></label>
                             <select class="form-control selectpicker" name="type_id" id="appointment_select_type" data-live-search="true">
-                              
-                                
+                            <option value=""><?= _l('dropdown_non_selected_tex'); ?></option>
+                                <?php foreach ($appointment_types as $appointment_type) { ?>
+                                    <option value="<?= $appointment_type['id']; ?>"><?= $appointment_type['type']; ?></option>
+                                <?php } ?>   
                             </select>
                         </div>
                         <div class=" clearfix mtop15"></div>
@@ -349,11 +333,8 @@ app_external_form_footer($form);
                 type_id: "required",
                 gender: "required",
                 age: "required",
-                branch: "required",
                 subject: "required",
                 name: "required",
-                // email: "required",
-                // description: "required",
                 date: "required",
                 phone: 'required',
                 dob: 'required',
@@ -376,15 +357,7 @@ app_external_form_footer($form);
          $('#new_web').appFormValidator({
             rules: {
                 type_id: "required",
-                // gender: "required",
-                // age: "required",
-                branch: "required",
-                // subject: "required",
-                // name: "required",
-                // email: "required",
-                // description: "required",
                 date: "required",
-                // phone: 'required',
             },
         });
 
@@ -400,11 +373,9 @@ app_external_form_footer($form);
                 type_id: "required",
                 gender: "required",
                 age: "required",
-                branch: "required",
                 subject: "required",
                 name: "required",
                 email: "required",
-                // description: "required",
                 date: "required",
                 phone: 'required',
             },
