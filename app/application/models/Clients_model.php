@@ -182,6 +182,21 @@ class Clients_model extends App_Model
         return $formattedNumber;
     }
 
+
+ /**
+     * Determine whether two database connections point to the same database.
+     *
+     * Patient records are mirrored to the main database and the active branch
+     * database. For the main branch both connections can point to the same
+     * database, in which case writing through both connections creates a
+     * duplicate patient.
+     */
+    private function is_same_database($first, $second)
+    {
+        return $first->hostname === $second->hostname
+            && $first->database === $second->database;
+    }
+
     
     /**
      * @param array $_POST data
@@ -299,14 +314,19 @@ class Clients_model extends App_Model
         ]));
 
         $clientMain_id = $MAIN_DB->insert_id();
-        
 
-        $this->db->insert(db_prefix() . 'clients', array_merge($company_data, [
-            'datecreated' => date('Y-m-d H:i:s'),
-            'addedfrom'   => is_staff_logged_in() ? get_staff_user_id() : 0,
-        ]));
+        $isMainDatabase = $this->is_same_database($MAIN_DB, $this->db);
+
+        if ($isMainDatabase) {
+            $client_id = $clientMain_id;
+        } else {
+            $this->db->insert(db_prefix() . 'clients', array_merge($company_data, [
+                'datecreated' => date('Y-m-d H:i:s'),
+                'addedfrom'   => is_staff_logged_in() ? get_staff_user_id() : 0,
+            ]));
 
         $client_id = $this->db->insert_id();
+        }
                 
         if ($withContact == false) {
 
@@ -314,14 +334,14 @@ class Clients_model extends App_Model
                 'datecreated' => date('Y-m-d H:i:s'), 
                 'userid'  => $clientMain_id,
             ]));
-
-
+        
+     if (!$isMainDatabase) {
             $this->db->insert(db_prefix() . 'contacts', array_merge($contact_data, [
                 'datecreated' => date('Y-m-d H:i:s'),
                 'userid' => $client_id,
             ]));
-            
-       
+        }
+
 
         $this->increment_next_number(); 
         
@@ -382,10 +402,12 @@ class Clients_model extends App_Model
             'datecreated' => date('Y-m-d H:i:s'),
         ]));
         
-        $this->db->insert(db_prefix() . 'medical_history', array_merge($medical_history, [
-            'userid' => $client_id,
-            'datecreated' => date('Y-m-d H:i:s'),
-        ]));
+        if (!$isMainDatabase) {
+            $this->db->insert(db_prefix() . 'medical_history', array_merge($medical_history, [
+                'userid' => $client_id,
+                'datecreated' => date('Y-m-d H:i:s'),
+            ]));
+        }
         
        
        

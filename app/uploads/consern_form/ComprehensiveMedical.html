@@ -9,7 +9,7 @@
     <style>
         @page {
             size: A4;
-            margin: 13mm 15mm 13mm 15mm;
+            margin: 12mm 14mm 12mm 14mm;
         }
 
         * {
@@ -26,17 +26,15 @@
         body {
             font-family: Arial, Helvetica, sans-serif;
             font-size: 11.5px;
-            line-height: 1.4;
+            line-height: 1.32;
             color: #33415a;
         }
 
-        .page {
-            width: 100%;
-        }
-
-        .main-table {
-            width: 100%;
-            border-collapse: collapse;
+    
+        .page-content {
+            width: auto;
+            margin: 0;
+            padding: 13mm 15mm;
         }
 
         .brand {
@@ -65,9 +63,17 @@
             border-bottom: 3px solid #1787c8;
         }
 
+        /* Each numbered block (heading + its table) is one atomic unit so a
+           heading can never get stranded alone at the bottom of a page while
+           its table starts on the next one. */
+        .section {
+            page-break-inside: avoid;
+            margin: 0 0 9px 0;
+        }
+
         .section-heading {
             width: 100%;
-            margin: 8px 0 8px 0;
+            margin: 6px 0 6px 0;
             border-collapse: collapse;
         }
 
@@ -83,14 +89,14 @@
 
         .form-table {
             width: 100%;
-            margin: 0 0 13px 0;
+            margin: 0;
             border-collapse: collapse;
             table-layout: fixed;
         }
 
         .form-table td {
             border: 1px solid #c7d2df;
-            padding: 7px 9px;
+            padding: 5px 7px;
             vertical-align: middle;
             line-height: 1.35;
         }
@@ -142,17 +148,16 @@
 
         .inner-choice-table td {
             border: none !important;
-            padding: 0 10px 3px 0 !important;
-            height: auto !important;
+            padding: 0 8px 0 0 !important;
+            height: 20px !important;
             vertical-align: middle !important;
             background: transparent !important;
             white-space: nowrap;
         }
 
         .choice {
-            display: inline-block;
-            margin-right: 15px;
-            margin-bottom: 3px;
+            display: inline;
+            margin: 0 16px 0 0;
             white-space: nowrap;
             cursor: pointer;
             font-weight: normal;
@@ -161,21 +166,25 @@
 
         .choice-block {
             display: block;
-            margin-bottom: 3px;
+            margin: 0 0 4px 0;
             white-space: nowrap;
             cursor: pointer;
             font-weight: normal;
             color: #26334a;
         }
 
-        .choice input,
-        .choice-block input {
-            width: 14px;
-            height: 14px;
-            margin: 0 5px 0 0;
-            padding: 0;
-            vertical-align: -2px;
-            cursor: pointer;
+       
+        .pdf-radio,
+        .pdf-checkbox {
+            color: #26334a;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 13px;
+            margin-right: 4px;
+        }
+
+        .choice,
+        .choice-block {
+            line-height: 16px;
         }
 
         .row-tall td {
@@ -187,10 +196,6 @@
             height: 40px;
         }
 
-        .page-break {
-            page-break-before: always;
-        }
-
         .avoid-break {
             page-break-inside: avoid;
         }
@@ -199,7 +204,8 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            margin-top: 26px;
+            margin-top: 12px;
+            page-break-inside: avoid;
         }
 
         .signature-table td {
@@ -246,9 +252,27 @@
             font-size: 11.5px;
         }
 
-        
+        .signature-image-box {
+            width: 100%;
+            height: 35px;
+            margin: 0;
+            padding: 0;
+            border-bottom: 1px solid #56657a;
+            vertical-align: bottom;
+        }
 
-     
+        .signature-image-box img {
+            display: block;
+            width: auto;
+            max-width: 180px;
+            height: 34px;
+            margin: 0;
+            padding: 0;
+        }
+
+        tr, td, .form-table, .section-heading, .signature-table {
+            page-break-inside: avoid;
+        }
 
         @media print {
 
@@ -263,453 +287,397 @@
 
 <body>
     <form action="" id="medicalCaseHistoryForm" method="post">
-        <!-- ===================== PAGE 6 ===================== -->
-        <div class="page">
-            <table class="main-table">
-                <tr>
-                    <td>
-                        <div class="brand">MEDITRAVEL</div>
-                        <div class="document-title">
-                            COMPREHENSIVE MEDICAL CASE HISTORY INTAKE
-                        </div>
-                        <div class="top-rule"></div>
-                        <!-- 1 -->
-                        <table class="section-heading">
-                            <tr>
-                                <td>1. PATIENT DEMOGRAPHICS &amp; IDENTIFICATION</td>
-                            </tr>
-                        </table>
-                        <table class="form-table">
-                            <colgroup>
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                            </colgroup>
-                            <tr>
-                                <td class="label">Full Legal Name *</td>
-                                <td class="input-space" colspan="3">
-                                    <input class="field-input" id="input1" name="input1" type="text" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">Date of Birth *</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input2" name="input2" type="date" />
-                                </td>
-                                <td class="label">Gender / Legal Sex</td>
-                                <td class="input-space">
-                                    <table class="inner-choice-table" style="width:100%; border-collapse:collapse;">
-                                        <tr>
-                                            <td
-                                                style="border:none; padding:0 12px 3px 0; height:auto; white-space:nowrap;">
-                                                <label class="choice" for="input3"><input data-radio-group="gender"
-                                                        id="input3" name="input3" type="radio" value="1" />Male</label>
-                                            </td>
-                                            <td
-                                                style="border:none; padding:0 12px 3px 0; height:auto; white-space:nowrap;">
-                                                <label class="choice" for="input4"><input data-radio-group="gender"
-                                                        id="input4" name="input4" type="radio"
-                                                        value="1" />Female</label></td>
-                                        </tr>
-                                        <tr>
-                                            <td colspan="2"
-                                                style="border:none; padding:0; height:auto; white-space:nowrap;"><label
-                                                    class="choice" for="input5"><input data-radio-group="gender"
-                                                        id="input5" name="input5" type="radio" value="1" />Other</label>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">Nationality / Country</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input6" name="input6" type="text" />
-                                </td>
-                                <td class="label">Primary Passport<br />No.</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input7" name="input7" type="text" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">Occupation</td>
-                                <td class="input-space" colspan="3">
-                                    <input class="field-input" id="input8" name="input8" type="text" />
-                                </td>
-                            </tr>
-                        </table>
-                        <!-- 2 -->
-                        <table class="section-heading">
-                            <tr>
-                                <td>2. PRESENT ILLNESS &amp; CHIEF COMPLAINT</td>
-                            </tr>
-                        </table>
-                        <table class="form-table">
-                            <colgroup>
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                            </colgroup>
-                            <tr class="row-tall">
-                                <td class="label">
-                                    Reason for Consultation<br />*
-                                </td>
-                                <td class="input-space" colspan="3">
-                                    <textarea class="field-textarea" id="input9" name="input9"></textarea>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">
-                                    Symptom Duration /<br />Onset
-                                </td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input10" name="input10" type="text" />
-                                </td>
-                                <td class="label">Severity Index</td>
-                                <td class="input-space">
-                                    <label class="choice-block" for="input11">
-                                        <input data-radio-group="severity" id="input11" name="input11" type="radio"
-                                            value="1" />Mild
-                                    </label>
-                                    <label class="choice-block" for="input12">
-                                        <input data-radio-group="severity" id="input12" name="input12" type="radio"
-                                            value="1" />Moderate
-                                    </label>
-                                    <label class="choice-block" for="input13">
-                                        <input data-radio-group="severity" id="input13" name="input13" type="radio"
-                                            value="1" />Severe
-                                    </label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">Prior Local Diagnosis</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input14" name="input14" type="text" />
-                                </td>
-                                <td class="label">
-                                    Treating Physician<br />(Local)
-                                </td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input15" name="input15" type="text" />
-                                </td>
-                            </tr>
-                        </table>
-                        <!-- 3 -->
-                        <table class="section-heading">
-                            <tr>
-                                <td>3. PAST MEDICAL &amp; SURGICAL HISTORY</td>
-                            </tr>
-                        </table>
-                        <table class="form-table">
-                            <colgroup>
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                            </colgroup>
-                            <tr>
-                                <td class="label">Chronic Diagnoses</td>
-                                <td class="input-space" colspan="3">
-                                    <label class="choice" for="input16">
-                                        <input id="input16" name="input16" type="checkbox" value="1" />Diabetes
-                                    </label>
-                                    <label class="choice" for="input17">
-                                        <input id="input17" name="input17" type="checkbox" value="1" />Hypertension
-                                    </label>
-                                    <label class="choice" for="input18">
-                                        <input id="input18" name="input18" type="checkbox" value="1" />Cardiovascular
-                                    </label>
-                                    <label class="choice" for="input19">
-                                        <input id="input19" name="input19" type="checkbox" value="1" />Asthma/COPD
-                                    </label>
-                                    <br />
-                                    <label class="choice" for="input20">
-                                        <input id="input20" name="input20" type="checkbox" value="1" />None
-                                    </label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">
-                                    Other Chronic<br />Conditions
-                                </td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input21" name="input21" type="text" />
-                                </td>
-                                <td class="label">Prior Surgeries &amp; Dates</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input22" name="input22" type="text" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">
-                                    Bleeding/Clotting<br />Disorders?
-                                </td>
-                                <td class="input-space">
-                                    <label class="choice" for="input23">
-                                        <input data-radio-group="bleeding" id="input23" name="input23" type="radio"
-                                            value="1" />Yes
-                                    </label>
-                                    <label class="choice" for="input24">
-                                        <input data-radio-group="bleeding" id="input24" name="input24" type="radio"
-                                            value="1" />No
-                                    </label>
-                                </td>
-                                <td class="label">Anesthesia Issues?</td>
-                                <td class="input-space">
-                                    <label class="choice" for="input25">
-                                        <input data-radio-group="anesthesia" id="input25" name="input25" type="radio"
-                                            value="1" />Yes
-                                    </label>
-                                    <label class="choice" for="input26">
-                                        <input data-radio-group="anesthesia" id="input26" name="input26" type="radio"
-                                            value="1" />No
-                                    </label>
-                                </td>
-                            </tr>
-                        </table>
-                        <!-- 4 -->
-                        <table class="section-heading">
-                            <tr>
-                                <td>4. CURRENT FORMULARIES &amp; ALLERGIES</td>
-                            </tr>
-                        </table>
-                        <table class="form-table">
-                            <colgroup>
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                            </colgroup>
-                            <tr>
-                                <td class="label">Known Drug Allergies *</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input27" name="input27" type="text" />
-                                </td>
-                                <td class="label">Food / Latent Allergies</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input28" name="input28" type="text" />
-                                </td>
-                            </tr>
-                            <tr class="row-medium">
-                                <td class="label">
-                                    Current Prescription<br />Meds
-                                </td>
-                                <td class="input-space" colspan="3">
-                                    <input class="field-input" id="input29" name="input29" type="text" />
-                                </td>
-                            </tr>
-                        </table>
-                       
-                    </td>
-                </tr>
-            </table>
-        </div>
-        <!-- ===================== PAGE 7 ===================== -->
-        <div class="page-break"></div>
-        <div class="page">
-            <table class="main-table">
-                <tr>
-                    <td>
-                        <!-- Section 4 continued -->
-                        <table class="form-table" style="margin-top:12px;">
-                            <colgroup>
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                            </colgroup>
-                            <tr>
-                                <td class="label">
-                                    Blood Thinners /<br />Aspirin?
-                                </td>
-                                <td class="input-space">
-                                    <label class="choice" for="input30">
-                                        <input data-radio-group="blood_thinner" id="input30" name="input30" type="radio"
-                                            value="1" />Yes
-                                    </label>
-                                    <label class="choice" for="input31">
-                                        <input data-radio-group="blood_thinner" id="input31" name="input31" type="radio"
-                                            value="1" />No
-                                    </label>
-                                </td>
-                                <td class="label">Dosage / Frequency</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input32" name="input32" type="text" />
-                                </td>
-                            </tr>
-                        </table>
-                        <!-- 5 -->
-                        <table class="section-heading">
-                            <tr>
-                                <td>5. SOCIAL, LIFESTYLE &amp; FAMILY HISTORY</td>
-                            </tr>
-                        </table>
-                        <table class="form-table">
-                            <colgroup>
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                            </colgroup>
-                            <tr>
-                                <td class="label">Tobacco Use Status</td>
-                                <td class="input-space">
-                                    <label class="choice-block" for="input33">
-                                        <input data-radio-group="tobacco" id="input33" name="input33" type="radio"
-                                            value="1" />Current
-                                    </label>
-                                    <label class="choice-block" for="input34">
-                                        <input data-radio-group="tobacco" id="input34" name="input34" type="radio"
-                                            value="1" />Former
-                                    </label>
-                                    <label class="choice-block" for="input35">
-                                        <input data-radio-group="tobacco" id="input35" name="input35" type="radio"
-                                            value="1" />Never
-                                    </label>
-                                </td>
-                                <td class="label">Alcohol Consumption</td>
-                                <td class="input-space">
-                                    <label class="choice" for="input36">
-                                        <input data-radio-group="alcohol" id="input36" name="input36" type="radio"
-                                            value="1" />Social
-                                    </label>
-                                    <label class="choice" for="input37">
-                                        <input data-radio-group="alcohol" id="input37" name="input37" type="radio"
-                                            value="1" />Daily
-                                    </label>
-                                    <br />
-                                    <label class="choice" for="input38">
-                                        <input data-radio-group="alcohol" id="input38" name="input38" type="radio"
-                                            value="1" />Rarely/Never
-                                    </label>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">
-                                    Drug / Substance<br />History
-                                </td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input39" name="input39" type="text" />
-                                </td>
-                                <td class="label">Family History of Illness</td>
-                                <td class="input-space">
-                                    <label class="choice-block" for="input40">
-                                        <input id="input40" name="input40" type="checkbox" value="1" />Cancer
-                                    </label>
-                                    <label class="choice-block" for="input41">
-                                        <input id="input41" name="input41" type="checkbox" value="1" />Heart Disease
-                                    </label>
-                                    <label class="choice-block" for="input42">
-                                        <input id="input42" name="input42" type="checkbox" value="1" />Stroke
-                                    </label>
-                                    <label class="choice-block" for="input43">
-                                        <input id="input43" name="input43" type="checkbox" value="1" />Diabetes
-                                    </label>
-                                </td>
-                            </tr>
-                        </table>
-                        <!-- 6 -->
-                        <table class="section-heading">
-                            <tr>
-                                <td>6. SYSTEMIC REVIEW &amp; CURRENT VITALS (IF AVAILABLE)</td>
-                            </tr>
-                        </table>
-                        <table class="form-table">
-                            <colgroup>
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                                <col style="width:25%;" />
-                            </colgroup>
-                            <tr>
-                                <td class="label">Current Height (cm / in)</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input44" name="input44" type="text" />
-                                </td>
-                                <td class="label">Current Weight (kg / lbs)</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input45" name="input45" type="text" />
-                                </td>
-                            </tr>
-                            <tr>
-                                <td class="label">Blood Pressure / Pulse</td>
-                                <td class="input-space">
-                                    <input class="field-input" id="input46" name="input46" type="text" />
-                                </td>
-                                <td class="label">Implanted Devices?</td>
-                                <td class="input-space">
-                                    <label class="choice" for="input47">
-                                        <input data-radio-group="implanted" id="input47" name="input47" type="radio"
-                                            value="1" />Yes
-                                    </label>
-                                    <label class="choice" for="input48">
-                                        <input data-radio-group="implanted" id="input48" name="input48" type="radio"
-                                            value="1" />No
-                                    </label>
-                                </td>
-                            </tr>
-                        </table>
-                        <!-- 7 -->
-                        <table class="section-heading">
-                            <tr>
-                                <td>7. PATIENT ATTESTATION &amp; SIGN-OFF</td>
-                            </tr>
-                        </table>
-                        <div class="avoid-break">
-                            <table class="signature-table">
+        <div class="page-content">
+            <div class="brand">MEDITRAVEL</div>
+            <div class="document-title">
+                COMPREHENSIVE MEDICAL CASE HISTORY INTAKE
+            </div>
+            <div class="top-rule"></div>
+
+            <!-- 1. PATIENT DEMOGRAPHICS -->
+            <div class="section">
+                <table class="section-heading">
+                    <tr>
+                        <td>1. PATIENT DEMOGRAPHICS &amp; IDENTIFICATION</td>
+                    </tr>
+                </table>
+                <table class="form-table">
+                    <colgroup>
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                    </colgroup>
+                    <tr>
+                        <td class="label">Full Legal Name *</td>
+                        <td class="input-space" colspan="3">
+                            <input class="field-input" id="input1" name="input1" type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Date of Birth *</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input2" name="input2" type="date" />
+                        </td>
+                        <td class="label">Gender / Legal Sex</td>
+                        <td class="input-space">
+                            <table class="inner-choice-table" style="width:100%; border-collapse:collapse;">
                                 <tr>
-                                    <td class="signature-label-cell">
-                                        Signature of Patient / Legal<br />
-                                        Guardian:
+                                    <td style="border:none; padding:0 12px 3px 0; height:auto; white-space:nowrap;">
+                                        <label class="choice" for="input3"><span class="pdf-radio">&#9675;</span>Male</label>
                                     </td>
-                                    <td class="signature-line-cell">
-<img
-                        id="patient_signature_image"
-                        name="patient_signature_image"
-                        alt="Signature of Patient or Authorized Traveler"
-                        class="line-input"
-                        style="display:block;width:220px;height:50px;"
-                    /><hr>
+                                    <td style="border:none; padding:0 12px 3px 0; height:auto; white-space:nowrap;">
+                                        <label class="choice" for="input4"><span class="pdf-radio">&#9675;</span>Female</label>
                                     </td>
-                                    <td class="date-label-cell">
-                                        Date:
-                                    </td>
-                                    <td class="date-line-cell">
-                                        <input class="signature-input" id="input50" name="input50" type="date" />
+                                </tr>
+                                <tr>
+                                    <td colspan="2" style="border:none; padding:0; height:auto; white-space:nowrap;">
+                                        <label class="choice" for="input5"><span class="pdf-radio">&#9675;</span>Other</label>
                                     </td>
                                 </tr>
                             </table>
-                        </div>
-                        
-                    </td>
-                </tr>
-            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Nationality / Country</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input6" name="input6" type="text" />
+                        </td>
+                        <td class="label">Primary Passport<br />No.</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input7" name="input7" type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Occupation</td>
+                        <td class="input-space" colspan="3">
+                            <input class="field-input" id="input8" name="input8" type="text" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 2. PRESENT ILLNESS -->
+            <div class="section">
+                <table class="section-heading">
+                    <tr>
+                        <td>2. PRESENT ILLNESS &amp; CHIEF COMPLAINT</td>
+                    </tr>
+                </table>
+                <table class="form-table">
+                    <colgroup>
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                    </colgroup>
+                    <tr class="row-tall">
+                        <td class="label">
+                            Reason for Consultation<br />*
+                        </td>
+                        <td class="input-space" colspan="3">
+                            <textarea class="field-textarea" id="input9" name="input9"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">
+                            Symptom Duration /<br />Onset
+                        </td>
+                        <td class="input-space">
+                            <input class="field-input" id="input10" name="input10" type="text" />
+                        </td>
+                        <td class="label">Severity Index</td>
+                        <td class="input-space">
+                            <label class="choice-block" for="input11">
+                                <span class="pdf-radio">&#9675;</span>Mild
+                            </label>
+                            <label class="choice-block" for="input12">
+                                <span class="pdf-radio">&#9675;</span>Moderate
+                            </label>
+                            <label class="choice-block" for="input13">
+                                <span class="pdf-radio">&#9675;</span>Severe
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Prior Local Diagnosis</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input14" name="input14" type="text" />
+                        </td>
+                        <td class="label">
+                            Treating Physician<br />(Local)
+                        </td>
+                        <td class="input-space">
+                            <input class="field-input" id="input15" name="input15" type="text" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 3. PAST MEDICAL & SURGICAL HISTORY -->
+            <div class="section">
+                <table class="section-heading">
+                    <tr>
+                        <td>3. PAST MEDICAL &amp; SURGICAL HISTORY</td>
+                    </tr>
+                </table>
+                <table class="form-table">
+                    <colgroup>
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                    </colgroup>
+                    <tr>
+                        <td class="label">Chronic Diagnoses</td>
+                        <td class="input-space" colspan="3">
+                            <label class="choice" for="input16">
+                                <span class="pdf-checkbox">&#9633;</span>Diabetes
+                            </label>
+                            <label class="choice" for="input17">
+                                <span class="pdf-checkbox">&#9633;</span>Hypertension
+                            </label>
+                            <label class="choice" for="input18">
+                                <span class="pdf-checkbox">&#9633;</span>Cardiovascular
+                            </label>
+                            <label class="choice" for="input19">
+                                <span class="pdf-checkbox">&#9633;</span>Asthma/COPD
+                            </label>
+                            <br />
+                            <label class="choice" for="input20">
+                                <span class="pdf-checkbox">&#9633;</span>None
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">
+                            Other Chronic<br />Conditions
+                        </td>
+                        <td class="input-space">
+                            <input class="field-input" id="input21" name="input21" type="text" />
+                        </td>
+                        <td class="label">Prior Surgeries &amp; Dates</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input22" name="input22" type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">
+                            Bleeding/Clotting<br />Disorders?
+                        </td>
+                        <td class="input-space">
+                            <label class="choice" for="input23">
+                                <span class="pdf-radio">&#9675;</span>Yes
+                            </label>
+                            <label class="choice" for="input24">
+                                <span class="pdf-radio">&#9675;</span>No
+                            </label>
+                        </td>
+                        <td class="label">Anesthesia Issues?</td>
+                        <td class="input-space">
+                            <label class="choice" for="input25">
+                                <span class="pdf-radio">&#9675;</span>Yes
+                            </label>
+                            <label class="choice" for="input26">
+                                <span class="pdf-radio">&#9675;</span>No
+                            </label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 4. CURRENT FORMULARIES & ALLERGIES -->
+            <div class="section">
+                <table class="section-heading">
+                    <tr>
+                        <td>4. CURRENT FORMULARIES &amp; ALLERGIES</td>
+                    </tr>
+                </table>
+                <table class="form-table">
+                    <colgroup>
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                    </colgroup>
+                    <tr>
+                        <td class="label">Known Drug Allergies *</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input27" name="input27" type="text" />
+                        </td>
+                        <td class="label">Food / Latent Allergies</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input28" name="input28" type="text" />
+                        </td>
+                    </tr>
+                    <tr class="row-medium">
+                        <td class="label">
+                            Current Prescription<br />Meds
+                        </td>
+                        <td class="input-space" colspan="3">
+                            <input class="field-input" id="input29" name="input29" type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">
+                            Blood Thinners /<br />Aspirin?
+                        </td>
+                        <td class="input-space">
+                            <label class="choice" for="input30">
+                                <span class="pdf-radio">&#9675;</span>Yes
+                            </label>
+                            <label class="choice" for="input31">
+                                <span class="pdf-radio">&#9675;</span>No
+                            </label>
+                        </td>
+                        <td class="label">Dosage / Frequency</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input32" name="input32" type="text" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 5. SOCIAL, LIFESTYLE & FAMILY HISTORY -->
+    <div class="section" style="padding-top:15mm !important;">
+    <table class="section-heading" style="margin-top:0 !important; margin-bottom:9px !important;">
+                    <tr>
+                        <td>5. SOCIAL, LIFESTYLE &amp; FAMILY HISTORY</td>
+                    </tr>
+                </table>
+                <table class="form-table">
+                    <colgroup>
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                    </colgroup>
+                    <tr>
+                        <td class="label">Tobacco Use Status</td>
+                        <td class="input-space">
+                            <label class="choice-block" for="input33">
+                                <span class="pdf-radio">&#9675;</span>Current
+                            </label>
+                            <label class="choice-block" for="input34">
+                                <span class="pdf-radio">&#9675;</span>Former
+                            </label>
+                            <label class="choice-block" for="input35">
+                                <span class="pdf-radio">&#9675;</span>Never
+                            </label>
+                        </td>
+                        <td class="label">Alcohol Consumption</td>
+                        <td class="input-space">
+                            <label class="choice" for="input36">
+                                <span class="pdf-radio">&#9675;</span>Social
+                            </label>
+                            <label class="choice" for="input37">
+                                <span class="pdf-radio">&#9675;</span>Daily
+                            </label>
+                            <br />
+                            <label class="choice" for="input38">
+                                <span class="pdf-radio">&#9675;</span>Rarely/Never
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">
+                            Drug / Substance<br />History
+                        </td>
+                        <td class="input-space">
+                            <input class="field-input" id="input39" name="input39" type="text" />
+                        </td>
+                        <td class="label">Family History of Illness</td>
+                        <td class="input-space">
+                            <label class="choice-block" for="input40">
+                                <span class="pdf-checkbox">&#9633;</span>Cancer
+                            </label>
+                            <label class="choice-block" for="input41">
+                                <span class="pdf-checkbox">&#9633;</span>Heart Disease
+                            </label>
+                            <label class="choice-block" for="input42">
+                                <span class="pdf-checkbox">&#9633;</span>Stroke
+                            </label>
+                            <label class="choice-block" for="input43">
+                                <span class="pdf-checkbox">&#9633;</span>Diabetes
+                            </label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <!-- 6. SYSTEMIC REVIEW & CURRENT VITALS -->
+            <div class="section">
+                <table class="section-heading">
+                    <tr>
+                        <td>6. SYSTEMIC REVIEW &amp; CURRENT VITALS (IF AVAILABLE)</td>
+                    </tr>
+                </table>
+                <table class="form-table">
+                    <colgroup>
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                        <col style="width:25%;" />
+                    </colgroup>
+                    <tr>
+                        <td class="label">Current Height (cm / in)</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input44" name="input44" type="text" />
+                        </td>
+                        <td class="label">Current Weight (kg / lbs)</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input45" name="input45" type="text" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="label">Blood Pressure / Pulse</td>
+                        <td class="input-space">
+                            <input class="field-input" id="input46" name="input46" type="text" />
+                        </td>
+                        <td class="label">Implanted Devices?</td>
+                        <td class="input-space">
+                            <label class="choice" for="input47">
+                                <span class="pdf-radio">&#9675;</span>Yes
+                            </label>
+                            <label class="choice" for="input48">
+                                <span class="pdf-radio">&#9675;</span>No
+                            </label>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <!-- 7. PATIENT ATTESTATION & SIGN-OFF -->
+            <div class="section avoid-break">
+                <table class="section-heading">
+                    <tr>
+                        <td>7. PATIENT ATTESTATION &amp; SIGN-OFF</td>
+                    </tr>
+                </table>
+                <table class="signature-table">
+                    <tr>
+                        <td class="signature-label-cell">
+                            Signature of Patient / Legal<br />
+                            Guardian:
+                        </td>
+                        <td class="signature-line-cell">
+                            <div class="signature-image-box">
+                                <img id="patient_signature_image"
+                                    name="patient_signature_image"
+                                    alt="Signature of Patient or Legal Guardian" />
+                            </div>
+                        </td>
+                        <td class="date-label-cell">
+                            Date:
+                        </td>
+                        <td class="date-line-cell">
+                            <input class="signature-input" id="input50" name="input50" type="date" />
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
         </div>
     </form>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            var radios = document.querySelectorAll('input[type="radio"][data-radio-group]');
-
-            radios.forEach(function (radio) {
-                radio.addEventListener('change', function () {
-                    if (!this.checked) return;
-
-                    var group = this.getAttribute('data-radio-group');
-                    var groupRadios = document.querySelectorAll(
-                        'input[type="radio"][data-radio-group="' + group + '"]'
-                    );
-
-                    groupRadios.forEach(function (item) {
-                        if (item !== radio) {
-                            item.checked = false;
-                        }
-                    });
-                });
-            });
-        });
-    </script>
 </body>
 
 </html>
