@@ -105,17 +105,13 @@ class Consent_form extends AdminController
     /* =========================================================
        1) LIST ALL CONSENT FORMS
        ---------------------------------------------------------
-       Unlike NABH, consent forms are NOT mapped to (or filtered
-       by) appointment type. Every row in tblconsent_form_master
-       is always returned, for every appointment type. There is
-       no equivalent of NABH's tblappointment_type_pdf_master
-       mapping table here, and none should be added.
+       Consent forms are not mapped to (or filtered by) appointment
+       type. Every row in tblconsent_form_master is always returned
+       for every appointment type.
 
-       appointment_type_id may still be POSTed by the frontend
-       (e.g. if the same modal/JS is reused for both NABH and
-       consent forms) but it is intentionally accepted-and-
-       ignored here — it is never used to filter which consent
-       forms are returned.
+       appointment_type_id may still be POSTed by older frontend
+       code, but it is intentionally accepted-and-ignored here — it
+       is never used to filter which consent forms are returned.
     ==========================================================*/
     public function list_json()
     {

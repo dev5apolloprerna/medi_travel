@@ -5,48 +5,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MEDITRAVEL - Form 14 Patient Experience &amp; NPS</title>
     <style>
-        @page { size: A4 portrait; margin: 9mm 14mm; }
+        @page { size: A4 portrait; margin: 10mm 12mm; }
         * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        body { margin: 0; color: #26364d; background: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 8px; line-height: 1.4; }
-        .page { width: 100%; margin: 0 auto; background: #fff; }
-        .brand { margin: 0; color: #233f8f; font-size: 25px; font-weight: 700; letter-spacing: 4px; line-height: 1; }
-        .form-title { margin: 9px 0 15px; color: #151d2d; font-size: 15px; font-weight: 700; }
+        body { margin: 0; padding: 0; color: #26364d; background: #fff; font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; line-height: 1.35; }
+        .page { width: 100%; margin: 0; padding: 0; min-height: 0; background: #fff; }
+        .brand { margin: 0; color: #233f8f; font-size: 26px; font-weight: 700; letter-spacing: 4px; line-height: 1; }
+        .form-title { margin: 7px 0 11px; color: #151d2d; font-size: 14px; font-weight: 700; }
         .top-rule { height: 2px; margin-bottom: 12px; background: #1685bd; }
-        .feedback-box { margin-bottom: 12px; padding: 7px 9px; border-left: 4px solid #1685bd; background: #f7f9fc; color: #53627a; font-size: 12px; line-height: 1.5; }
+        .feedback-box { margin-bottom: 10px; padding: 7px 9px; border-left: 4px solid #1685bd; background: #f7f9fc; color: #53627a; font-size: 10.5px; line-height: 1.45; }
         .feedback-box strong { color: #34445d; }
         .section { margin-bottom: 11px; page-break-inside: avoid; }
-        .section-heading { margin: 0 0 7px; padding-bottom: 4px; border-bottom: 1px solid #d6deea; color: #20428f; font-size: 15px; font-weight: 700; letter-spacing: .1px; }
-        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .section-heading { margin: 0 0 6px; padding-bottom: 4px; border-bottom: 1px solid #d6deea; color: #20428f; font-size: 14px; font-weight: 700; letter-spacing: .1px; }
+        table { width: 100%; max-width: 100%; border-collapse: collapse; table-layout: fixed; }
         td { border: 1px solid #afbed3; padding: 5px 7px; vertical-align: top; }
-        .label { width: 25%; background: #f7f9fc; color: #34445d; font-size: 10px; font-weight: 700; }
+        .label { width: 25%; background: #f7f9fc; color: #34445d; font-size: 10.5px; font-weight: 700; }
         .value { width: 25%; height: 26px; }
         input[type="text"], textarea { width: 100%; margin: 0; padding: 1px 2px; border: 0;
              /* border-bottom: 1px solid #7b8799; */
               border-radius: 0; outline: 0; background: transparent; color: #172033; font: 12px Arial, Helvetica, sans-serif; }
-        textarea { height: 70px; min-height: 70px; resize: vertical; border: 1px solid #bac7d8; padding: 6px; }
+        textarea { height: 62px; min-height: 62px; resize: none; border: 1px solid #bac7d8; padding: 5px; }
         input:focus, textarea:focus { background: #fffbe8; }
-        .question { margin: 0 0 7px; color: #3f4d62; font-size: 12px; line-height: 1.45; }
-        .nps-table td { height: 38px; padding: 5px 2px; text-align: center; vertical-align: middle; }
+        .question { margin: 0 0 6px; color: #3f4d62; font-size: 10.5px; line-height: 1.45; }
+        .nps-table td { width: 9.09%; height: 40px; padding: 4px 0; text-align: center; vertical-align: middle; }
         .nps-option { display: block; cursor: pointer; font-weight: 700; color: #24334a; }
         .nps-number { display: block; margin-bottom: 4px; }
         input[type="radio"] { width: 10px; height: 10px; margin: 0; cursor: pointer; vertical-align: middle; }
-        .nps-scale { width: 100%; margin-top: 3px; color: #718096; font-size: 11px; }
+        .nps-scale { width: 100%; margin-top: 3px; color: #718096; font-size: 9px; }
         .nps-scale td { border: 0; padding: 0; }
         .nps-scale .right { text-align: right; }
-        .benchmark-intro { margin: 0 0 7px; color: #526077; font-size: 12px; }
+        .benchmark-intro { margin: 0 0 6px; color: #526077; font-size: 10.5px; }
         .benchmark-row { margin-bottom: 6px; page-break-inside: avoid; }
-        .benchmark-label { margin-bottom: 2px; color: #34445d; font-size: 10.7px; font-weight: 700; }
-        .rating-option { display: inline-block; margin-right: 9px; color: #34445d; cursor: pointer; white-space: nowrap; font-size: 12px; }
-        .remarks-label { margin: 0 0 7px; color: #3f4d62; font-size: 12px; }
-        .footer-note { margin: 12px 0 0; color: #56647a; font-size: 11px; font-style: italic; line-height: 1.45; text-align: center; }
+        .benchmark-label { margin-bottom: 2px; color: #34445d; font-size: 10.2px; font-weight: 700; }
+        .rating-option { display: inline-block; margin-right: 8px; color: #34445d; cursor: pointer; white-space: nowrap; font-size: 10.5px; }
+        .remarks-label { margin: 0 0 6px; color: #3f4d62; font-size: 10.5px; }
+        .footer-note { margin: 10px 0 0; color: #56647a; font-size: 9px; font-style: italic; line-height: 1.45; text-align: center; }
         .print-value { display: inline-block; width: 100%; min-height: 12px; border-bottom: 1px solid #7b8799; white-space: pre-wrap; }
         .print-textarea { min-height: 70px; border: 1px solid #bac7d8; padding: 6px; }
         .print-radio { display: inline-block; font-family: DejaVu Sans, sans-serif; font-size: 10px; }
-        @media screen {
-            body { background: #e9edf3; }
-            .page { width: 210mm; min-height: 297mm; padding: 9mm 14mm; margin: 12px auto; box-shadow: 0 2px 14px rgba(15,23,42,.15); }
+
+        /* ===== mPDF FIXES ===== */
+        .page, .section, .feedback-box, table, tr, td {
+            overflow: visible;
         }
-        @media print { .page { padding: 0; margin: 0; } }
+
+        .nps-table,
+        .nps-scale {
+            page-break-inside: avoid;
+        }
+
+        .nps-table td:first-child {
+            border-left: 1px solid #afbed3;
+        }
+
+        .nps-table td:last-child {
+            border-right: 1px solid #afbed3;
+        }
+
+        h1, h2, h3, p {
+            page-break-after: avoid;
+        }
+        
+        .benchmark-row {
+    margin-bottom: 7px;
+    page-break-inside: avoid;
+}
+
+.benchmark-label {
+    margin-bottom: 3px;
+    color: #34445d;
+    font-size: 10.7px;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.rating-row {
+    width: auto;
+    margin: 0;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+.rating-row td {
+    width: auto;
+    border: none !important;
+    padding: 0 14px 0 0 !important;
+    vertical-align: middle !important;
+    white-space: nowrap;
+    height: 18px;
+    line-height: 18px;
+}
+
+.rating-row input[type="radio"] {
+    width: 12px;
+    height: 12px;
+    margin: 0 4px 0 0;
+    padding: 0;
+    vertical-align: middle;
+}
+
+.rating-row span {
+    display: inline;
+    font-size: 11px;
+    line-height: normal;
+    vertical-align: middle;
+}
     </style>
 </head>
 <body>
@@ -99,54 +161,168 @@
         </div>
 
         <div class="section">
-            <h3 class="section-heading">2. TARGETED JOURNEY EXPERIENCE BENCHMARKS</h3>
-            <p class="benchmark-intro">Please rate your satisfaction across specific operational modules (1 = Very Dissatisfied, 5 = Exceptionally Satisfied):</p>
+    <h3 class="section-heading">2. TARGETED JOURNEY EXPERIENCE BENCHMARKS</h3>
 
-            <div class="benchmark-row">
-                <div class="benchmark-label">Pre-Departure Coordination &amp; Itinerary Engineering:</div>
-                <label class="rating-option">[ <input type="radio" id="input16" name="benchmark1" value="1" tabindex="16"> ] 1</label>
-                <label class="rating-option">[ <input type="radio" id="input17" name="benchmark1" value="2" tabindex="17"> ] 2</label>
-                <label class="rating-option">[ <input type="radio" id="input18" name="benchmark1" value="3" tabindex="18"> ] 3</label>
-                <label class="rating-option">[ <input type="radio" id="input19" name="benchmark1" value="4" tabindex="19"> ] 4</label>
-                <label class="rating-option">[ <input type="radio" id="input20" name="benchmark1" value="5" tabindex="20"> ] 5</label>
-            </div>
+    <p class="benchmark-intro">
+        Please rate your satisfaction across specific operational modules
+        (1 = Very Dissatisfied, 5 = Exceptionally Satisfied):
+    </p>
 
-            <div class="benchmark-row">
-                <div class="benchmark-label">Airport Pickup Logistics, Reception, &amp; Secure Chauffeur Transfers:</div>
-                <label class="rating-option">[ <input type="radio" id="input21" name="benchmark2" value="1" tabindex="21"> ] 1</label>
-                <label class="rating-option">[ <input type="radio" id="input22" name="benchmark2" value="2" tabindex="22"> ] 2</label>
-                <label class="rating-option">[ <input type="radio" id="input23" name="benchmark2" value="3" tabindex="23"> ] 3</label>
-                <label class="rating-option">[ <input type="radio" id="input24" name="benchmark2" value="4" tabindex="24"> ] 4</label>
-                <label class="rating-option">[ <input type="radio" id="input25" name="benchmark2" value="5" tabindex="25"> ] 5</label>
-            </div>
-
-            <div class="benchmark-row">
-                <div class="benchmark-label">Hospital Care Quality, Clinical Staff, &amp; Attending Physicians:</div>
-                <label class="rating-option">[ <input type="radio" id="input26" name="benchmark3" value="1" tabindex="26"> ] 1</label>
-                <label class="rating-option">[ <input type="radio" id="input27" name="benchmark3" value="2" tabindex="27"> ] 2</label>
-                <label class="rating-option">[ <input type="radio" id="input28" name="benchmark3" value="3" tabindex="28"> ] 3</label>
-                <label class="rating-option">[ <input type="radio" id="input29" name="benchmark3" value="4" tabindex="29"> ] 4</label>
-                <label class="rating-option">[ <input type="radio" id="input30" name="benchmark3" value="5" tabindex="30"> ] 5</label>
-            </div>
-
-            <div class="benchmark-row">
-                <div class="benchmark-label">Language Translation Services &amp; Care Coordinator On-Site Support:</div>
-                <label class="rating-option">[ <input type="radio" id="input31" name="benchmark4" value="1" tabindex="31"> ] 1</label>
-                <label class="rating-option">[ <input type="radio" id="input32" name="benchmark4" value="2" tabindex="32"> ] 2</label>
-                <label class="rating-option">[ <input type="radio" id="input33" name="benchmark4" value="3" tabindex="33"> ] 3</label>
-                <label class="rating-option">[ <input type="radio" id="input34" name="benchmark4" value="4" tabindex="34"> ] 4</label>
-                <label class="rating-option">[ <input type="radio" id="input35" name="benchmark4" value="5" tabindex="35"> ] 5</label>
-            </div>
-
-            <div class="benchmark-row">
-                <div class="benchmark-label">Hotel Accommodations, Cleanliness, &amp; Post-Op Comfort Parameters:</div>
-                <label class="rating-option">[ <input type="radio" id="input36" name="benchmark5" value="1" tabindex="36"> ] 1</label>
-                <label class="rating-option">[ <input type="radio" id="input37" name="benchmark5" value="2" tabindex="37"> ] 2</label>
-                <label class="rating-option">[ <input type="radio" id="input38" name="benchmark5" value="3" tabindex="38"> ] 3</label>
-                <label class="rating-option">[ <input type="radio" id="input39" name="benchmark5" value="4" tabindex="39"> ] 4</label>
-                <label class="rating-option">[ <input type="radio" id="input40" name="benchmark5" value="5" tabindex="40"> ] 5</label>
-            </div>
+    <div class="benchmark-row">
+        <div class="benchmark-label">
+            Pre-Departure Coordination &amp; Itinerary Engineering:
         </div>
+
+        <table class="rating-row">
+            <tr>
+                <td>
+                    <input type="radio" id="input16" name="benchmark1" value="1" tabindex="16">
+                    <span>1</span>
+                </td>
+                <td>
+                    <input type="radio" id="input17" name="benchmark1" value="2" tabindex="17">
+                    <span>2</span>
+                </td>
+                <td>
+                    <input type="radio" id="input18" name="benchmark1" value="3" tabindex="18">
+                    <span>3</span>
+                </td>
+                <td>
+                    <input type="radio" id="input19" name="benchmark1" value="4" tabindex="19">
+                    <span>4</span>
+                </td>
+                <td>
+                    <input type="radio" id="input20" name="benchmark1" value="5" tabindex="20">
+                    <span>5</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="benchmark-row">
+        <div class="benchmark-label">
+            Airport Pickup Logistics, Reception, &amp; Secure Chauffeur Transfers:
+        </div>
+
+        <table class="rating-row">
+            <tr>
+                <td>
+                    <input type="radio" id="input21" name="benchmark2" value="1" tabindex="21">
+                    <span>1</span>
+                </td>
+                <td>
+                    <input type="radio" id="input22" name="benchmark2" value="2" tabindex="22">
+                    <span>2</span>
+                </td>
+                <td>
+                    <input type="radio" id="input23" name="benchmark2" value="3" tabindex="23">
+                    <span>3</span>
+                </td>
+                <td>
+                    <input type="radio" id="input24" name="benchmark2" value="4" tabindex="24">
+                    <span>4</span>
+                </td>
+                <td>
+                    <input type="radio" id="input25" name="benchmark2" value="5" tabindex="25">
+                    <span>5</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="benchmark-row">
+        <div class="benchmark-label">
+            Hospital Care Quality, Clinical Staff, &amp; Attending Physicians:
+        </div>
+
+        <table class="rating-row">
+            <tr>
+                <td>
+                    <input type="radio" id="input26" name="benchmark3" value="1" tabindex="26">
+                    <span>1</span>
+                </td>
+                <td>
+                    <input type="radio" id="input27" name="benchmark3" value="2" tabindex="27">
+                    <span>2</span>
+                </td>
+                <td>
+                    <input type="radio" id="input28" name="benchmark3" value="3" tabindex="28">
+                    <span>3</span>
+                </td>
+                <td>
+                    <input type="radio" id="input29" name="benchmark3" value="4" tabindex="29">
+                    <span>4</span>
+                </td>
+                <td>
+                    <input type="radio" id="input30" name="benchmark3" value="5" tabindex="30">
+                    <span>5</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="benchmark-row">
+        <div class="benchmark-label">
+            Language Translation Services &amp; Care Coordinator On-Site Support:
+        </div>
+
+        <table class="rating-row">
+            <tr>
+                <td>
+                    <input type="radio" id="input31" name="benchmark4" value="1" tabindex="31">
+                    <span>1</span>
+                </td>
+                <td>
+                    <input type="radio" id="input32" name="benchmark4" value="2" tabindex="32">
+                    <span>2</span>
+                </td>
+                <td>
+                    <input type="radio" id="input33" name="benchmark4" value="3" tabindex="33">
+                    <span>3</span>
+                </td>
+                <td>
+                    <input type="radio" id="input34" name="benchmark4" value="4" tabindex="34">
+                    <span>4</span>
+                </td>
+                <td>
+                    <input type="radio" id="input35" name="benchmark4" value="5" tabindex="35">
+                    <span>5</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="benchmark-row">
+        <div class="benchmark-label">
+            Hotel Accommodations, Cleanliness, &amp; Post-Op Comfort Parameters:
+        </div>
+
+        <table class="rating-row">
+            <tr>
+                <td>
+                    <input type="radio" id="input36" name="benchmark5" value="1" tabindex="36">
+                    <span>1</span>
+                </td>
+                <td>
+                    <input type="radio" id="input37" name="benchmark5" value="2" tabindex="37">
+                    <span>2</span>
+                </td>
+                <td>
+                    <input type="radio" id="input38" name="benchmark5" value="3" tabindex="38">
+                    <span>3</span>
+                </td>
+                <td>
+                    <input type="radio" id="input39" name="benchmark5" value="4" tabindex="39">
+                    <span>4</span>
+                </td>
+                <td>
+                    <input type="radio" id="input40" name="benchmark5" value="5" tabindex="40">
+                    <span>5</span>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
 
         <div class="section">
             <h3 class="section-heading">3. QUALITATIVE INSIGHTS &amp; REMARKS</h3>
@@ -156,23 +332,5 @@
         </div>
     </div>
 </form>
-
-<script>
-/* For mPDF: populate values, run prepareForMpdf(), and pass the returned HTML to WriteHTML(). */
-function prepareForMpdf() {
-    document.querySelectorAll('#meditravelNpsForm input, #meditravelNpsForm textarea').forEach(function (field) {
-        var replacement = document.createElement('span');
-        if (field.type === 'radio') {
-            replacement.className = 'print-radio';
-            replacement.textContent = field.checked ? '\u25c9' : '\u25cb';
-        } else {
-            replacement.className = 'print-value' + (field.tagName === 'TEXTAREA' ? ' print-textarea' : '');
-            replacement.textContent = field.value || '\u00a0';
-        }
-        field.parentNode.replaceChild(replacement, field);
-    });
-    return document.documentElement.outerHTML;
-}
-</script>
 </body>
 </html>

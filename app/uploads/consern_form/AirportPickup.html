@@ -8,11 +8,20 @@
     <style>
         @page {
             size: A4;
-            margin: 14mm 15mm 16mm 15mm;
+            margin: 0;
         }
 
         * {
             box-sizing: border-box;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
         }
 
         body {
@@ -20,13 +29,15 @@
             padding: 0;
             font-family: Arial, Helvetica, sans-serif;
             font-size: 13px;
-            line-height: 1.5;
+            line-height: 1.42;
             color: #33415a;
             background: #ffffff;
         }
 
-        .page {
-            width: 100%;
+        .pdf-content {
+            width: auto;
+            margin: 0;
+            padding: 10mm;
         }
 
         .main-table {
@@ -40,36 +51,36 @@
             letter-spacing: 5px;
             color: #254398;
             line-height: 1.1;
-            padding-bottom: 10px;
+            padding-bottom: 5px;
         }
 
         .document-title {
             font-size: 18px;
             font-weight: bold;
             color: #182033;
-            padding-bottom: 18px;
+            padding-bottom: 7px;
             letter-spacing: .2px;
         }
 
         .blue-line {
             width: 100%;
-            height: 13px;
-            border-bottom: 3px solid #1b84c6;
-            margin-bottom: 20px;
+            height: 5px;
+            border-bottom: 2px solid #1b84c6;
+            margin-bottom: 8px;
         }
 
         .instruction-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 18px;
+            margin-bottom: 11px;
         }
 
         .instruction-table td {
             background: #f4f7fa;
             border-left: 4px solid #1791d0;
-            padding: 10px 14px;
+            padding: 8px 10px;
             color: #4a5870;
-            line-height: 1.55;
+            line-height: 1.42;
         }
 
         .instruction-title {
@@ -80,35 +91,35 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
-            margin-bottom: 9px;
+            margin-bottom: 6px;
         }
 
         .section-heading td {
             color: #24479a;
             font-size: 16px;
             font-weight: bold;
-            padding: 4px 0 6px 0;
+            padding: 3px 0 5px 0;
             border-bottom: 1px solid #cfd9e6;
             letter-spacing: .1px;
         }
 
         .paragraph {
-            margin: 0 0 12px 0;
+            margin: 0 0 9px 0;
             text-align: justify;
-            line-height: 1.55;
+            line-height: 1.45;
         }
 
         .contact-table {
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
-            margin-top: 6px;
-            margin-bottom: 15px;
+            margin-top: 5px;
+            margin-bottom: 10px;
         }
 
         .contact-table td {
             border: 1px solid #c8d3e0;
-            padding: 10px 11px;
+            padding: 7px 8px;
             vertical-align: middle;
         }
 
@@ -125,7 +136,7 @@
         }
 
         .contact-input {
-            width: 100%;
+            width: 95%;
             border: none;
             border-bottom: 1px solid #5d6b7e;
             outline: none;
@@ -133,15 +144,15 @@
             font-family: Arial, Helvetica, sans-serif;
             font-size: 13px;
             color: #182033;
-            padding: 2px 3px;
-            height: 24px;
+            padding: 3px 4px;
+            height: 22px;
         }
 
         .warning {
             margin-top: 6px;
             color: #d71913;
             font-weight: bold;
-            line-height: 1.5;
+            line-height: 1.42;
             text-align: justify;
         }
 
@@ -157,25 +168,23 @@
             padding-top: 8px;
         }
 
-        .page-break {
-            page-break-before: always;
-        }
-
         .ack-page {
-            padding-top: 28px;
+            padding-top: 10mm;
+            page-break-before: always;
+            page-break-inside: avoid;
         }
 
         .ack-heading {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 48px;
+            margin-bottom: 12px;
         }
 
         .ack-heading td {
             color: #24479a;
             font-size: 16px;
             font-weight: bold;
-            padding: 4px 0 6px 0;
+            padding: 3px 0 5px 0;
             border-bottom: 1px solid #cfd9e6;
         }
 
@@ -183,11 +192,13 @@
             width: 100%;
             border-collapse: collapse;
             table-layout: fixed;
+            margin-top: 6px;
+            margin-bottom: 6px;
         }
 
         .ack-table td {
             vertical-align: bottom;
-            padding: 0 0 46px 0;
+            padding: 5px;
         }
 
         .ack-left {
@@ -200,8 +211,8 @@
         }
 
         .line-input {
-            width: 100%;
-            height: 31px;
+            width: 95%;
+            height: 35px;
             border: none;
             border-bottom: 1px solid #56657a;
             outline: none;
@@ -209,19 +220,43 @@
             font-family: Arial, Helvetica, sans-serif;
             font-size: 13px;
             color: #182033;
-            padding: 2px 3px;
+            padding: 0 3px;
+            box-sizing: border-box;
+        }
+
+        input.line-input {
+            padding: 14px 3px 0 3px;
+            line-height: 18px;
+        }
+
+        img.line-input {
+            padding: 0;
+            object-fit: contain;
+            object-position: left bottom;
         }
 
         .field-caption {
             font-size: 12px;
             color: #46556c;
-            padding-top: 5px;
+            padding-top: 2px;
         }
 
         @media print {
-            input {
+            *, input {
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
+            }
+
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            .pdf-content {
+                width: auto !important;
+                margin: 0 !important;
+                padding: 10mm !important;
             }
         }
     </style>
@@ -231,11 +266,7 @@
 
 <form action="" method="post" id="airportArrivalProtocolForm">
 
-    <!-- PAGE 1 -->
-    <div class="page">
-        <table class="main-table">
-            <tr>
-                <td>
+    <div class="pdf-content">
 
                     <div class="brand">MEDITRAVEL</div>
 
@@ -359,16 +390,7 @@
                         luggage handling.
                     </p>
 
-                   
-
-                </td>
-            </tr>
-        </table>
-
-    </div>
-
-
-    <div class="page ack-page">
+        <div class="ack-page">
 
         <table class="ack-heading">
             <tr>
@@ -385,7 +407,7 @@
                         name="patient_signature_image"
                         alt="Signature of Patient or Authorized Traveler"
                         class="line-input"
-                        style="display:block;width:220px;height:50px;"
+                        style="display:block;width:180px;height:35px;"
                     />
                     <div class="field-caption">
                         Signature of Patient / Authorized Traveler
@@ -395,8 +417,8 @@
                 <td class="ack-right">
                     <input
                         type="date"
-                        id="input5"
-                        name="input5"
+                        id="input4"
+                        name="input4"
                         class="line-input"
                         aria-label="Date"
                     >
@@ -410,8 +432,8 @@
                 <td class="ack-left">
                     <input
                         type="text"
-                        id="patient_name"
-                        name="patient_name"
+                        id="input5"
+                        name="input5"
                         class="line-input"
                         aria-label="Printed Name of Patient"
                     >
@@ -423,8 +445,8 @@
                 <td class="ack-right">
                     <input
                         type="text"
-                        id="input7"
-                        name="input7"
+                        id="input6"
+                        name="input6"
                         class="line-input"
                         aria-label="Flight Number and Arrival Date"
                     >
@@ -436,6 +458,7 @@
 
         </table>
 
+        </div>
     </div>
 
 </form>

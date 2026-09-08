@@ -432,12 +432,7 @@ class Appointments extends AdminController
 
         $data = getAppointlyUserMeta();
         $data['filters'] = get_appointments_table_filters();
-
-        // ✅ PDFs for dropdown
-        $data['all_pdfs'] = $this->appointly_model->get_all_pdfs();
-
-        // ✅ Types table data
-        $data['types_rows'] = $this->appointly_model->get_types_with_pdfs();
+        $data['types_rows'] = $this->appointly_model->get_types();
 
         $this->load->view('users/index', $data);
     }
@@ -454,16 +449,12 @@ class Appointments extends AdminController
             die;
         }
 
-        $pdf_ids = $this->appointly_model->get_type_pdf_ids((int)$id);
-
         echo json_encode([
             'success' => true,
             'data' => [
                 'id' => (int)$type['id'],
                 'type' => $type['type'],
-                'color' => $type['color'],
-                'pdf_ids' => $pdf_ids,
-            ]
+                'color' => $type['color'],            ]
         ]);
         die;
     }
@@ -483,13 +474,10 @@ class Appointments extends AdminController
         $id   = (int)$this->input->post('id');
         $type = $this->input->post('appointment_type', true);
         $color = $this->input->post('color', true);
-        $pdf_ids = $this->input->post('pdf_ids'); // array
-
-        $result = $this->appointly_model->save_type_with_pdfs([
+        $result = $this->appointly_model->save_type([
             'id' => $id,
             'type' => $type,
             'color' => $color,
-            'pdf_ids' => $pdf_ids,
         ]);
 
         // ✅ add csrf
