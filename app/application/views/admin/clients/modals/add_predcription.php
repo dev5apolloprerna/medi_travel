@@ -455,57 +455,32 @@ function appendExistingPrescriptionRow(data, item_key) {
     function add_item_to_preview1() {
 
           var selectElement = document.getElementById('item_select1');
-            
+
             // Get the selected option value
             var id = selectElement.value;
+
+            if (!id) { return; } // blank option select thay to kai na karo
+
   requestGetJSON("invoice_items/get_item_by_id/" + id).done(function (
     response
   ) {
-    clear_item_preview_values();
+    clear_prescription_preview_values(); // .mainprescription row ne clear kare (.main nahi, e prescription ma exist j nathi karto)
 
-    $('.mainprescription textarea[name="description"]').val(response.description);
+    $('.mainprescription textarea[name="description"]').val(response.description || '');
     $('.mainprescription textarea[name="long_description"]').val(
-      response.long_description.replace(/(<|&lt;)br\s*\/*(>|&gt;)/g, " ")
+      (response.long_description || '').replace(/(<|&lt;)br\s*\/*(>|&gt;)/g, " ")
     );
-
-    _set_item_preview_custom_fields_array(response.custom_fields);
 
     $('.mainprescription input[name="quantity"]').val(1);
-
-    var taxSelectedArray = [];
-    if (response.taxname && response.taxrate) {
-      taxSelectedArray.push(response.taxname + "|" + response.taxrate);
-    }
-    if (response.taxname_2 && response.taxrate_2) {
-      taxSelectedArray.push(response.taxname_2 + "|" + response.taxrate_2);
-    }
-
-    $(".mainprescription select.tax").selectpicker("val", taxSelectedArray);
-    $('.mainprescription input[name="unit"]').val(response.unit);
-
-    var $currency = $("body").find(
-      '.accounting-template select[name="currency"]'
-    );
-    var baseCurency = $currency.attr("data-base");
-    var selectedCurrency = $currency.find("option:selected").val();
-    var $rateInputPreview = $('.main input[name="rate"]');
-
-    if (baseCurency == selectedCurrency) {
-      $rateInputPreview.val(response.rate);
-    } else {
-      var itemCurrencyRate = response["rate_currency_" + selectedCurrency];
-      if (!itemCurrencyRate || parseFloat(itemCurrencyRate) === 0) {
-        $rateInputPreview.val(response.rate);
-      } else {
-        $rateInputPreview.val(itemCurrencyRate);
-      }
-    }
+    $('.mainprescription input[name="unit"]').val(response.unit || '');
 
     $(document).trigger({
       type: "item-added-to-preview",
       item: response,
       item_type: "item",
     });
+  }).fail(function (xhr) {
+    console.error("Medicine data la nathi malyu:", xhr.responseText);
   });
 }
 
@@ -601,13 +576,10 @@ function clear_prescription_preview_values() {
         return;
   }
 
-  if(data.m == 0 && data.a == 0 && data.e == 0 && data.n == 0){
-    alert('Please select at least one time slot');return;
-  }
 
-  if(data.m_time == 0 && data.a_time == 0 && data.e_time == 0 && data.n_time == 0){
+/*  if(data.m_time == 0 && data.a_time == 0 && data.e_time == 0 && data.n_time == 0){
     alert('Please select at least one time slot');return;
-  }
+  }*/
 
   
    var regex = /<br[^>]*>/gi;
