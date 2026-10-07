@@ -53,6 +53,13 @@ function get_available_staff_permissions($data = [])
                 'view_own' => _l('permission_customers_based_on_admins'),
             ],
         ],
+        'doctor_receipts' => [
+            'name'         => 'Doctor Receipts',
+            'capabilities' => $allPermissionsArray,
+            'help'         => [
+                'view_own' => 'Doctor sees only the receipts issued to him / her',
+            ],
+        ],
         'email_templates' => [
             'name'         => _l('email_templates'),
             'capabilities' => [

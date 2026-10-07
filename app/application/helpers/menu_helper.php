@@ -92,6 +92,16 @@ function app_init_admin_sidebar_menu_items()
         ]);
     }
 
+    if (staff_can('view', 'doctor_receipts') || staff_can('view_own', 'doctor_receipts')) {
+        $CI->app_menu->add_sidebar_children_item('sales', [
+            'slug'     => 'doctor-receipts',
+            'name'     => 'Doctor Receipts',
+            'href'     => admin_url('doctor_receipts'),
+            'position' => 21,
+            'badge'    => [],
+        ]);
+    }
+
     // if (staff_can('view',  'credit_notes') || staff_can('view_own',  'credit_notes')) {
     //     $CI->app_menu->add_sidebar_children_item('sales', [
     //         'slug'     => 'credit_notes',
