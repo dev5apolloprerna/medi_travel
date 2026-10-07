@@ -178,6 +178,66 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Doctor Receipts (Doctor Disbursement & Settlement Advice) -->
+                <div class="tw-flex tw-justify-between tw-items-center tw-mb-2.5 tw-mt-4">
+                    <h4 class="tw-mt-0 tw-font-semibold tw-text-lg tw-text-neutral-700 tw-mb-0">Doctor Receipts</h4>
+                    <?php if (staff_can('create', 'doctor_receipts') || staff_can('edit', 'payments')) { ?>
+                    <a href="#" class="btn btn-primary" onclick="open_doctor_receipt(''); return false;">
+                        <i class="fa-regular fa-plus tw-mr-1"></i> New Doctor Receipt
+                    </a>
+                    <?php } ?>
+                </div>
+                <div class="panel_s">
+                    <div class="panel-body">
+                        <?php if (empty($doctor_receipts)) { ?>
+                        <p class="text-muted tw-mb-0">No doctor receipt yet for this payment.</p>
+                        <?php } else { ?>
+                        <div class="table-responsive">
+                            <table class="table table-bordered !tw-mt-0 tw-mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Statement No</th>
+                                        <th>Doctor</th>
+                                        <th>Settlement Date</th>
+                                        <th>Gross Remuneration</th>
+                                        <th class="text-right"><?php echo _l('options'); ?></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($doctor_receipts as $dr) { ?>
+                                    <tr>
+                                        <td>DS-<?php echo str_pad($dr->id, 6, '0', STR_PAD_LEFT); ?></td>
+                                        <td>Dr. <?php echo e($dr->doctor_name); ?></td>
+                                        <td><?php echo e(_d($dr->statement_date)); ?></td>
+                                        <td><?php echo e(app_format_money($dr->total, $dr->currency ?: $payment->invoice->currency_name)); ?></td>
+                                        <td class="text-right">
+                                            <div class="btn-group">
+                                                <a href="#" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+                                                    <i class="fa-regular fa-file-pdf"></i> <span class="caret"></span>
+                                                </a>
+                                                <ul class="dropdown-menu dropdown-menu-right">
+                                                    <li><a href="<?php echo admin_url('doctor_receipts/pdf/' . $dr->id . '?output_type=I'); ?>" target="_blank"><?php echo _l('view_pdf_in_new_window'); ?></a></li>
+                                                    <li><a href="<?php echo admin_url('doctor_receipts/pdf/' . $dr->id); ?>"><?php echo _l('download'); ?></a></li>
+                                                    <li><a href="<?php echo admin_url('doctor_receipts/pdf/' . $dr->id . '?print=true'); ?>" target="_blank"><?php echo _l('print'); ?></a></li>
+                                                </ul>
+                                            </div>
+                                            <?php if (staff_can('edit', 'doctor_receipts') || staff_can('edit', 'payments')) { ?>
+                                            <a href="#" class="btn btn-default btn-sm" onclick="open_doctor_receipt(<?php echo (int) $dr->id; ?>); return false;"><i class="fa-regular fa-pen-to-square"></i></a>
+                                            <?php } ?>
+                                            <?php if (staff_can('delete', 'doctor_receipts') || staff_can('delete', 'payments')) { ?>
+                                            <a href="<?php echo admin_url('doctor_receipts/delete/' . $dr->id); ?>" class="btn btn-danger btn-sm _delete"><i class="fa fa-remove"></i></a>
+                                            <?php } ?>
+                                        </td>
+                                    </tr>
+                                    <?php } ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        <?php } ?>
+                    </div>
+                </div>
+                <div id="doctor_receipt_modal_wrapper"></div>
             </div>
         </div>
     </div>
@@ -188,8 +248,15 @@
 <?php $this->load->view('admin/payments/send_to_client'); ?>
 <?php init_tail(); ?>
 <script>
+function open_doctor_receipt(id) {
+    var url = admin_url + 'doctor_receipts/modal/<?php echo (int) $payment->paymentid; ?>' + (id ? '/' + id : '');
+    $('#doctor_receipt_modal_wrapper').load(url, function() {
+        $('#doctor_receipt_modal').modal('show');
+    });
+}
+
 $(function() {
-    appValidateForm($('form'), {
+    appValidateForm($('form').not('#doctor-receipt-form'), {
         amount: 'required',
         date: 'required'
     });

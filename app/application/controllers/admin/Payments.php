@@ -119,6 +119,9 @@ class Payments extends AdminController
             $i++;
         }
 
+        $this->load->model('doctor_receipts_model');
+        $data['doctor_receipts'] = $this->doctor_receipts_model->get_by_payment($id);
+
         $data['title'] = _l('payment_receipt') . ' - ' . format_invoice_number($data['payment']->invoiceid);
         $this->load->view('admin/payments/payment', $data);
     }
