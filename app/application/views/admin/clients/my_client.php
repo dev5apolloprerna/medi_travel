@@ -43,36 +43,14 @@
                 <?php if (isset($client)) { ?>
                 <h4 class="tw-text-lg tw-font-semibold tw-text-neutral-800 tw-mt-0">
                     <div class="tw-space-x-3 tw-flex tw-items-center">
-                        <!-- <span class="tw-truncate">
-                            #<?php echo $client->userid . ' ' . $title; ?>
-                        </span>
-                        <?php if (staff_can('delete',  'customers') || is_admin()) { ?>
-                        <div class="btn-group">
-                            <a href="#" class="dropdown-toggle btn-link" data-toggle="dropdown" aria-haspopup="true"
-                                aria-expanded="false">
-                                <span class="caret"></span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-right">
-                                <?php if (is_admin()) { ?>
-                                <li>
-                                    <a href="<?php echo admin_url('clients/login_as_client/' . $client->userid); ?>"
-                                        target="_blank">
-                                        <i class="fa-regular fa-share-from-square"></i>
-                                        <?php echo _l('login_as_client'); ?>
-                                    </a>
-                                </li>
-                                <?php } ?>
-                                <?php if (staff_can('delete',  'customers')) { ?>
-                                <li>
-                                    <a href="<?php echo admin_url('clients/delete/' . $client->userid); ?>"
-                                        class="text-danger delete-text _delete"><i class="fa fa-remove"></i>
-                                        Branches         <?php echo _l('delete'); ?>
-                                    </a>
-                                </li>
-                                <?php } ?>
-                            </ul>
-                        </div> -->
-                        <?php } ?>
+                        <?php
+                        /*
+                         * Patient number / delete menu intentionally hidden.
+                         * (It used to be wrapped in an HTML comment containing a PHP "if" - for staff without
+                         * delete permission, e.g. doctors, the closing "-->" was skipped and the rest of the page
+                         * (tab bar styles and markup) ended up inside the comment.)
+                         */
+                        ?>
                     </div>
                     <?php if (isset($client) && $client->leadid != null) { ?>
                     <small class="tw-block">
@@ -111,9 +89,7 @@
                     <?php if ($group == 'profile') { ?>
                     <div class="panel-footer text-right tw-space-x-1" id="profile-save-section">
                         <?php if (!isset($client)) { ?>
-                      <!--   <button class="btn btn-default save-and-add-contact customer-form-submiter">
-                            <?php echo _l('save_customer_and_add_contact'); ?>
-                        </button> -->
+                        <?php /* "Save customer and add contact" button intentionally hidden */ ?>
                         <?php } ?>
                         <button class="btn btn-primary only-save customer-form-submiter">
                             <?php echo _l('submit'); ?>

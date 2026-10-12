@@ -41,7 +41,8 @@ function festival_module_init_menu_items()
 {
     $CI = &get_instance();
 
-    if (is_admin()) {
+    // Festival menu hidden - change false back to is_admin() to show it again
+    if (false && is_admin()) {
 	    $CI->app_menu->add_sidebar_menu_item('festival', [
 	        'name'     => _l('festival'),
 	        'href'     => admin_url('festival/festival'),
@@ -50,5 +51,3 @@ function festival_module_init_menu_items()
 	    ]);
 	}
 }
-
-

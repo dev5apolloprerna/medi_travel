@@ -215,6 +215,16 @@ function doctor_receipt_pdf($receipt, $tag = '')
 }
 
 /**
+ * Prepare doctor payment receipt pdf (Setup -> Staff -> Generate Receipt)
+ * @param  object $receipt doctor payment receipt row
+ * @return mixed
+ */
+function doctor_payment_receipt_pdf($receipt, $tag = '')
+{
+    return app_pdf('doctor_payment_receipt', LIBSPATH . 'pdf/Doctor_payment_receipt_pdf', $receipt, $tag);
+}
+
+/**
  * Prepare customer statement pdf
  * @param  object $statement statement
  * @return mixed

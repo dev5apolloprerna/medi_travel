@@ -1931,13 +1931,16 @@ function getClientIdFromUrl() {
 function open_patient_appointment_create_modal() 
 {
     var contactId = <?= json_encode((string) ($contact->id ?? '')); ?>;
+    var clientId  = <?= json_encode((string) ($client->userid ?? '')); ?>;
+    var createUrl = "<?php echo admin_url('appointly/appointments/patient_profile_create'); ?>";
 
-    if (!contactId || typeof admin_url === 'undefined') {
+    if (contactId) {
+        window.location.href = createUrl + '?contact_id=' + encodeURIComponent(contactId) + '&client_id=' + encodeURIComponent(clientId);
+    } else if (clientId) {
+        window.location.href = createUrl + '?client_id=' + encodeURIComponent(clientId);
+    } else {
         window.location.href = "<?php echo admin_url('appointly/appointments'); ?>";
-        return;
     }
-
-    window.location.href = admin_url + 'appointly/appointments/patient_profile_create?contact_id=' + encodeURIComponent(contactId);
 }
 </script>
 
