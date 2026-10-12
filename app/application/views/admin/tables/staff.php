@@ -39,7 +39,14 @@ $result = data_tables_init($aColumns, $sIndexColumn, $sTable, $join, $where, [
     'profile_image',
     'lastname',
     'staffid',
+    db_prefix() . 'staff.role as staff_roleid',
     ]);
+
+$can_generate_doctor_receipt = is_admin() || staff_can('create', 'doctor_receipts');
+$can_view_doctor_receipts    = is_admin() || staff_can('view', 'doctor_receipts');
+$CI = &get_instance();
+$CI->load->model('doctor_payment_receipts_model');
+$staff_with_doctor_receipt = $CI->doctor_payment_receipts_model->staff_with_receipt();
 
 $output  = $result['output'];
 $rResult = $result['rResult'];
@@ -107,6 +114,24 @@ foreach ($rResult as $aRow) {
     $row['DT_RowClass'] = 'has-row-options';
 
     $row = hooks()->apply_filters('staff_table_row', $row, $aRow);
+
+    // "Generate Receipt" for doctors - added after the "Create Appointment" link
+    if (($can_generate_doctor_receipt || $can_view_doctor_receipts) && is_doctor_role($aRow['staff_roleid'])) {
+        $receipt_links = '';
+        $has_receipt = in_array((int) $aRow['staffid'], $staff_with_doctor_receipt, true);
+        if ($has_receipt) {
+            // Receipt is generated only once - after that only "View Receipt"
+            if ($can_view_doctor_receipts || $can_generate_doctor_receipt) {
+                $receipt_links .= ' | <a href="' . admin_url('doctor_payment_receipts?staffid=' . $aRow['staffid']) . '">View Receipt</a>';
+            }
+        } elseif ($can_generate_doctor_receipt) {
+            $receipt_links .= ' | <a href="' . admin_url('doctor_payment_receipts/create/' . $aRow['staffid']) . '">Generate Receipt</a>';
+        }
+        $pos = strrpos($row[0], '</div>');
+        if ($pos !== false) {
+            $row[0] = substr_replace($row[0], $receipt_links . '</div>', $pos, strlen('</div>'));
+        }
+    }
 
     $output['aaData'][] = $row;
 }

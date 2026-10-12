@@ -70,7 +70,6 @@ ul#slider-menu li .edit_profile .edit_title {
 <?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
 <div class="patient-profile-tab">
 <ul id="slider-menu" class="clearfix nav navbar-pills navbar-pills-flat nav-tabs nav-stacked customer-tabs" role="tablist">
-<!-- <ul class="clearfix nav navbar-pills navbar-pills-flat nav-tabs nav-stacked customer-tabs" role="tablist"> -->
   <?php
   
   foreach ($customer_tabs as $key => $tab) {

@@ -265,6 +265,50 @@ class Appointments extends AdminController
 
 
     /**
+     * Full page "Add Appointment" form opened from the patient profile
+     * (Customers -> Patient -> Patient Profile -> Add Appointment)
+     *
+     * URL: admin/appointly/appointments/patient_profile_create?contact_id=X
+     *  or  admin/appointly/appointments/patient_profile_create?client_id=X
+     *
+     * @return void
+     */
+    public function patient_profile_create()
+    {
+        if (!staff_can('create', 'appointments') && !staff_appointments_responsible()) {
+            access_denied('Appointments');
+        }
+
+        $this->load->model('clients_model');
+
+        $contact_id = (int) $this->input->get('contact_id');
+        $client_id  = (int) $this->input->get('client_id');
+        $contact    = $contact_id ? $this->clients_model->get_contact($contact_id) : null;
+
+        // Fallback: primary (or any) contact of the patient
+        if (!$contact && $client_id) {
+            $contact_id = get_primary_contact_user_id($client_id);
+            if (!$contact_id) {
+                $any = $this->db->select('id')->where('userid', $client_id)->get(db_prefix() . 'contacts')->row();
+                $contact_id = $any ? (int) $any->id : 0;
+            }
+            $contact = $contact_id ? $this->clients_model->get_contact($contact_id) : null;
+        }
+
+        if (!$contact) {
+            set_alert('warning', 'No contact found for this patient. Please add a contact first.');
+            redirect($client_id ? admin_url('clients/client/' . $client_id) : admin_url('appointly/appointments'));
+        }
+
+        $data['user']       = $contact;
+        $data['staff']      = $this->staff_model->get('', ['active' => 1]);
+        $data['return_url'] = admin_url('clients/client/' . $contact->userid . '?group=patient_profile');
+        $data['title']      = _l('appointment_create_label') . ' ' . _l('appointment_label');
+
+        $this->load->view('patient_profile_create', $data);
+    }
+
+    /**
      * Create internal appointment for staff
      *
      * @return void

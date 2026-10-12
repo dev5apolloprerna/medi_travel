@@ -395,3 +395,86 @@ function is_staff_member($staff_id = '')
 
     return $CI->db->count_all_results(db_prefix() . 'staff') > 0 ? true : false;
 }
+/**
+ * Is the given staff role a "Doctor" role?
+ * A role counts as doctor when its name contains "doctor" (e.g. "Doctor", "Senior Doctor")
+ * or when it is role #1 (the role the rest of the CRM already treats as doctors).
+ * Filter "staff_doctor_role_ids" can be used to change the list of doctor role ids.
+ *
+ * @param  mixed $roleid
+ * @return boolean
+ */
+function is_doctor_role($roleid)
+{
+    static $doctor_roles = null;
+
+    if ($doctor_roles === null) {
+        $CI = &get_instance();
+        $doctor_roles = [1];
+        foreach ($CI->db->select('roleid, name')->get(db_prefix() . 'roles')->result() as $role) {
+            if (stripos($role->name, 'doctor') !== false) {
+                $doctor_roles[] = (int) $role->roleid;
+            }
+        }
+        $doctor_roles = array_map('intval', hooks()->apply_filters('staff_doctor_role_ids', array_unique($doctor_roles)));
+    }
+
+    return in_array((int) $roleid, $doctor_roles, true);
+}
+
+/**
+ * Amount in words using the Indian numbering system
+ * e.g. 11210 => "Rupees Eleven Thousand Two Hundred and Ten Only"
+ *
+ * @param  float $amount
+ * @return string
+ */
+function amount_in_words_indian($amount)
+{
+    $amount = round((float) $amount, 2);
+    $rupees = (int) floor($amount);
+    $paise  = (int) round(($amount - $rupees) * 100);
+
+    $ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten',
+        'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen', ];
+    $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+
+    $two = function ($n) use ($ones, $tens) {
+        if ($n < 20) {
+            return $ones[$n];
+        }
+
+        return trim($tens[(int) ($n / 10)] . ' ' . $ones[$n % 10]);
+    };
+
+    $words = function ($n) use ($two) {
+        if ($n == 0) {
+            return 'Zero';
+        }
+        $parts = [];
+        foreach ([['Crore', 10000000], ['Lakh', 100000], ['Thousand', 1000]] as $unit) {
+            if ($n >= $unit[1]) {
+                $count = (int) ($n / $unit[1]);
+                // Crore count can itself be large (e.g. 150 crore)
+                $parts[] = ($count >= 100 ? trim($two((int) ($count / 100)) . ' Hundred ' . $two($count % 100)) : $two($count)) . ' ' . $unit[0];
+                $n %= $unit[1];
+            }
+        }
+        if ($n >= 100) {
+            $parts[] = $two((int) ($n / 100)) . ' Hundred';
+            $n %= 100;
+        }
+        if ($n > 0) {
+            $parts[] = (count($parts) ? 'and ' : '') . $two($n);
+        }
+
+        return implode(' ', $parts);
+    };
+
+    $result = 'Rupees ' . $words($rupees);
+    if ($paise > 0) {
+        $result .= ' and ' . $two($paise) . ' Paise';
+    }
+
+    return $result . ' Only';
+}
