@@ -61,6 +61,11 @@ $route['translate_uri_dashes'] = false;
 $route['admin'] = 'admin/dashboard';
 
 /**
+ * Lead API: POST api/inquiry/{guid}
+ */
+$route['api/inquiry/(:any)'] = 'lead_api/inquiry/$1';
+
+/**
  * Misc controller routes
  */
 $route['admin/access_denied'] = 'admin/misc/access_denied';

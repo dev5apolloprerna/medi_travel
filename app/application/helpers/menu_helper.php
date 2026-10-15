@@ -470,6 +470,13 @@ function app_init_admin_sidebar_menu_items()
             'position' => 20,
             'badge'    => [],
         ]);
+        $CI->app_menu->add_setup_children_item('leads', [
+            'slug'     => 'lead-api',
+            'name'     => 'Lead API',
+            'href'     => admin_url('lead_api'),
+            'position' => 25,
+            'badge'    => [],
+        ]);
 
         $CI->app_menu->add_setup_menu_item('finance', [
             'collapse' => true,

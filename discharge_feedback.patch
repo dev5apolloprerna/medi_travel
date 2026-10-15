@@ -1,0 +1,2854 @@
+From 37f3406c5fddc188df304309a71880c050bbd58f Mon Sep 17 00:00:00 2001
+From: MediTravel Dev <dev5.apolloinfotech@gmail.com>
+Date: Tue, 13 Oct 2026 09:36:56 +0000
+Subject: [PATCH] Add Discharge Feedback module: lead close = discharge,
+ feedback link by email/SMS, daily reminder cron, public Fit-to-Fly form
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01Ftr2U2ZKpEooTGHPQ8SETG
+---
+ app/modules/discharge_feedback/README.md      | 162 ++++
+ .../controllers/Dfb_cron.php                  |  31 +
+ .../controllers/Discharge_feedback.php        | 183 +++++
+ .../controllers/Patient_feedback.php          | 106 +++
+ .../discharge_feedback/controllers/index.html |   1 +
+ .../discharge_feedback/discharge_feedback.php | 110 +++
+ app/modules/discharge_feedback/index.html     |   1 +
+ app/modules/discharge_feedback/install.php    |  97 +++
+ .../english/discharge_feedback_lang.php       |  11 +
+ .../language/english/index.html               |   1 +
+ .../discharge_feedback/language/index.html    |   1 +
+ .../models/Discharge_feedback_model.php       | 699 ++++++++++++++++++
+ .../discharge_feedback/models/index.html      |   1 +
+ app/modules/discharge_feedback/sql/index.html |   1 +
+ .../discharge_feedback/sql/manual_install.sql |  67 ++
+ app/modules/discharge_feedback/uninstall.php  |  17 +
+ .../discharge_feedback/views/admin/_nav.php   |  25 +
+ .../views/admin/history.php                   |  63 ++
+ .../discharge_feedback/views/admin/index.html |   1 +
+ .../views/admin/requests.php                  | 141 ++++
+ .../views/admin/response.php                  |  94 +++
+ .../views/admin/responses.php                 |  61 ++
+ .../views/admin/settings.php                  | 172 +++++
+ .../discharge_feedback/views/index.html       |   1 +
+ .../discharge_feedback/views/public/form.php  | 530 +++++++++++++
+ .../views/public/index.html                   |   1 +
+ .../views/public/thanks.php                   |  46 ++
+ 27 files changed, 2624 insertions(+)
+ create mode 100644 app/modules/discharge_feedback/README.md
+ create mode 100644 app/modules/discharge_feedback/controllers/Dfb_cron.php
+ create mode 100644 app/modules/discharge_feedback/controllers/Discharge_feedback.php
+ create mode 100644 app/modules/discharge_feedback/controllers/Patient_feedback.php
+ create mode 100644 app/modules/discharge_feedback/controllers/index.html
+ create mode 100644 app/modules/discharge_feedback/discharge_feedback.php
+ create mode 100644 app/modules/discharge_feedback/index.html
+ create mode 100644 app/modules/discharge_feedback/install.php
+ create mode 100644 app/modules/discharge_feedback/language/english/discharge_feedback_lang.php
+ create mode 100644 app/modules/discharge_feedback/language/english/index.html
+ create mode 100644 app/modules/discharge_feedback/language/index.html
+ create mode 100644 app/modules/discharge_feedback/models/Discharge_feedback_model.php
+ create mode 100644 app/modules/discharge_feedback/models/index.html
+ create mode 100644 app/modules/discharge_feedback/sql/index.html
+ create mode 100644 app/modules/discharge_feedback/sql/manual_install.sql
+ create mode 100644 app/modules/discharge_feedback/uninstall.php
+ create mode 100644 app/modules/discharge_feedback/views/admin/_nav.php
+ create mode 100644 app/modules/discharge_feedback/views/admin/history.php
+ create mode 100644 app/modules/discharge_feedback/views/admin/index.html
+ create mode 100644 app/modules/discharge_feedback/views/admin/requests.php
+ create mode 100644 app/modules/discharge_feedback/views/admin/response.php
+ create mode 100644 app/modules/discharge_feedback/views/admin/responses.php
+ create mode 100644 app/modules/discharge_feedback/views/admin/settings.php
+ create mode 100644 app/modules/discharge_feedback/views/index.html
+ create mode 100644 app/modules/discharge_feedback/views/public/form.php
+ create mode 100644 app/modules/discharge_feedback/views/public/index.html
+ create mode 100644 app/modules/discharge_feedback/views/public/thanks.php
+
+diff --git a/app/modules/discharge_feedback/README.md b/app/modules/discharge_feedback/README.md
+new file mode 100644
+index 0000000..bc15823
+--- /dev/null
++++ b/app/modules/discharge_feedback/README.md
+@@ -0,0 +1,162 @@
++# Discharge Feedback module – MediTravel CRM (Perfex)
++
++## What it does
++
++1. **Lead closed = patient discharged.** When staff change a lead's status to **Close**, the module creates a feedback request for that patient. This works from the lead edit form, kanban drag, the status dropdown and bulk actions. It uses the `lead_status_changed` hook already in `app/application/models/Leads_model.php`, which passes a status ID from the edit form and a status name from kanban/bulk; both are handled.
++2. **Feedback link sent right away** by **Email** (your CRM SMTP) and **SMS** (your active MSG91 / Twilio / Clickatell gateway) to the lead's email and phone number.
++3. **Daily cron reminder.** Once a day the same message goes out again to every patient who has **not** filled the form yet. It stops automatically when the form is submitted, or after the maximum number of messages you set.
++4. **Public feedback form outside the CRM** (no login). This is your Fit-to-Fly Medical Sign-Off form, mobile friendly:
++   - **Personal link** per patient (sent in the email/SMS), pre-filled with the patient name, one submission only:
++     `https://YOUR-DOMAIN/discharge_feedback/patient_feedback/form/<unique-code>`
++   - **General link** you can share anywhere (WhatsApp, website, QR code):
++     `https://YOUR-DOMAIN/discharge_feedback/patient_feedback/form`
++5. **Admin screen** at *Sidebar → Discharge Feedback*:
++   - Patients list with status, copy-link and "Send now" buttons
++   - Send history per patient
++   - Submitted forms (view / print)
++   - Settings
++
++Works with your **Branch module** (multi-database). All feedback data is stored in the **main** database, and leads are read from each branch database.
++
++---
++
++## Folder contents
++
++```
++discharge_feedback/
++├── discharge_feedback.php          ← module definition + hooks (status change, cron)
++├── install.php / uninstall.php     ← creates / drops tables
++├── controllers/
++│   ├── Discharge_feedback.php      ← admin pages (/admin/discharge_feedback)
++│   ├── Patient_feedback.php        ← PUBLIC feedback form
++│   └── Dfb_cron.php                ← optional dedicated daily cron URL
++├── models/Discharge_feedback_model.php   ← all logic (detect, send, remind, save)
++├── views/public/form.php           ← your Fit-to-Fly form (online version)
++├── views/public/thanks.php
++├── views/admin/*.php               ← admin screens
++├── language/english/discharge_feedback_lang.php
++└── sql/manual_install.sql          ← only if activation can't create tables
++```
++
++---
++
++## Installation (about 10 minutes)
++
++### Step 1 – Add to your project
++This zip mirrors your `medi_travel` repository. Pick one way:
++
++**A) Copy the folder.** Copy `app/modules/discharge_feedback/` from the zip into your repo or server at the same path, next to `appointly` and `branch`. Then commit and deploy as usual:
++```
++git checkout -b discharge-feedback
++git add app/modules/discharge_feedback
++git commit -m "Add discharge feedback module"
++git push origin discharge-feedback
++```
++
++**B) Apply the git patch.** From the repo root:
++```
++git checkout -b discharge-feedback
++git am < discharge_feedback.patch
++```
++
++Nothing outside `app/modules/discharge_feedback/` is changed. No core Perfex files are edited, so CRM updates won't overwrite it.
++
++Check that this file exists on the server: `app/modules/discharge_feedback/discharge_feedback.php`
++
++### Step 2 – Activate
++1. Log in to the CRM as **admin** (in the **main** branch).
++2. Go to **Setup → Modules**, find **Discharge Feedback**, and click **Activate**.
++3. A new sidebar item **Discharge Feedback** appears under Leads.
++
++> Your Branch module automatically repeats the activation for every branch database. That's harmless, because the data always lives in the main DB.
++> If activation shows a database error, run `sql/manual_install.sql` in phpMyAdmin on the **main** database and activate again.
++
++### Step 3 – Choose the "Close" status
++Go to **Discharge Feedback → Settings**:
++- In **Lead status name(s) that mean Close = Discharge**, click your status chip (e.g. *Close*). The default already covers `Close, Closed, Discharge, Discharged`.
++- Names are used instead of IDs, so the same setting works in every branch even if the status IDs differ.
++
++### Step 4 – Make sure Email and SMS work
++- **Email:** Setup → Settings → Email. Use **Send Test Email** to confirm SMTP works.
++- **SMS:** Setup → Settings → SMS. Enable **one** gateway (MSG91 for India) and use **Send Test SMS**.
++  - **India DLT rule:** the SMS text must match a **DLT-approved template** exactly, or Jio/Airtel/Vi will block it. Register the SMS text from the module settings on your DLT portal, with `{#var#}` for each variable, for example:
++    `Dear {#var#}, thank you for choosing {#var#}. Please fill your discharge feedback form: {#var#}`
++    Then make sure the text in module settings produces exactly that message.
++- **Phone numbers:** the module turns 10-digit numbers into `91XXXXXXXXXX` (or `+91…` for Twilio). Change the country code in settings if needed.
++
++### Step 5 – Set the cron job (daily messages)
++
++**Option A – Perfex cron (recommended).** Most likely you already have it (Setup → Settings → Cron Job shows the command). If not, add this in **hPanel → Advanced → Cron Jobs** (Hostinger) or cPanel → Cron Jobs:
++
++```
++*/5 * * * *   wget -q -O- https://YOUR-DOMAIN/cron/index >/dev/null 2>&1
++```
++
++Every cron run, the module:
++- picks up any closed lead the status hook missed (only leads closed **after** installation, so old leads won't be spammed)
++- sends links that failed earlier (retried once per hour)
++- **once a day, at or after the hour in settings (default 10:00)**, sends the reminder to everyone still waiting
++
++**Option B – dedicated daily URL (exact time).** Copy the URL with its secret key from **Settings → Cron job** and add:
++
++```
++0 10 * * *   wget -q -O- "https://YOUR-DOMAIN/discharge_feedback/dfb_cron/run/YOUR_SECRET_KEY" >/dev/null 2>&1
++```
++
++You can use A, B or both. A patient never gets more than one message per day.
++
++> Hostinger's hPanel cron uses "Custom" → paste only the command part (`wget …`) and choose the schedule in the dropdowns.
++
++### Step 6 – Branch databases (only if you use branches)
++- Status changes made inside a branch are sent instantly via the hook.
++- For the cron scan to also read branch databases, the `tblbranch` table (main DB) must have **branch_db_user** and **branch_db_pass** filled for each branch, the same values Appointly already uses. If a branch can't be connected, it is skipped and logged in `application/logs`.
++
++---
++
++## Testing checklist
++
++1. Create a test lead with **your own** email and mobile number.
++2. Change its status to **Close**. You should receive the email and SMS within a few seconds.
++3. Open **Discharge Feedback**. The lead shows *Waiting for form*, Messages sent = 1.
++4. Click **Run daily job now**. Nothing new is sent, because the link already went out today. This proves there are no duplicates.
++5. Open the link from the SMS on your phone, fill in the form and submit. You'll see the **Thank you** page.
++6. The patient now shows **Form submitted**, reminders stop, and the form appears under **Submitted Forms** (with Print).
++7. Open the same link again. It says *already submitted*.
++8. To test a reminder: in phpMyAdmin set `last_sent_at` of that request to yesterday, set `status` back to `pending`, then click **Run daily job now**.
++
++---
++
++## Settings reference
++
++| Setting | Default | Meaning |
++|---|---|---|
++| Enable | On | Master switch |
++| Status name(s) | Close, Closed, Discharge, Discharged | Lead statuses treated as discharge |
++| Send by Email / SMS | On / On | Channels |
++| Country code | 91 | Added to 10-digit numbers |
++| Daily reminder hour | 10 | Server time, 0–23 |
++| Maximum messages | 5 | Includes the first message. 0 = every day until submitted |
++| General link | On | Allow the shareable form without a personal code |
++| Templates | — | Merge fields: `{patient_name}` `{feedback_link}` `{company_name}` `{branch_name}` |
++
++---
++
++## Troubleshooting
++
++| Problem | Fix |
++|---|---|
++| Nothing sent on Close | Check the status name matches in Settings. Open **History** for the patient to see the exact error. |
++| "No active SMS gateway" | Activate a gateway in Setup → Settings → SMS. |
++| SMS "sent" but not delivered | DLT template mismatch (India). Check your MSG91 delivery report. |
++| Email failed | Fix SMTP in Setup → Settings → Email and use the test button. |
++| "Lead has no valid email / phone" | Add an email or phone number to the lead, then click **Send now** (this also restarts a stopped request). |
++| Reminders not going daily | Cron not running. Open `https://YOUR-DOMAIN/cron/index` once in a browser, or use the Option B URL to see the JSON result. |
++| Public link shows 404 | Make sure the folder is `app/modules/discharge_feedback` (lowercase) and the module is **activated**. |
++| Old closed leads got no message | By design, only leads closed after installation are picked up. For an old lead, set its status away from Close and back to Close. |
++
++## Customising the form
++- Add a field: add the input in `views/public/form.php`, read it in `controllers/Patient_feedback.php` (`$values`), add a column to `tbldischarge_feedback_responses`, and add it to `save_response()` in the model.
++- The checklist texts still end in "..." exactly like your original HTML. Replace them with the full wording in `views/public/form.php` and `views/admin/response.php`.
++
++## Uninstall
++Setup → Modules → Deactivate, then Uninstall. **Uninstall deletes all feedback data.**
+diff --git a/app/modules/discharge_feedback/controllers/Dfb_cron.php b/app/modules/discharge_feedback/controllers/Dfb_cron.php
+new file mode 100644
+index 0000000..12beebc
+--- /dev/null
++++ b/app/modules/discharge_feedback/controllers/Dfb_cron.php
+@@ -0,0 +1,31 @@
++<?php
++
++defined('BASEPATH') or exit('No direct script access allowed');
++
++/**
++ * Dedicated DAILY cron URL (optional – use it if you want the reminders
++ * at an exact time, or if the Perfex cron is not set up):
++ *
++ *   https://YOUR-DOMAIN/discharge_feedback/dfb_cron/run/{cron_key}
++ *
++ * The full URL with the key is shown on the module's Settings page.
++ */
++class Dfb_cron extends App_Controller
++{
++    public function run($key = '')
++    {
++        $this->load->model('discharge_feedback/discharge_feedback_model', 'dfb');
++
++        $expected = (string) $this->dfb->setting('cron_key');
++        if ($expected === '' || !hash_equals($expected, (string) $key)) {
++            show_404();
++        }
++
++        @set_time_limit(300);
++        $result = $this->dfb->run(true);
++
++        $this->output
++            ->set_content_type('application/json')
++            ->set_output(json_encode(['success' => true, 'time' => date('Y-m-d H:i:s')] + $result));
++    }
++}
+diff --git a/app/modules/discharge_feedback/controllers/Discharge_feedback.php b/app/modules/discharge_feedback/controllers/Discharge_feedback.php
+new file mode 100644
+index 0000000..85856d5
+--- /dev/null
++++ b/app/modules/discharge_feedback/controllers/Discharge_feedback.php
+@@ -0,0 +1,183 @@
++<?php
++
++defined('BASEPATH') or exit('No direct script access allowed');
++
++/**
++ * Admin area:  /admin/discharge_feedback
++ */
++class Discharge_feedback extends AdminController
++{
++    public function __construct()
++    {
++        parent::__construct();
++        if (!is_admin() && staff_cant('view', 'leads')) {
++            access_denied('Discharge Feedback');
++        }
++        $this->load->model('discharge_feedback/discharge_feedback_model', 'dfb');
++    }
++
++    /* Patients who were sent the link */
++    public function index()
++    {
++        $status = (string) $this->input->get('status');
++        if (!in_array($status, ['', 'pending', 'completed', 'stopped'], true)) {
++            $status = '';
++        }
++
++        $this->load->view('discharge_feedback/admin/requests', [
++            'title'        => _l('discharge_feedback'),
++            'active'       => 'requests',
++            'requests'     => $this->dfb->get_requests($status),
++            'stats'        => $this->dfb->stats(),
++            'status'       => $status,
++            'max_messages' => (int) $this->dfb->setting('max_messages'),
++            'dfb'          => $this->dfb,
++        ]);
++    }
++
++    /* Submitted forms */
++    public function responses()
++    {
++        $this->load->view('discharge_feedback/admin/responses', [
++            'title'     => _l('discharge_feedback_responses'),
++            'active'    => 'responses',
++            'responses' => $this->dfb->get_responses(),
++        ]);
++    }
++
++    public function response($id = 0)
++    {
++        $response = $this->dfb->get_response($id);
++        if (!$response) {
++            show_404();
++        }
++
++        $this->load->view('discharge_feedback/admin/response', [
++            'title'    => _l('discharge_feedback_response'),
++            'active'   => 'responses',
++            'response' => $response,
++        ]);
++    }
++
++    /* Send log of one patient */
++    public function history($id = 0)
++    {
++        $request = $this->dfb->get_request($id);
++        if (!$request) {
++            show_404();
++        }
++
++        $this->load->view('discharge_feedback/admin/history', [
++            'title'   => _l('discharge_feedback_history'),
++            'active'  => 'requests',
++            'request' => $request,
++            'logs'    => $this->dfb->get_logs($id),
++            'link'    => $this->dfb->feedback_link($request['hash']),
++        ]);
++    }
++
++    /* Send the link again now */
++    public function resend($id = 0)
++    {
++        $request = $this->dfb->get_request($id);
++        if (!$request) {
++            show_404();
++        }
++
++        if ($request['status'] === 'completed') {
++            set_alert('warning', 'This patient has already submitted the form.');
++        } else {
++            if ($request['status'] === 'stopped') {
++                $this->dfb->set_request_status($id, 'pending');
++                $request['status'] = 'pending';
++            }
++            $result = $this->dfb->send_request($request, (int) $request['send_count'] > 0);
++            if ($result['sent']) {
++                set_alert('success', 'Feedback link sent by: ' . strtoupper(implode(' + ', $result['sent'])));
++            }
++            if ($result['errors']) {
++                set_alert($result['sent'] ? 'warning' : 'danger', implode(' | ', $result['errors']));
++            }
++        }
++
++        redirect(admin_url('discharge_feedback'));
++    }
++
++    /* Stop / restart daily reminders for one patient */
++    public function toggle($id = 0)
++    {
++        $request = $this->dfb->get_request($id);
++        if ($request && $request['status'] !== 'completed') {
++            $new = $request['status'] === 'stopped' ? 'pending' : 'stopped';
++            $this->dfb->set_request_status($id, $new);
++            set_alert('success', $new === 'stopped' ? 'Reminders stopped.' : 'Reminders restarted.');
++        }
++
++        redirect(admin_url('discharge_feedback'));
++    }
++
++    /* Run the daily job right now (testing) */
++    public function run_now()
++    {
++        if (!is_admin()) {
++            access_denied('Discharge Feedback');
++        }
++
++        $r = $this->dfb->run(true);
++        set_alert('success', sprintf(
++            'Done. New discharges found: %d, first messages sent: %d, reminders sent: %d.',
++            $r['new_discharges'],
++            $r['first_messages'],
++            $r['reminders']
++        ));
++
++        redirect(admin_url('discharge_feedback'));
++    }
++
++    public function settings()
++    {
++        if (!is_admin()) {
++            access_denied('Discharge Feedback Settings');
++        }
++
++        if ($this->input->post()) {
++            $text = ['status_names', 'country_code', 'email_subject', 'sms_body'];
++            foreach ($text as $key) {
++                $this->dfb->save_setting($key, trim((string) $this->input->post($key)));
++            }
++
++            $this->dfb->save_setting('email_body', (string) $this->input->post('email_body', false));
++            $this->dfb->save_setting('daily_hour', (string) max(0, min(23, (int) $this->input->post('daily_hour'))));
++            $this->dfb->save_setting('max_messages', (string) max(0, (int) $this->input->post('max_messages')));
++
++            foreach (['enabled', 'send_email', 'send_sms', 'allow_general_link'] as $key) {
++                $this->dfb->save_setting($key, $this->input->post($key) ? '1' : '0');
++            }
++
++            if ($this->input->post('regenerate_cron_key')) {
++                $this->dfb->save_setting('cron_key', bin2hex(random_bytes(16)));
++            }
++
++            set_alert('success', _l('settings_updated'));
++            redirect(admin_url('discharge_feedback/settings'));
++        }
++
++        $settings = $this->dfb->settings();
++        if ($settings['cron_key'] === '') {
++            $this->dfb->save_setting('cron_key', bin2hex(random_bytes(16)));
++            $settings = $this->dfb->settings();
++        }
++
++        $this->load->model('leads_model');
++
++        $this->load->view('discharge_feedback/admin/settings', [
++            'title'         => _l('discharge_feedback_settings'),
++            'active'        => 'settings',
++            's'             => $settings,
++            'lead_statuses' => $this->leads_model->get_status(),
++            'general_link'  => $this->dfb->feedback_link(),
++            'cron_url'      => site_url('discharge_feedback/dfb_cron/run/' . $settings['cron_key']),
++            'perfex_cron'   => site_url('cron/index'),
++        ]);
++    }
++}
+diff --git a/app/modules/discharge_feedback/controllers/Patient_feedback.php b/app/modules/discharge_feedback/controllers/Patient_feedback.php
+new file mode 100644
+index 0000000..ee36656
+--- /dev/null
++++ b/app/modules/discharge_feedback/controllers/Patient_feedback.php
+@@ -0,0 +1,106 @@
++<?php
++
++defined('BASEPATH') or exit('No direct script access allowed');
++
++/**
++ * PUBLIC feedback form (no login needed).
++ *
++ *   Personal link (sent by email / SMS):  /discharge_feedback/patient_feedback/form/{hash}
++ *   General link (share anywhere):        /discharge_feedback/patient_feedback/form
++ */
++class Patient_feedback extends ClientsController
++{
++    public function __construct()
++    {
++        parent::__construct();
++        $this->load->model('discharge_feedback/discharge_feedback_model', 'dfb');
++    }
++
++    public function index()
++    {
++        redirect(site_url('discharge_feedback/patient_feedback/form'));
++    }
++
++    public function form($hash = '')
++    {
++        $request = null;
++
++        if ($hash !== '') {
++            $request = $this->dfb->get_by_hash($hash);
++            if (!$request) {
++                show_404();
++            }
++            if ($request['status'] === 'completed') {
++                $this->thanks(true);
++
++                return;
++            }
++        } elseif (!(int) $this->dfb->setting('allow_general_link')) {
++            show_404();
++        }
++
++        $values = [
++            'patient_name'        => $request ? (string) $request['patient_name'] : '',
++            'passport_number'     => '',
++            'incision_healed'     => 0,
++            'cardio_stable'       => 0,
++            'physician_signature' => '',
++            'license_number'      => '',
++        ];
++        $errors = [];
++
++        if ($this->input->method() === 'post') {
++            $values = [
++                'patient_name'        => $this->clean('patient_name', 191),
++                'passport_number'     => $this->clean('passport_number', 100),
++                'incision_healed'     => $this->input->post('incision_healed') ? 1 : 0,
++                'cardio_stable'       => $this->input->post('cardio_stable') ? 1 : 0,
++                'physician_signature' => $this->clean('physician_signature', 191),
++                'license_number'      => $this->clean('license_number', 100),
++            ];
++
++            if ($values['patient_name'] === '') {
++                $errors['patient_name'] = 'Please enter the patient full name.';
++            }
++            if ($values['passport_number'] === '') {
++                $errors['passport_number'] = 'Please enter the passport number.';
++            }
++
++            if (!$errors) {
++                $this->dfb->save_response(
++                    $request,
++                    $values,
++                    $this->input->ip_address(),
++                    $this->input->user_agent()
++                );
++                $this->thanks(false);
++
++                return;
++            }
++        }
++
++        $this->load->view('discharge_feedback/public/form', [
++            'values'     => $values,
++            'errors'     => $errors,
++            'action'     => $this->dfb->feedback_link($hash),
++            'csrf_name'  => $this->security->get_csrf_token_name(),
++            'csrf_hash'  => $this->security->get_csrf_hash(),
++            'company'    => get_option('companyname'),
++        ]);
++    }
++
++    private function thanks($alreadySubmitted)
++    {
++        $this->load->view('discharge_feedback/public/thanks', [
++            'already' => $alreadySubmitted,
++            'company' => get_option('companyname'),
++        ]);
++    }
++
++    private function clean($field, $maxLength)
++    {
++        $value = trim((string) $this->input->post($field));
++
++        return mb_substr($value, 0, $maxLength);
++    }
++}
+diff --git a/app/modules/discharge_feedback/controllers/index.html b/app/modules/discharge_feedback/controllers/index.html
+new file mode 100644
+index 0000000..ce170d0
+--- /dev/null
++++ b/app/modules/discharge_feedback/controllers/index.html
+@@ -0,0 +1 @@
++<html><head><title>403 Forbidden</title></head><body><p>Directory access is forbidden.</p></body></html>
+diff --git a/app/modules/discharge_feedback/discharge_feedback.php b/app/modules/discharge_feedback/discharge_feedback.php
+new file mode 100644
+index 0000000..a800fab
+--- /dev/null
++++ b/app/modules/discharge_feedback/discharge_feedback.php
+@@ -0,0 +1,110 @@
++<?php
++
++defined('BASEPATH') or exit('No direct script access allowed');
++
++/*
++Module Name: Discharge Feedback
++Description: Treats a closed lead as a discharge, sends the patient the Fit-to-Fly feedback form link by Email + SMS and reminds them every day until the form is submitted.
++Version: 1.0.0
++Requires at least: 2.3.*
++Author: MediTravel
++*/
++
++define('DISCHARGE_FEEDBACK_MODULE', 'discharge_feedback');
++
++register_activation_hook(DISCHARGE_FEEDBACK_MODULE, 'discharge_feedback_activation_hook');
++register_uninstall_hook(DISCHARGE_FEEDBACK_MODULE, 'discharge_feedback_uninstall_hook');
++register_language_files(DISCHARGE_FEEDBACK_MODULE, [DISCHARGE_FEEDBACK_MODULE]);
++
++function discharge_feedback_activation_hook()
++{
++    require_once __DIR__ . '/install.php';
++}
++
++function discharge_feedback_uninstall_hook()
++{
++    require_once __DIR__ . '/uninstall.php';
++}
++
++/* ------------------------------------------------------------------
++ * Admin menu
++ * ------------------------------------------------------------------ */
++hooks()->add_action('admin_init', 'discharge_feedback_admin_menu');
++
++function discharge_feedback_admin_menu()
++{
++    $CI = &get_instance();
++
++    if (is_staff_member()) {
++        $CI->app_menu->add_sidebar_menu_item('discharge-feedback', [
++            'name'     => _l('discharge_feedback'),
++            'href'     => admin_url('discharge_feedback'),
++            'icon'     => 'fa fa-clipboard-check',
++            'position' => 6, // right after Leads (5)
++            'badge'    => [],
++        ]);
++    }
++}
++
++/* ------------------------------------------------------------------
++ * 1) Lead closed  ==>  discharge  ==>  send feedback link right away
++ *    Perfex fires "lead_status_changed" from leads_model when the status
++ *    is changed (kanban drag, status dropdown, bulk action).
++ * ------------------------------------------------------------------ */
++hooks()->add_action('lead_status_changed', 'discharge_feedback_on_lead_status_changed');
++
++function discharge_feedback_on_lead_status_changed($data)
++{
++    try {
++        // NOTE: Leads_model::update() passes the status ID, while
++        // Leads_model::update_lead_status() (kanban / bulk) passes the status NAME.
++        $leadId    = isset($data['lead_id']) ? (int) $data['lead_id'] : 0;
++        $newStatus = isset($data['new_status']) ? trim((string) $data['new_status']) : '';
++
++        if (!$leadId || $newStatus === '') {
++            return;
++        }
++
++        $CI = &get_instance();
++        $CI->load->model('discharge_feedback/discharge_feedback_model', 'dfb');
++
++        if (!(int) $CI->dfb->setting('enabled')) {
++            return;
++        }
++
++        // $CI->db is the branch database the staff member is working in
++        if (!$CI->dfb->is_discharge_status($newStatus, $CI->db)) {
++            return;
++        }
++
++        $branch  = $CI->dfb->current_branch();
++        $request = $CI->dfb->enqueue_lead($leadId, $CI->db, $branch['id'], $branch['name']);
++
++        if ($request && $request['status'] === 'pending' && (int) $request['send_count'] === 0) {
++            $CI->dfb->send_request($request, false);
++        }
++    } catch (Throwable $e) {
++        // Never break the lead update because of a notification problem
++        log_message('error', 'Discharge feedback (status hook): ' . $e->getMessage());
++    }
++}
++
++/* ------------------------------------------------------------------
++ * 2) Perfex cron (runs every few minutes when Setup > Settings > Cron
++ *    Job is configured):
++ *      - picks up closed leads the hook may have missed
++ *      - sends links that could not be sent yet
++ *      - once per day (after the configured hour) sends reminders
++ * ------------------------------------------------------------------ */
++hooks()->add_action('after_cron_run', 'discharge_feedback_on_cron');
++
++function discharge_feedback_on_cron($manually = false)
++{
++    try {
++        $CI = &get_instance();
++        $CI->load->model('discharge_feedback/discharge_feedback_model', 'dfb');
++        $CI->dfb->run(false);
++    } catch (Throwable $e) {
++        log_message('error', 'Discharge feedback (cron): ' . $e->getMessage());
++    }
++}
+diff --git a/app/modules/discharge_feedback/index.html b/app/modules/discharge_feedback/index.html
+new file mode 100644
+index 0000000..ce170d0
+--- /dev/null
++++ b/app/modules/discharge_feedback/index.html
+@@ -0,0 +1 @@
++<html><head><title>403 Forbidden</title></head><body><p>Directory access is forbidden.</p></body></html>
+diff --git a/app/modules/discharge_feedback/install.php b/app/modules/discharge_feedback/install.php
+new file mode 100644
+index 0000000..7966007
+--- /dev/null
++++ b/app/modules/discharge_feedback/install.php
+@@ -0,0 +1,97 @@
++<?php
++
++defined('BASEPATH') or exit('No direct script access allowed');
++
++/*
++ * NOTE: keep this file free of function declarations and __DIR__ includes.
++ * The Branch module copies install.php into every branch database on
++ * activation, so it must be plain, re-runnable statements.
++ */
++
++$CI      = &get_instance();
++$prefix  = db_prefix();
++$charset = $CI->db->char_set ?: 'utf8';
++
++if (!$CI->db->table_exists($prefix . 'discharge_feedback_requests')) {
++    $CI->db->query('CREATE TABLE `' . $prefix . "discharge_feedback_requests` (
++        `id` INT(11) NOT NULL AUTO_INCREMENT,
++        `branch_id` INT(11) NOT NULL DEFAULT 0,
++        `branch_name` VARCHAR(191) NULL,
++        `lead_id` INT(11) NOT NULL,
++        `hash` VARCHAR(64) NOT NULL,
++        `patient_name` VARCHAR(191) NULL,
++        `email` VARCHAR(191) NULL,
++        `phone` VARCHAR(50) NULL,
++        `discharged_at` DATETIME NULL,
++        `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
++        `send_count` INT(11) NOT NULL DEFAULT 0,
++        `last_sent_at` DATETIME NULL,
++        `last_attempt_at` DATETIME NULL,
++        `last_channels` VARCHAR(50) NULL,
++        `last_error` TEXT NULL,
++        `completed_at` DATETIME NULL,
++        `created_at` DATETIME NOT NULL,
++        PRIMARY KEY (`id`),
++        UNIQUE KEY `hash` (`hash`),
++        UNIQUE KEY `branch_lead` (`branch_id`, `lead_id`),
++        KEY `status` (`status`)
++    ) ENGINE=InnoDB DEFAULT CHARSET=" . $charset . ';');
++}
++
++if (!$CI->db->table_exists($prefix . 'discharge_feedback_responses')) {
++    $CI->db->query('CREATE TABLE `' . $prefix . 'discharge_feedback_responses` (
++        `id` INT(11) NOT NULL AUTO_INCREMENT,
++        `request_id` INT(11) NULL,
++        `branch_id` INT(11) NOT NULL DEFAULT 0,
++        `lead_id` INT(11) NULL,
++        `patient_name` VARCHAR(191) NOT NULL,
++        `passport_number` VARCHAR(100) NULL,
++        `incision_healed` TINYINT(1) NOT NULL DEFAULT 0,
++        `cardio_stable` TINYINT(1) NOT NULL DEFAULT 0,
++        `physician_signature` VARCHAR(191) NULL,
++        `license_number` VARCHAR(100) NULL,
++        `ip_address` VARCHAR(45) NULL,
++        `user_agent` VARCHAR(255) NULL,
++        `submitted_at` DATETIME NOT NULL,
++        PRIMARY KEY (`id`),
++        KEY `request_id` (`request_id`)
++    ) ENGINE=InnoDB DEFAULT CHARSET=' . $charset . ';');
++}
++
++if (!$CI->db->table_exists($prefix . 'discharge_feedback_log')) {
++    $CI->db->query('CREATE TABLE `' . $prefix . 'discharge_feedback_log` (
++        `id` INT(11) NOT NULL AUTO_INCREMENT,
++        `request_id` INT(11) NOT NULL,
++        `channel` VARCHAR(10) NOT NULL,
++        `recipient` VARCHAR(191) NULL,
++        `is_reminder` TINYINT(1) NOT NULL DEFAULT 0,
++        `success` TINYINT(1) NOT NULL DEFAULT 0,
++        `error` TEXT NULL,
++        `sent_at` DATETIME NOT NULL,
++        PRIMARY KEY (`id`),
++        KEY `request_id` (`request_id`)
++    ) ENGINE=InnoDB DEFAULT CHARSET=' . $charset . ';');
++}
++
++if (!$CI->db->table_exists($prefix . 'discharge_feedback_settings')) {
++    $CI->db->query('CREATE TABLE `' . $prefix . 'discharge_feedback_settings` (
++        `name` VARCHAR(100) NOT NULL,
++        `value` TEXT NULL,
++        PRIMARY KEY (`name`)
++    ) ENGINE=InnoDB DEFAULT CHARSET=' . $charset . ';');
++}
++
++// Values that must be fixed at install time (everything else has code defaults)
++$dfbInstallValues = [
++    // Only leads closed AFTER installation get messages (no blast to old closed leads)
++    'start_date' => date('Y-m-d H:i:s'),
++    // Secret key for the dedicated daily cron URL
++    'cron_key'   => bin2hex(random_bytes(16)),
++];
++
++foreach ($dfbInstallValues as $dfbName => $dfbValue) {
++    $CI->db->where('name', $dfbName);
++    if ($CI->db->count_all_results($prefix . 'discharge_feedback_settings') == 0) {
++        $CI->db->insert($prefix . 'discharge_feedback_settings', ['name' => $dfbName, 'value' => $dfbValue]);
++    }
++}
+diff --git a/app/modules/discharge_feedback/language/english/discharge_feedback_lang.php b/app/modules/discharge_feedback/language/english/discharge_feedback_lang.php
+new file mode 100644
+index 0000000..98857df
+--- /dev/null
++++ b/app/modules/discharge_feedback/language/english/discharge_feedback_lang.php
+@@ -0,0 +1,11 @@
++<?php
++
++defined('BASEPATH') or exit('No direct script access allowed');
++
++$lang['discharge_feedback']           = 'Discharge Feedback';
++$lang['discharge_feedback_patients']  = 'Patients';
++$lang['discharge_feedback_responses'] = 'Submitted Forms';
++$lang['discharge_feedback_response']  = 'Submitted Form';
++$lang['discharge_feedback_history']   = 'Send History';
++$lang['discharge_feedback_settings']  = 'Settings';
++$lang['discharge_feedback_run_now']   = 'Run daily job now';
+diff --git a/app/modules/discharge_feedback/language/english/index.html b/app/modules/discharge_feedback/language/english/index.html
+new file mode 100644
+index 0000000..ce170d0
+--- /dev/null
++++ b/app/modules/discharge_feedback/language/english/index.html
+@@ -0,0 +1 @@
++<html><head><title>403 Forbidden</title></head><body><p>Directory access is forbidden.</p></body></html>
+diff --git a/app/modules/discharge_feedback/language/index.html b/app/modules/discharge_feedback/language/index.html
+new file mode 100644
+index 0000000..ce170d0
+--- /dev/null
++++ b/app/modules/discharge_feedback/language/index.html
+@@ -0,0 +1 @@
++<html><head><title>403 Forbidden</title></head><body><p>Directory access is forbidden.</p></body></html>
+diff --git a/app/modules/discharge_feedback/models/Discharge_feedback_model.php b/app/modules/discharge_feedback/models/Discharge_feedback_model.php
+new file mode 100644
+index 0000000..5feb387
+--- /dev/null
++++ b/app/modules/discharge_feedback/models/Discharge_feedback_model.php
+@@ -0,0 +1,699 @@
++<?php
++
++defined('BASEPATH') or exit('No direct script access allowed');
++
++/**
++ * Discharge feedback – all business logic.
++ *
++ * All module data (requests, responses, logs, settings) is stored in the
++ * MAIN database, so one admin screen, one public link format and one cron
++ * job cover every branch. Leads themselves are read from whichever branch
++ * database they live in.
++ */
++class Discharge_feedback_model extends App_Model
++{
++    /** @var CI_DB_query_builder Main (default) database connection */
++    private $main;
++
++    private $settingsCache = null;
++
++    private $branchConnections = [];
++
++    public function __construct()
++    {
++        parent::__construct();
++        $this->main = $this->load->database('default', true);
++    }
++
++    private function t($name)
++    {
++        return db_prefix() . 'discharge_feedback_' . $name;
++    }
++
++    /* ==================================================================
++     * SETTINGS
++     * ================================================================== */
++
++    public static function defaults()
++    {
++        return [
++            'enabled'            => '1',
++            // Lead status names that mean "closed / discharged" (comma separated, case-insensitive)
++            'status_names'       => 'Close, Closed, Discharge, Discharged',
++            'send_email'         => '1',
++            'send_sms'           => '1',
++            'country_code'       => '91',
++            // Daily reminders are sent on the first cron run at/after this hour (24h, server time)
++            'daily_hour'         => '10',
++            // Total messages per patient incl. the first one. 0 = keep reminding until submitted
++            'max_messages'       => '5',
++            'allow_general_link' => '1',
++            'start_date'         => date('Y-m-d H:i:s'),
++            'cron_key'           => '',
++            'last_daily_run'     => '',
++            'email_subject'      => 'Your discharge feedback form – {company_name}',
++            'email_body'         => '<p>Dear {patient_name},</p>'
++                . '<p>Thank you for choosing {company_name}. We hope your recovery is going well.</p>'
++                . '<p>Please take a moment to complete your <strong>Fit-to-Fly / discharge feedback form</strong>:</p>'
++                . '<p><a href="{feedback_link}" style="display:inline-block;padding:10px 18px;background:#24469a;color:#ffffff;text-decoration:none;border-radius:4px;">Open Feedback Form</a></p>'
++                . '<p>Or copy this link into your browser:<br>{feedback_link}</p>'
++                . '<p>Wishing you a safe journey home.<br>Team {company_name}</p>',
++            'sms_body'           => 'Dear {patient_name}, thank you for choosing {company_name}. Please fill your discharge feedback form: {feedback_link}',
++        ];
++    }
++
++    public function settings()
++    {
++        if ($this->settingsCache === null) {
++            $this->settingsCache = self::defaults();
++            if ($this->main->table_exists($this->t('settings'))) {
++                foreach ($this->main->get($this->t('settings'))->result_array() as $row) {
++                    $this->settingsCache[$row['name']] = $row['value'];
++                }
++            }
++        }
++
++        return $this->settingsCache;
++    }
++
++    public function setting($name)
++    {
++        $settings = $this->settings();
++
++        return isset($settings[$name]) ? $settings[$name] : null;
++    }
++
++    public function save_setting($name, $value)
++    {
++        $table = $this->t('settings');
++        $this->main->where('name', $name);
++        if ($this->main->count_all_results($table) > 0) {
++            $this->main->where('name', $name);
++            $this->main->update($table, ['value' => $value]);
++        } else {
++            $this->main->insert($table, ['name' => $name, 'value' => $value]);
++        }
++        $this->settingsCache = null;
++    }
++
++    public function status_names()
++    {
++        $names = array_map(function ($n) {
++            return mb_strtolower(trim($n));
++        }, explode(',', (string) $this->setting('status_names')));
++
++        return array_values(array_filter($names, 'strlen'));
++    }
++
++    /* ==================================================================
++     * BRANCHES (multi-database setup from the Branch module)
++     * ================================================================== */
++
++    /**
++     * Branch of the database the current request is using ($this->db).
++     */
++    public function current_branch()
++    {
++        $dbName      = isset($this->db->database) ? $this->db->database : '';
++        $branchTable = db_prefix() . 'branch';
++
++        if ($dbName && $dbName !== $this->main->database && $this->main->table_exists($branchTable)) {
++            $this->main->where('branch_db', $dbName);
++            $row = $this->main->get($branchTable)->row_array();
++            if ($row) {
++                return ['id' => (int) $row['branchid'], 'name' => $row['branch']];
++            }
++        }
++
++        return ['id' => 0, 'name' => 'Main'];
++    }
++
++    /**
++     * Main DB + every branch DB we can connect to.
++     */
++    public function branches()
++    {
++        $list        = [['id' => 0, 'name' => 'Main', 'db' => $this->main]];
++        $branchTable = db_prefix() . 'branch';
++
++        if (!$this->main->table_exists($branchTable)) {
++            return $list;
++        }
++
++        foreach ($this->main->get($branchTable)->result_array() as $row) {
++            if (empty($row['branch_db']) || $row['branch_db'] === $this->main->database) {
++                continue;
++            }
++            $conn = $this->branch_connection($row);
++            if ($conn) {
++                $list[] = ['id' => (int) $row['branchid'], 'name' => $row['branch'], 'db' => $conn];
++            }
++        }
++
++        return $list;
++    }
++
++    private function branch_connection($row)
++    {
++        $key = $row['branch_db'];
++        if (array_key_exists($key, $this->branchConnections)) {
++            return $this->branchConnections[$key];
++        }
++
++        $config = [
++            'hostname' => APP_DB_HOSTNAME,
++            'username' => !empty($row['branch_db_user']) ? $row['branch_db_user'] : APP_DB_USERNAME,
++            'password' => !empty($row['branch_db_pass']) ? $row['branch_db_pass'] : APP_DB_PASSWORD,
++            'database' => $key,
++            'dbdriver' => defined('APP_DB_DRIVER') ? APP_DB_DRIVER : 'mysqli',
++            'dbprefix' => db_prefix(),
++            'pconnect' => false,
++            'db_debug' => false,
++            'cache_on' => false,
++            'cachedir' => '',
++            'char_set' => defined('APP_DB_CHARSET') ? APP_DB_CHARSET : 'utf8',
++            'dbcollat' => defined('APP_DB_COLLATION') ? APP_DB_COLLATION : 'utf8_general_ci',
++            'swap_pre' => '',
++            'encrypt'  => false,
++            'compress' => false,
++            'failover' => [],
++            'save_queries' => false,
++        ];
++
++        $conn = null;
++        try {
++            $conn = $this->load->database($config, true);
++            if (!$conn || !$conn->conn_id) {
++                log_message('error', 'Discharge feedback: cannot connect to branch DB ' . $key . ' (check branch_db_user / branch_db_pass in ' . db_prefix() . 'branch)');
++                $conn = null;
++            }
++        } catch (Throwable $e) {
++            log_message('error', 'Discharge feedback: branch DB ' . $key . ' – ' . $e->getMessage());
++            $conn = null;
++        }
++
++        return $this->branchConnections[$key] = $conn;
++    }
++
++    /* ==================================================================
++     * DISCHARGE DETECTION
++     * ================================================================== */
++
++    /**
++     * @param int|string $status status ID or status name
++     */
++    public function is_discharge_status($status, $db)
++    {
++        $name = (string) $status;
++
++        if (ctype_digit($name)) {
++            $db->select('name');
++            $db->where('id', (int) $status);
++            $row  = $db->get(db_prefix() . 'leads_status')->row();
++            $name = $row ? $row->name : '';
++        }
++
++        return $name !== '' && in_array(mb_strtolower(trim($name)), $this->status_names(), true);
++    }
++
++    /**
++     * Create (or return the existing) feedback request for a lead.
++     */
++    public function enqueue_lead($leadId, $db, $branchId, $branchName)
++    {
++        $existing = $this->find_request($branchId, $leadId);
++        if ($existing) {
++            return $existing;
++        }
++
++        $db->where('id', (int) $leadId);
++        $lead = $db->get(db_prefix() . 'leads')->row_array();
++        if (!$lead) {
++            return null;
++        }
++
++        $now  = date('Y-m-d H:i:s');
++        $data = [
++            'branch_id'     => (int) $branchId,
++            'branch_name'   => $branchName,
++            'lead_id'       => (int) $leadId,
++            'hash'          => bin2hex(random_bytes(10)),
++            'patient_name'  => trim((string) $lead['name']),
++            'email'         => trim((string) (isset($lead['email']) ? $lead['email'] : '')),
++            'phone'         => trim((string) (isset($lead['phonenumber']) ? $lead['phonenumber'] : '')),
++            'discharged_at' => $now,
++            'status'        => 'pending',
++            'send_count'    => 0,
++            'created_at'    => $now,
++        ];
++
++        // INSERT IGNORE: safe if the hook and the cron run at the same moment
++        $sql = preg_replace('/^INSERT/i', 'INSERT IGNORE', $this->main->insert_string($this->t('requests'), $data));
++        $this->main->query($sql);
++
++        return $this->find_request($branchId, $leadId);
++    }
++
++    private function find_request($branchId, $leadId)
++    {
++        $this->main->where('branch_id', (int) $branchId);
++        $this->main->where('lead_id', (int) $leadId);
++
++        return $this->main->get($this->t('requests'))->row_array();
++    }
++
++    /**
++     * Find closed leads in every branch that don't have a request yet
++     * (only leads closed after the module was installed).
++     */
++    public function scan_discharged_leads()
++    {
++        $names = $this->status_names();
++        if (!$names) {
++            return 0;
++        }
++
++        $start   = (string) $this->setting('start_date');
++        $created = 0;
++        $leads   = db_prefix() . 'leads';
++
++        foreach ($this->branches() as $branch) {
++            $db = $branch['db'];
++            try {
++                if (!$db->table_exists($leads)) {
++                    continue;
++                }
++
++                $statusIds = [];
++                foreach ($db->get(db_prefix() . 'leads_status')->result_array() as $status) {
++                    if (in_array(mb_strtolower(trim($status['name'])), $names, true)) {
++                        $statusIds[] = (int) $status['id'];
++                    }
++                }
++                if (!$statusIds) {
++                    continue;
++                }
++
++                $this->main->select('lead_id');
++                $this->main->where('branch_id', $branch['id']);
++                $existing = array_map('intval', array_column($this->main->get($this->t('requests'))->result_array(), 'lead_id'));
++
++                $dateExpr = $db->field_exists('last_status_change', $leads)
++                    ? 'COALESCE(last_status_change, dateadded)'
++                    : 'dateadded';
++
++                $db->select('id');
++                $db->where_in('status', $statusIds);
++                $db->where('lost', 0);
++                $db->where('junk', 0);
++                $db->where($dateExpr . ' >= ' . $db->escape($start), null, false);
++                if ($existing) {
++                    $db->where_not_in('id', $existing);
++                }
++                $db->limit(200);
++
++                foreach ($db->get($leads)->result_array() as $lead) {
++                    if ($this->enqueue_lead($lead['id'], $db, $branch['id'], $branch['name'])) {
++                        $created++;
++                    }
++                }
++            } catch (Throwable $e) {
++                log_message('error', 'Discharge feedback scan (' . $branch['name'] . '): ' . $e->getMessage());
++            }
++        }
++
++        return $created;
++    }
++
++    /* ==================================================================
++     * SENDING
++     * ================================================================== */
++
++    public function feedback_link($hash = '')
++    {
++        return site_url('discharge_feedback/patient_feedback/form' . ($hash !== '' ? '/' . $hash : ''));
++    }
++
++    /**
++     * Send the feedback link to one patient by every enabled channel.
++     *
++     * @return array ['sent' => [channels], 'errors' => [messages]]
++     */
++    public function send_request($request, $isReminder = false)
++    {
++        $settings = $this->settings();
++        $now      = date('Y-m-d H:i:s');
++        $link     = $this->feedback_link($request['hash']);
++        $company  = (string) get_option('companyname');
++        $name     = $request['patient_name'] !== '' ? $request['patient_name'] : 'Patient';
++
++        $mergeText = [
++            '{patient_name}'  => $name,
++            '{feedback_link}' => $link,
++            '{company_name}'  => $company,
++            '{branch_name}'   => (string) $request['branch_name'],
++        ];
++        $mergeHtml = [
++            '{patient_name}'  => html_escape($name),
++            '{feedback_link}' => html_escape($link),
++            '{company_name}'  => html_escape($company),
++            '{branch_name}'   => html_escape((string) $request['branch_name']),
++        ];
++
++        $sent      = [];
++        $errors    = [];
++        $hasTarget = false;
++
++        // ---- Email ----
++        if ((int) $settings['send_email'] && filter_var($request['email'], FILTER_VALIDATE_EMAIL)) {
++            $hasTarget = true;
++            $subject   = strtr($settings['email_subject'], $mergeText);
++            if ($isReminder) {
++                $subject = 'Reminder: ' . $subject;
++            }
++            list($ok, $err) = $this->send_email($request['email'], $subject, strtr($settings['email_body'], $mergeHtml));
++            $this->log_send($request['id'], 'email', $request['email'], $isReminder, $ok, $err);
++            if ($ok) {
++                $sent[] = 'email';
++            } else {
++                $errors[] = 'Email: ' . $err;
++            }
++        }
++
++        // ---- SMS ----
++        if ((int) $settings['send_sms'] && $request['phone'] !== '') {
++            $hasTarget = true;
++            $phone     = $this->normalize_phone($request['phone']);
++            list($ok, $err) = $this->send_sms($phone, strtr($settings['sms_body'], $mergeText));
++            $this->log_send($request['id'], 'sms', $phone, $isReminder, $ok, $err);
++            if ($ok) {
++                $sent[] = 'sms';
++            } else {
++                $errors[] = 'SMS: ' . $err;
++            }
++        }
++
++        $update = ['last_attempt_at' => $now];
++
++        if (!$hasTarget) {
++            $update['status']     = 'stopped';
++            $update['last_error'] = 'Lead has no valid email / phone number (or both channels are disabled in settings).';
++            $errors[]             = $update['last_error'];
++        } else {
++            $update['last_error'] = $errors ? implode(' | ', $errors) : null;
++        }
++
++        if ($sent) {
++            $update['send_count']    = (int) $request['send_count'] + 1;
++            $update['last_sent_at']  = $now;
++            $update['last_channels'] = implode(',', $sent);
++        }
++
++        $this->main->where('id', $request['id']);
++        $this->main->update($this->t('requests'), $update);
++
++        return ['sent' => $sent, 'errors' => $errors];
++    }
++
++    private function send_email($to, $subject, $html)
++    {
++        try {
++            $CI = &get_instance();
++            $CI->load->model('emails_model');
++            if (method_exists($CI->emails_model, 'send_simple_email')) {
++                $ok = $CI->emails_model->send_simple_email($to, $subject, $html);
++
++                return [(bool) $ok, $ok ? null : 'Mail server rejected the message (check Setup > Settings > Email).'];
++            }
++
++            // Fallback: plain CodeIgniter email with the CRM SMTP settings
++            $CI->load->library('email');
++            $CI->email->clear(true);
++            $CI->email->set_newline("\r\n");
++            $CI->email->set_mailtype('html');
++            $CI->email->from(get_option('smtp_email'), get_option('companyname'));
++            $CI->email->to($to);
++            $CI->email->subject($subject);
++            $CI->email->message($html);
++            $ok = $CI->email->send(false);
++
++            return [(bool) $ok, $ok ? null : strip_tags((string) $CI->email->print_debugger(['headers']))];
++        } catch (Throwable $e) {
++            return [false, $e->getMessage()];
++        }
++    }
++
++    private function send_sms($phone, $message)
++    {
++        try {
++            $CI = &get_instance();
++            if (!isset($CI->app_sms)) {
++                return [false, 'SMS library not loaded.'];
++            }
++            $gateway = $CI->app_sms->get_active_gateway();
++            if (!$gateway) {
++                return [false, 'No active SMS gateway (Setup > Settings > SMS).'];
++            }
++
++            $lib = $CI->{'sms_' . $gateway['id']};
++            unset($GLOBALS['sms_error']);
++            $ok = $lib->send($phone, $message);
++
++            if (isset($GLOBALS['sms_error'])) {
++                return [false, (string) $GLOBALS['sms_error']];
++            }
++
++            return [(bool) $ok, $ok ? null : 'Gateway "' . $gateway['id'] . '" returned failure.'];
++        } catch (Throwable $e) {
++            return [false, $e->getMessage()];
++        }
++    }
++
++    /**
++     * 98765 43210  -> 919876543210   (MSG91 / Clickatell)
++     *              -> +919876543210  (Twilio)
++     */
++    public function normalize_phone($phone)
++    {
++        $digits = preg_replace('/\D+/', '', (string) $phone);
++        $cc     = preg_replace('/\D+/', '', (string) $this->setting('country_code'));
++
++        if ($cc !== '') {
++            if (strlen($digits) === 11 && $digits[0] === '0') {
++                $digits = substr($digits, 1);
++            }
++            if (strlen($digits) === 10) {
++                $digits = $cc . $digits;
++            }
++        }
++
++        $CI      = &get_instance();
++        $gateway = isset($CI->app_sms) ? $CI->app_sms->get_active_gateway() : null;
++        if ($gateway && $gateway['id'] === 'twilio') {
++            return '+' . $digits;
++        }
++
++        return $digits;
++    }
++
++    private function log_send($requestId, $channel, $recipient, $isReminder, $success, $error)
++    {
++        $this->main->insert($this->t('log'), [
++            'request_id'  => (int) $requestId,
++            'channel'     => $channel,
++            'recipient'   => $recipient,
++            'is_reminder' => $isReminder ? 1 : 0,
++            'success'     => $success ? 1 : 0,
++            'error'       => $error,
++            'sent_at'     => date('Y-m-d H:i:s'),
++        ]);
++    }
++
++    /* ==================================================================
++     * CRON
++     * ================================================================== */
++
++    /**
++     * @param bool $forceDaily true = send today's reminders now (dedicated cron URL / "Run now")
++     */
++    public function run($forceDaily = false)
++    {
++        $result = ['new_discharges' => 0, 'first_messages' => 0, 'reminders' => 0, 'daily_run' => false];
++
++        if (!(int) $this->setting('enabled')) {
++            return $result;
++        }
++
++        // 1) Closed leads the status hook may have missed (any branch)
++        $result['new_discharges'] = $this->scan_discharged_leads();
++
++        // 2) First message not delivered yet (retry at most once an hour)
++        $this->main->where('status', 'pending');
++        $this->main->where('send_count', 0);
++        $this->main->group_start();
++        $this->main->where('last_attempt_at IS NULL', null, false);
++        $this->main->or_where('last_attempt_at <', date('Y-m-d H:i:s', strtotime('-1 hour')));
++        $this->main->group_end();
++        $this->main->limit(100);
++        foreach ($this->main->get($this->t('requests'))->result_array() as $request) {
++            $r = $this->send_request($request, false);
++            if ($r['sent']) {
++                $result['first_messages']++;
++            }
++        }
++
++        // 3) Daily reminders
++        $today = date('Y-m-d');
++        $due   = (int) date('G') >= (int) $this->setting('daily_hour') && $this->setting('last_daily_run') !== $today;
++
++        if ($forceDaily || $due) {
++            $result['daily_run'] = true;
++            $result['reminders'] = $this->send_daily_reminders();
++            $this->save_setting('last_daily_run', $today);
++        }
++
++        return $result;
++    }
++
++    private function send_daily_reminders()
++    {
++        $max   = (int) $this->setting('max_messages');
++        $count = 0;
++
++        $this->main->where('status', 'pending');
++        $this->main->where('send_count >', 0);
++        // at most one message per patient per day
++        $this->main->where('DATE(last_sent_at) < ' . $this->main->escape(date('Y-m-d')), null, false);
++        if ($max > 0) {
++            $this->main->where('send_count <', $max);
++        }
++        $this->main->limit(500);
++
++        foreach ($this->main->get($this->t('requests'))->result_array() as $request) {
++            $r = $this->send_request($request, true);
++            if ($r['sent']) {
++                $count++;
++            }
++        }
++
++        return $count;
++    }
++
++    /* ==================================================================
++     * PUBLIC FORM
++     * ================================================================== */
++
++    public function get_by_hash($hash)
++    {
++        if (!preg_match('/^[a-f0-9]{20,64}$/', (string) $hash)) {
++            return null;
++        }
++        $this->main->where('hash', $hash);
++
++        return $this->main->get($this->t('requests'))->row_array();
++    }
++
++    /**
++     * @return bool false if this personal link was already used
++     */
++    public function save_response($request, array $values, $ip, $userAgent)
++    {
++        $now = date('Y-m-d H:i:s');
++
++        if ($request) {
++            // Mark completed first – this also stops the daily reminders
++            $this->main->where('id', $request['id']);
++            $this->main->where('status !=', 'completed');
++            $this->main->update($this->t('requests'), ['status' => 'completed', 'completed_at' => $now]);
++            if ($this->main->affected_rows() === 0) {
++                return false;
++            }
++        }
++
++        $this->main->insert($this->t('responses'), [
++            'request_id'          => $request ? (int) $request['id'] : null,
++            'branch_id'           => $request ? (int) $request['branch_id'] : 0,
++            'lead_id'             => $request ? (int) $request['lead_id'] : null,
++            'patient_name'        => $values['patient_name'],
++            'passport_number'     => $values['passport_number'],
++            'incision_healed'     => $values['incision_healed'],
++            'cardio_stable'       => $values['cardio_stable'],
++            'physician_signature' => $values['physician_signature'],
++            'license_number'      => $values['license_number'],
++            'ip_address'          => $ip,
++            'user_agent'          => mb_substr((string) $userAgent, 0, 255),
++            'submitted_at'        => $now,
++        ]);
++
++        return true;
++    }
++
++    /* ==================================================================
++     * ADMIN
++     * ================================================================== */
++
++    public function get_requests($status = '')
++    {
++        if ($status !== '') {
++            $this->main->where('status', $status);
++        }
++        $this->main->order_by('id', 'DESC');
++        $this->main->limit(1000);
++
++        return $this->main->get($this->t('requests'))->result_array();
++    }
++
++    public function get_request($id)
++    {
++        $this->main->where('id', (int) $id);
++
++        return $this->main->get($this->t('requests'))->row_array();
++    }
++
++    public function set_request_status($id, $status)
++    {
++        $this->main->where('id', (int) $id);
++        $this->main->update($this->t('requests'), ['status' => $status]);
++    }
++
++    public function stats()
++    {
++        $stats = ['pending' => 0, 'completed' => 0, 'stopped' => 0];
++        $this->main->select('status, COUNT(*) AS total');
++        $this->main->group_by('status');
++        foreach ($this->main->get($this->t('requests'))->result_array() as $row) {
++            $stats[$row['status']] = (int) $row['total'];
++        }
++
++        return $stats;
++    }
++
++    public function get_responses()
++    {
++        $this->main->select('r.*, q.branch_name, q.email, q.phone');
++        $this->main->from($this->t('responses') . ' r');
++        $this->main->join($this->t('requests') . ' q', 'q.id = r.request_id', 'left');
++        $this->main->order_by('r.id', 'DESC');
++        $this->main->limit(1000);
++
++        return $this->main->get()->result_array();
++    }
++
++    public function get_response($id)
++    {
++        $this->main->select('r.*, q.branch_name, q.email, q.phone, q.hash');
++        $this->main->from($this->t('responses') . ' r');
++        $this->main->join($this->t('requests') . ' q', 'q.id = r.request_id', 'left');
++        $this->main->where('r.id', (int) $id);
++
++        return $this->main->get()->row_array();
++    }
++
++    public function get_logs($requestId)
++    {
++        $this->main->where('request_id', (int) $requestId);
++        $this->main->order_by('id', 'DESC');
++
++        return $this->main->get($this->t('log'))->result_array();
++    }
++}
+diff --git a/app/modules/discharge_feedback/models/index.html b/app/modules/discharge_feedback/models/index.html
+new file mode 100644
+index 0000000..ce170d0
+--- /dev/null
++++ b/app/modules/discharge_feedback/models/index.html
+@@ -0,0 +1 @@
++<html><head><title>403 Forbidden</title></head><body><p>Directory access is forbidden.</p></body></html>
+diff --git a/app/modules/discharge_feedback/sql/index.html b/app/modules/discharge_feedback/sql/index.html
+new file mode 100644
+index 0000000..ce170d0
+--- /dev/null
++++ b/app/modules/discharge_feedback/sql/index.html
+@@ -0,0 +1 @@
++<html><head><title>403 Forbidden</title></head><body><p>Directory access is forbidden.</p></body></html>
+diff --git a/app/modules/discharge_feedback/sql/manual_install.sql b/app/modules/discharge_feedback/sql/manual_install.sql
+new file mode 100644
+index 0000000..8a0684d
+--- /dev/null
++++ b/app/modules/discharge_feedback/sql/manual_install.sql
+@@ -0,0 +1,67 @@
++-- ONLY needed if the module "Activate" button could not create the tables.
++-- Run in the MAIN database (phpMyAdmin > main DB > SQL). Change `tbl` if your db_prefix is different.
++
++CREATE TABLE IF NOT EXISTS `tbldischarge_feedback_requests` (
++  `id` INT(11) NOT NULL AUTO_INCREMENT,
++  `branch_id` INT(11) NOT NULL DEFAULT 0,
++  `branch_name` VARCHAR(191) NULL,
++  `lead_id` INT(11) NOT NULL,
++  `hash` VARCHAR(64) NOT NULL,
++  `patient_name` VARCHAR(191) NULL,
++  `email` VARCHAR(191) NULL,
++  `phone` VARCHAR(50) NULL,
++  `discharged_at` DATETIME NULL,
++  `status` VARCHAR(20) NOT NULL DEFAULT 'pending',
++  `send_count` INT(11) NOT NULL DEFAULT 0,
++  `last_sent_at` DATETIME NULL,
++  `last_attempt_at` DATETIME NULL,
++  `last_channels` VARCHAR(50) NULL,
++  `last_error` TEXT NULL,
++  `completed_at` DATETIME NULL,
++  `created_at` DATETIME NOT NULL,
++  PRIMARY KEY (`id`),
++  UNIQUE KEY `hash` (`hash`),
++  UNIQUE KEY `branch_lead` (`branch_id`, `lead_id`),
++  KEY `status` (`status`)
++) ENGINE=InnoDB DEFAULT CHARSET=utf8;
++
++CREATE TABLE IF NOT EXISTS `tbldischarge_feedback_responses` (
++  `id` INT(11) NOT NULL AUTO_INCREMENT,
++  `request_id` INT(11) NULL,
++  `branch_id` INT(11) NOT NULL DEFAULT 0,
++  `lead_id` INT(11) NULL,
++  `patient_name` VARCHAR(191) NOT NULL,
++  `passport_number` VARCHAR(100) NULL,
++  `incision_healed` TINYINT(1) NOT NULL DEFAULT 0,
++  `cardio_stable` TINYINT(1) NOT NULL DEFAULT 0,
++  `physician_signature` VARCHAR(191) NULL,
++  `license_number` VARCHAR(100) NULL,
++  `ip_address` VARCHAR(45) NULL,
++  `user_agent` VARCHAR(255) NULL,
++  `submitted_at` DATETIME NOT NULL,
++  PRIMARY KEY (`id`),
++  KEY `request_id` (`request_id`)
++) ENGINE=InnoDB DEFAULT CHARSET=utf8;
++
++CREATE TABLE IF NOT EXISTS `tbldischarge_feedback_log` (
++  `id` INT(11) NOT NULL AUTO_INCREMENT,
++  `request_id` INT(11) NOT NULL,
++  `channel` VARCHAR(10) NOT NULL,
++  `recipient` VARCHAR(191) NULL,
++  `is_reminder` TINYINT(1) NOT NULL DEFAULT 0,
++  `success` TINYINT(1) NOT NULL DEFAULT 0,
++  `error` TEXT NULL,
++  `sent_at` DATETIME NOT NULL,
++  PRIMARY KEY (`id`),
++  KEY `request_id` (`request_id`)
++) ENGINE=InnoDB DEFAULT CHARSET=utf8;
++
++CREATE TABLE IF NOT EXISTS `tbldischarge_feedback_settings` (
++  `name` VARCHAR(100) NOT NULL,
++  `value` TEXT NULL,
++  PRIMARY KEY (`name`)
++) ENGINE=InnoDB DEFAULT CHARSET=utf8;
++
++INSERT IGNORE INTO `tbldischarge_feedback_settings` (`name`, `value`) VALUES
++  ('start_date', NOW()),
++  ('cron_key', MD5(RAND()));
+diff --git a/app/modules/discharge_feedback/uninstall.php b/app/modules/discharge_feedback/uninstall.php
+new file mode 100644
+index 0000000..0199452
+--- /dev/null
++++ b/app/modules/discharge_feedback/uninstall.php
+@@ -0,0 +1,17 @@
++<?php
++
++defined('BASEPATH') or exit('No direct script access allowed');
++
++/*
++ * Runs only when the module is UNINSTALLED (not on deactivate).
++ * Removes all discharge feedback data.
++ */
++
++$CI     = &get_instance();
++$prefix = db_prefix();
++
++foreach (['requests', 'responses', 'log', 'settings'] as $dfbTable) {
++    if ($CI->db->table_exists($prefix . 'discharge_feedback_' . $dfbTable)) {
++        $CI->db->query('DROP TABLE `' . $prefix . 'discharge_feedback_' . $dfbTable . '`');
++    }
++}
+diff --git a/app/modules/discharge_feedback/views/admin/_nav.php b/app/modules/discharge_feedback/views/admin/_nav.php
+new file mode 100644
+index 0000000..a20ebfd
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/admin/_nav.php
+@@ -0,0 +1,25 @@
++<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
++<div class="tw-flex tw-items-center tw-justify-between tw-mb-3">
++    <h4 class="tw-my-0 tw-font-semibold tw-text-lg">
++        <i class="fa fa-clipboard-check tw-mr-1"></i> <?php echo _l('discharge_feedback'); ?>
++    </h4>
++    <?php if (is_admin()) { ?>
++        <a href="<?php echo admin_url('discharge_feedback/run_now'); ?>" class="btn btn-default"
++           onclick="return confirm('Scan for closed leads and send today\'s reminders now?');">
++            <i class="fa fa-play tw-mr-1"></i> <?php echo _l('discharge_feedback_run_now'); ?>
++        </a>
++    <?php } ?>
++</div>
++<ul class="nav nav-tabs tw-mb-4">
++    <li class="<?php echo $active === 'requests' ? 'active' : ''; ?>">
++        <a href="<?php echo admin_url('discharge_feedback'); ?>"><?php echo _l('discharge_feedback_patients'); ?></a>
++    </li>
++    <li class="<?php echo $active === 'responses' ? 'active' : ''; ?>">
++        <a href="<?php echo admin_url('discharge_feedback/responses'); ?>"><?php echo _l('discharge_feedback_responses'); ?></a>
++    </li>
++    <?php if (is_admin()) { ?>
++        <li class="<?php echo $active === 'settings' ? 'active' : ''; ?>">
++            <a href="<?php echo admin_url('discharge_feedback/settings'); ?>"><?php echo _l('discharge_feedback_settings'); ?></a>
++        </li>
++    <?php } ?>
++</ul>
+diff --git a/app/modules/discharge_feedback/views/admin/history.php b/app/modules/discharge_feedback/views/admin/history.php
+new file mode 100644
+index 0000000..a4a2e87
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/admin/history.php
+@@ -0,0 +1,63 @@
++<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
++<?php init_head(); ?>
++<div id="wrapper">
++    <div class="content">
++        <div class="row">
++            <div class="col-md-12">
++                <?php $this->load->view('discharge_feedback/admin/_nav', ['active' => $active]); ?>
++
++                <div class="panel_s">
++                    <div class="panel-body">
++                        <a href="<?php echo admin_url('discharge_feedback'); ?>" class="btn btn-default btn-sm pull-right">
++                            <i class="fa fa-arrow-left"></i> Back
++                        </a>
++                        <h4 class="tw-mt-0 tw-font-semibold"><?php echo e($request['patient_name']); ?></h4>
++                        <p class="tw-text-neutral-600">
++                            Lead #<?php echo (int) $request['lead_id']; ?> · <?php echo e($request['branch_name']); ?>
++                            · Email: <?php echo e($request['email'] ?: '—'); ?>
++                            · Phone: <?php echo e($request['phone'] ?: '—'); ?>
++                            · Status: <strong><?php echo e(ucfirst($request['status'])); ?></strong>
++                        </p>
++                        <p>Feedback link: <a href="<?php echo e($link); ?>" target="_blank" rel="noopener"><?php echo e($link); ?></a></p>
++
++                        <table class="table table-striped tw-mt-4">
++                            <thead>
++                            <tr>
++                                <th>Date</th>
++                                <th>Channel</th>
++                                <th>Sent to</th>
++                                <th>Type</th>
++                                <th>Result</th>
++                            </tr>
++                            </thead>
++                            <tbody>
++                            <?php if (!$logs) { ?>
++                                <tr><td colspan="5" class="text-center tw-text-neutral-500">Nothing sent yet.</td></tr>
++                            <?php } ?>
++                            <?php foreach ($logs as $log) { ?>
++                                <tr>
++                                    <td><?php echo _dt($log['sent_at']); ?></td>
++                                    <td><?php echo e(strtoupper($log['channel'])); ?></td>
++                                    <td><?php echo e($log['recipient']); ?></td>
++                                    <td><?php echo $log['is_reminder'] ? 'Daily reminder' : 'First message'; ?></td>
++                                    <td>
++                                        <?php if ($log['success']) { ?>
++                                            <span class="label label-success">Sent</span>
++                                        <?php } else { ?>
++                                            <span class="label label-danger">Failed</span>
++                                            <div class="tw-text-sm text-danger"><?php echo e($log['error']); ?></div>
++                                        <?php } ?>
++                                    </td>
++                                </tr>
++                            <?php } ?>
++                            </tbody>
++                        </table>
++                    </div>
++                </div>
++            </div>
++        </div>
++    </div>
++</div>
++<?php init_tail(); ?>
++</body>
++</html>
+diff --git a/app/modules/discharge_feedback/views/admin/index.html b/app/modules/discharge_feedback/views/admin/index.html
+new file mode 100644
+index 0000000..ce170d0
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/admin/index.html
+@@ -0,0 +1 @@
++<html><head><title>403 Forbidden</title></head><body><p>Directory access is forbidden.</p></body></html>
+diff --git a/app/modules/discharge_feedback/views/admin/requests.php b/app/modules/discharge_feedback/views/admin/requests.php
+new file mode 100644
+index 0000000..07587e6
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/admin/requests.php
+@@ -0,0 +1,141 @@
++<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
++<?php init_head(); ?>
++<div id="wrapper">
++    <div class="content">
++        <div class="row">
++            <div class="col-md-12">
++                <?php $this->load->view('discharge_feedback/admin/_nav', ['active' => $active]); ?>
++
++                <div class="row tw-mb-4">
++                    <?php
++                    $cards = [
++                        ''          => ['All', array_sum($stats), 'tw-text-neutral-700'],
++                        'pending'   => ['Waiting for form', $stats['pending'], 'tw-text-warning-600'],
++                        'completed' => ['Form submitted', $stats['completed'], 'tw-text-success-600'],
++                        'stopped'   => ['Stopped', $stats['stopped'], 'tw-text-danger-600'],
++                    ];
++                    foreach ($cards as $key => $card) { ?>
++                        <div class="col-md-3 col-xs-6">
++                            <a href="<?php echo admin_url('discharge_feedback' . ($key !== '' ? '?status=' . $key : '')); ?>"
++                               class="panel_s tw-block tw-p-3 tw-mb-2<?php echo $status === $key ? ' tw-ring-2 tw-ring-primary-400' : ''; ?>">
++                                <span class="tw-block tw-text-2xl tw-font-semibold <?php echo $card[2]; ?>"><?php echo (int) $card[1]; ?></span>
++                                <span class="tw-text-neutral-500"><?php echo $card[0]; ?></span>
++                            </a>
++                        </div>
++                    <?php } ?>
++                </div>
++
++                <div class="panel_s">
++                    <div class="panel-body panel-table-full">
++                        <table class="table dt-table" data-order-col="0" data-order-type="desc">
++                            <thead>
++                            <tr>
++                                <th>#</th>
++                                <th>Patient</th>
++                                <th>Branch</th>
++                                <th>Email / Phone</th>
++                                <th>Discharged</th>
++                                <th>Messages sent</th>
++                                <th>Last sent</th>
++                                <th>Status</th>
++                                <th>Feedback link</th>
++                                <th>Actions</th>
++                            </tr>
++                            </thead>
++                            <tbody>
++                            <?php foreach ($requests as $r) {
++                                $link = $dfb->feedback_link($r['hash']);
++                                if ($r['status'] === 'completed') {
++                                    $label = '<span class="label label-success">Form submitted</span>';
++                                } elseif ($r['status'] === 'stopped') {
++                                    $label = '<span class="label label-danger">Stopped</span>';
++                                } elseif ($max_messages > 0 && (int) $r['send_count'] >= $max_messages) {
++                                    $label = '<span class="label label-default">Max reminders reached</span>';
++                                } elseif ((int) $r['send_count'] === 0) {
++                                    $label = '<span class="label label-info">Not sent yet</span>';
++                                } else {
++                                    $label = '<span class="label label-warning">Waiting for form</span>';
++                                } ?>
++                                <tr>
++                                    <td><?php echo (int) $r['id']; ?></td>
++                                    <td>
++                                        <?php echo e($r['patient_name']); ?>
++                                        <div class="tw-text-neutral-500 tw-text-sm">Lead #<?php echo (int) $r['lead_id']; ?></div>
++                                    </td>
++                                    <td><?php echo e($r['branch_name']); ?></td>
++                                    <td>
++                                        <?php echo e($r['email'] ?: '—'); ?><br>
++                                        <?php echo e($r['phone'] ?: '—'); ?>
++                                    </td>
++                                    <td data-order="<?php echo e($r['discharged_at']); ?>"><?php echo $r['discharged_at'] ? _dt($r['discharged_at']) : ''; ?></td>
++                                    <td>
++                                        <?php echo (int) $r['send_count']; ?>
++                                        <?php if ($r['last_channels']) { ?>
++                                            <div class="tw-text-neutral-500 tw-text-sm"><?php echo e(strtoupper(str_replace(',', ' + ', $r['last_channels']))); ?></div>
++                                        <?php } ?>
++                                    </td>
++                                    <td data-order="<?php echo e($r['last_sent_at']); ?>"><?php echo $r['last_sent_at'] ? _dt($r['last_sent_at']) : '—'; ?></td>
++                                    <td>
++                                        <?php echo $label; ?>
++                                        <?php if ($r['last_error'] && $r['status'] !== 'completed') { ?>
++                                            <i class="fa fa-exclamation-triangle text-danger" data-toggle="tooltip"
++                                               title="<?php echo e($r['last_error']); ?>"></i>
++                                        <?php } ?>
++                                    </td>
++                                    <td>
++                                        <div class="input-group input-group-sm" style="min-width:200px;">
++                                            <input type="text" class="form-control" readonly value="<?php echo e($link); ?>"
++                                                   onclick="this.select();">
++                                            <span class="input-group-btn">
++                                                <button type="button" class="btn btn-default" title="Copy"
++                                                        onclick="dfbCopy(this, <?php echo html_escape(json_encode($link)); ?>);">
++                                                    <i class="fa fa-copy"></i>
++                                                </button>
++                                            </span>
++                                        </div>
++                                    </td>
++                                    <td class="tw-whitespace-nowrap">
++                                        <?php if ($r['status'] !== 'completed') { ?>
++                                            <a href="<?php echo admin_url('discharge_feedback/resend/' . $r['id']); ?>"
++                                               class="btn btn-primary btn-xs"
++                                               onclick="return confirm('Send the feedback link to this patient now?');">
++                                                <i class="fa fa-paper-plane"></i> Send now
++                                            </a>
++                                            <a href="<?php echo admin_url('discharge_feedback/toggle/' . $r['id']); ?>"
++                                               class="btn btn-default btn-xs">
++                                                <?php echo $r['status'] === 'stopped' ? 'Restart' : 'Stop'; ?>
++                                            </a>
++                                        <?php } ?>
++                                        <a href="<?php echo admin_url('discharge_feedback/history/' . $r['id']); ?>"
++                                           class="btn btn-default btn-xs">History</a>
++                                    </td>
++                                </tr>
++                            <?php } ?>
++                            </tbody>
++                        </table>
++                    </div>
++                </div>
++            </div>
++        </div>
++    </div>
++</div>
++<?php init_tail(); ?>
++<script>
++    function dfbCopy(btn, text) {
++        var done = function () {
++            var icon = btn.querySelector('i');
++            icon.className = 'fa fa-check';
++            setTimeout(function () { icon.className = 'fa fa-copy'; }, 1500);
++        };
++        if (navigator.clipboard && window.isSecureContext) {
++            navigator.clipboard.writeText(text).then(done);
++        } else {
++            var input = btn.closest('.input-group').querySelector('input');
++            input.select();
++            document.execCommand('copy');
++            done();
++        }
++    }
++</script>
++</body>
++</html>
+diff --git a/app/modules/discharge_feedback/views/admin/response.php b/app/modules/discharge_feedback/views/admin/response.php
+new file mode 100644
+index 0000000..f7324b2
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/admin/response.php
+@@ -0,0 +1,94 @@
++<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
++<?php init_head(); ?>
++<style>
++    /* Same look as the Fit-to-Fly form, read-only and printable */
++    .dfb-sheet { background:#fff; padding:28px 32px; color:#33415a; font-family: Arial, Helvetica, sans-serif; font-size:14px; }
++    .dfb-sheet .brand { font-size:32px; font-weight:bold; letter-spacing:5px; color:#24469a; line-height:1.05; padding-bottom:10px; }
++    .dfb-sheet .document-title { font-size:20px; font-weight:bold; color:#182033; padding:6px 0 16px; }
++    .dfb-sheet .top-rule { height:12px; margin:0 0 18px; border-bottom:3px solid #1787c8; }
++    .dfb-sheet table { width:100%; border-collapse:collapse; }
++    .dfb-sheet .profile td { border:1px solid #c7d2df; padding:9px 10px; width:25%; }
++    .dfb-sheet .profile .lbl { background:#f4f6f9; font-weight:bold; color:#354258; }
++    .dfb-sheet .check td { padding:7px 0; vertical-align:top; }
++    .dfb-sheet .box { display:inline-block; width:16px; height:16px; border:1px solid #66758a; text-align:center; line-height:14px; font-size:12px; margin-right:10px; }
++    .dfb-sheet .sig td { width:50%; padding-right:24px; vertical-align:bottom; }
++    .dfb-sheet .sig .line { border-bottom:1px solid #56657a; min-height:32px; padding:6px 4px; color:#182033; }
++    .dfb-sheet .meta { margin-top:28px; color:#7a8699; font-size:12px; }
++    @media print {
++        #header, #menu, #setup-menu-wrapper, .dfb-no-print, .nav-tabs { display:none !important; }
++        #wrapper { margin:0 !important; }
++        .content { padding:0 !important; }
++        .panel_s { box-shadow:none !important; border:none !important; }
++        * { -webkit-print-color-adjust:exact !important; print-color-adjust:exact !important; }
++    }
++</style>
++<div id="wrapper">
++    <div class="content">
++        <div class="row">
++            <div class="col-md-10 col-md-offset-1">
++                <div class="dfb-no-print">
++                    <?php $this->load->view('discharge_feedback/admin/_nav', ['active' => $active]); ?>
++                    <div class="tw-mb-3">
++                        <a href="<?php echo admin_url('discharge_feedback/responses'); ?>" class="btn btn-default">
++                            <i class="fa fa-arrow-left"></i> Back
++                        </a>
++                        <button type="button" class="btn btn-primary" onclick="window.print();">
++                            <i class="fa fa-print"></i> Print
++                        </button>
++                    </div>
++                </div>
++
++                <div class="panel_s">
++                    <div class="dfb-sheet">
++                        <div class="brand">MEDITRAVEL</div>
++                        <div class="document-title">FIT-TO-FLY MEDICAL SIGN-OFF FORM</div>
++                        <div class="top-rule"></div>
++
++                        <table class="profile tw-mb-4">
++                            <tr>
++                                <td class="lbl">Patient Full Name</td>
++                                <td><?php echo e($response['patient_name']); ?></td>
++                                <td class="lbl">Passport Number</td>
++                                <td><?php echo e($response['passport_number']); ?></td>
++                            </tr>
++                        </table>
++
++                        <table class="check" style="margin-bottom:32px;">
++                            <tr>
++                                <td><span class="box"><?php echo $response['incision_healed'] ? '&#10003;' : ''; ?></span>
++                                    The surgical incision site(s) are closed, healing stably...</td>
++                            </tr>
++                            <tr>
++                                <td><span class="box"><?php echo $response['cardio_stable'] ? '&#10003;' : ''; ?></span>
++                                    The patient's cardiopulmonary status is stable...</td>
++                            </tr>
++                        </table>
++
++                        <table class="sig">
++                            <tr>
++                                <td>
++                                    <div class="line"><?php echo e($response['physician_signature']); ?></div>
++                                    <div style="padding-top:5px;">Signature of Attending Physician</div>
++                                </td>
++                                <td>
++                                    <div class="line"><?php echo e($response['license_number']); ?></div>
++                                    <div style="padding-top:5px;">License Number</div>
++                                </td>
++                            </tr>
++                        </table>
++
++                        <div class="meta">
++                            Submitted online on <?php echo _dt($response['submitted_at']); ?>
++                            <?php if ($response['branch_name']) { ?> · Branch: <?php echo e($response['branch_name']); ?><?php } ?>
++                            <?php if ($response['lead_id']) { ?> · Lead #<?php echo (int) $response['lead_id']; ?><?php } ?>
++                            · IP <?php echo e($response['ip_address']); ?>
++                        </div>
++                    </div>
++                </div>
++            </div>
++        </div>
++    </div>
++</div>
++<?php init_tail(); ?>
++</body>
++</html>
+diff --git a/app/modules/discharge_feedback/views/admin/responses.php b/app/modules/discharge_feedback/views/admin/responses.php
+new file mode 100644
+index 0000000..87fe1dc
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/admin/responses.php
+@@ -0,0 +1,61 @@
++<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
++<?php init_head(); ?>
++<div id="wrapper">
++    <div class="content">
++        <div class="row">
++            <div class="col-md-12">
++                <?php $this->load->view('discharge_feedback/admin/_nav', ['active' => $active]); ?>
++
++                <div class="panel_s">
++                    <div class="panel-body panel-table-full">
++                        <table class="table dt-table" data-order-col="0" data-order-type="desc">
++                            <thead>
++                            <tr>
++                                <th>#</th>
++                                <th>Submitted</th>
++                                <th>Patient</th>
++                                <th>Passport</th>
++                                <th>Branch</th>
++                                <th>Incision healed</th>
++                                <th>Cardiopulmonary stable</th>
++                                <th>Physician / License</th>
++                                <th>Source</th>
++                                <th></th>
++                            </tr>
++                            </thead>
++                            <tbody>
++                            <?php foreach ($responses as $r) { ?>
++                                <tr>
++                                    <td><?php echo (int) $r['id']; ?></td>
++                                    <td data-order="<?php echo e($r['submitted_at']); ?>"><?php echo _dt($r['submitted_at']); ?></td>
++                                    <td><?php echo e($r['patient_name']); ?></td>
++                                    <td><?php echo e($r['passport_number']); ?></td>
++                                    <td><?php echo e($r['branch_name'] ?: '—'); ?></td>
++                                    <td><?php echo $r['incision_healed'] ? '<span class="text-success">Yes</span>' : '<span class="text-danger">No</span>'; ?></td>
++                                    <td><?php echo $r['cardio_stable'] ? '<span class="text-success">Yes</span>' : '<span class="text-danger">No</span>'; ?></td>
++                                    <td>
++                                        <?php echo e($r['physician_signature'] ?: '—'); ?>
++                                        <div class="tw-text-neutral-500 tw-text-sm"><?php echo e($r['license_number']); ?></div>
++                                    </td>
++                                    <td>
++                                        <?php echo $r['request_id']
++                                            ? 'Lead #' . (int) $r['lead_id']
++                                            : '<span class="label label-default">General link</span>'; ?>
++                                    </td>
++                                    <td>
++                                        <a href="<?php echo admin_url('discharge_feedback/response/' . $r['id']); ?>"
++                                           class="btn btn-default btn-xs">View / Print</a>
++                                    </td>
++                                </tr>
++                            <?php } ?>
++                            </tbody>
++                        </table>
++                    </div>
++                </div>
++            </div>
++        </div>
++    </div>
++</div>
++<?php init_tail(); ?>
++</body>
++</html>
+diff --git a/app/modules/discharge_feedback/views/admin/settings.php b/app/modules/discharge_feedback/views/admin/settings.php
+new file mode 100644
+index 0000000..7b5cc04
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/admin/settings.php
+@@ -0,0 +1,172 @@
++<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
++<?php init_head(); ?>
++<div id="wrapper">
++    <div class="content">
++        <div class="row">
++            <div class="col-md-12">
++                <?php $this->load->view('discharge_feedback/admin/_nav', ['active' => $active]); ?>
++            </div>
++
++            <?php echo form_open(admin_url('discharge_feedback/settings')); ?>
++
++            <div class="col-md-7">
++                <div class="panel_s">
++                    <div class="panel-body">
++
++                        <h4 class="tw-mt-0 tw-font-semibold">When is a lead "discharged"?</h4>
++
++                        <div class="checkbox checkbox-primary">
++                            <input type="checkbox" name="enabled" id="dfb_enabled" value="1" <?php echo $s['enabled'] ? 'checked' : ''; ?>>
++                            <label for="dfb_enabled">Enable discharge feedback (send links and daily reminders)</label>
++                        </div>
++
++                        <div class="form-group">
++                            <label for="status_names">Lead status name(s) that mean <strong>Close = Discharge</strong></label>
++                            <input type="text" class="form-control" id="status_names" name="status_names"
++                                   value="<?php echo e($s['status_names']); ?>">
++                            <p class="help-block">
++                                Comma separated, not case-sensitive. Names are used (not IDs) so it works in every branch database.<br>
++                                Your lead statuses (click to add):
++                                <?php foreach ($lead_statuses as $st) { ?>
++                                    <a href="#" class="label tw-inline-block tw-mr-1 tw-mt-1"
++                                       style="background:<?php echo e($st['color'] ?: '#64748b'); ?>;color:#fff;"
++                                       onclick="dfbAddStatus(<?php echo html_escape(json_encode($st['name'])); ?>);return false;"><?php echo e($st['name']); ?></a>
++                                <?php } ?>
++                            </p>
++                        </div>
++
++                        <hr>
++                        <h4 class="tw-font-semibold">Channels</h4>
++
++                        <div class="checkbox checkbox-primary">
++                            <input type="checkbox" name="send_email" id="dfb_send_email" value="1" <?php echo $s['send_email'] ? 'checked' : ''; ?>>
++                            <label for="dfb_send_email">Send by Email <small class="text-muted">(uses Setup &rarr; Settings &rarr; Email SMTP)</small></label>
++                        </div>
++                        <div class="checkbox checkbox-primary">
++                            <input type="checkbox" name="send_sms" id="dfb_send_sms" value="1" <?php echo $s['send_sms'] ? 'checked' : ''; ?>>
++                            <label for="dfb_send_sms">Send by SMS <small class="text-muted">(uses the active gateway in Setup &rarr; Settings &rarr; SMS)</small></label>
++                        </div>
++
++                        <div class="form-group">
++                            <label for="country_code">Default country code for 10-digit phone numbers</label>
++                            <input type="text" class="form-control" id="country_code" name="country_code" style="max-width:120px;"
++                                   value="<?php echo e($s['country_code']); ?>">
++                            <p class="help-block">91 for India. 9876543210 becomes 919876543210 (+919876543210 for Twilio).</p>
++                        </div>
++
++                        <hr>
++                        <h4 class="tw-font-semibold">Daily reminders</h4>
++
++                        <div class="row">
++                            <div class="col-md-6">
++                                <div class="form-group">
++                                    <label for="daily_hour">Send daily reminders at (hour, 0–23)</label>
++                                    <input type="number" min="0" max="23" class="form-control" id="daily_hour" name="daily_hour"
++                                           value="<?php echo (int) $s['daily_hour']; ?>">
++                                    <p class="help-block">Server time now: <?php echo date('H:i'); ?> (<?php echo e(date_default_timezone_get()); ?>)</p>
++                                </div>
++                            </div>
++                            <div class="col-md-6">
++                                <div class="form-group">
++                                    <label for="max_messages">Maximum messages per patient</label>
++                                    <input type="number" min="0" class="form-control" id="max_messages" name="max_messages"
++                                           value="<?php echo (int) $s['max_messages']; ?>">
++                                    <p class="help-block">Includes the first message. 0 = remind every day until the form is submitted.</p>
++                                </div>
++                            </div>
++                        </div>
++
++                        <hr>
++                        <h4 class="tw-font-semibold">Message templates</h4>
++                        <p class="text-muted">Merge fields: <code>{patient_name}</code> <code>{feedback_link}</code> <code>{company_name}</code> <code>{branch_name}</code></p>
++
++                        <div class="form-group">
++                            <label for="email_subject">Email subject</label>
++                            <input type="text" class="form-control" id="email_subject" name="email_subject"
++                                   value="<?php echo e($s['email_subject']); ?>">
++                            <p class="help-block">Reminders are prefixed with "Reminder: ".</p>
++                        </div>
++
++                        <div class="form-group">
++                            <label for="email_body">Email body (HTML)</label>
++                            <textarea class="form-control" id="email_body" name="email_body" rows="9"><?php echo html_escape($s['email_body']); ?></textarea>
++                        </div>
++
++                        <div class="form-group">
++                            <label for="sms_body">SMS text</label>
++                            <textarea class="form-control" id="sms_body" name="sms_body" rows="3"><?php echo html_escape($s['sms_body']); ?></textarea>
++                            <p class="help-block">
++                                <strong>India (MSG91):</strong> SMS must match a DLT-approved template exactly, otherwise operators block it.
++                                Register this text with <code>{#var#}</code> for each merge field on your DLT portal first.
++                            </p>
++                        </div>
++
++                        <button type="submit" class="btn btn-primary"><?php echo _l('submit'); ?></button>
++                    </div>
++                </div>
++            </div>
++
++            <div class="col-md-5">
++                <div class="panel_s">
++                    <div class="panel-body">
++                        <h4 class="tw-mt-0 tw-font-semibold">Feedback form links</h4>
++
++                        <p class="tw-mb-1"><strong>Personal link</strong> (sent automatically to each patient):</p>
++                        <p class="text-muted"><code><?php echo e(site_url('discharge_feedback/patient_feedback/form/')); ?>&lt;unique-code&gt;</code><br>
++                            Pre-filled with the patient name and stops the reminders once submitted.</p>
++
++                        <div class="checkbox checkbox-primary tw-mt-4">
++                            <input type="checkbox" name="allow_general_link" id="dfb_general" value="1" <?php echo $s['allow_general_link'] ? 'checked' : ''; ?>>
++                            <label for="dfb_general"><strong>General link</strong> – anyone with it can fill the form (share on WhatsApp, website, QR code)</label>
++                        </div>
++                        <div class="input-group">
++                            <input type="text" class="form-control" readonly value="<?php echo e($general_link); ?>" onclick="this.select();">
++                            <span class="input-group-btn">
++                                <a href="<?php echo e($general_link); ?>" target="_blank" rel="noopener" class="btn btn-default">Open</a>
++                            </span>
++                        </div>
++                    </div>
++                </div>
++
++                <div class="panel_s">
++                    <div class="panel-body">
++                        <h4 class="tw-mt-0 tw-font-semibold">Cron job (daily messages)</h4>
++
++                        <p><strong>Option A – Perfex cron</strong> (recommended, you probably have it already).<br>
++                            Runs every 5 minutes; this module sends new links immediately and the daily reminders once a day after the hour above.</p>
++                        <pre class="tw-text-xs" style="white-space:pre-wrap;">*/5 * * * * wget -q -O- <?php echo e($perfex_cron); ?> &gt;/dev/null 2&gt;&amp;1</pre>
++
++                        <p class="tw-mt-4"><strong>Option B – dedicated daily URL</strong> (exact time, e.g. 10:00 every day):</p>
++                        <pre class="tw-text-xs" style="white-space:pre-wrap;">0 10 * * * wget -q -O- "<?php echo e($cron_url); ?>" &gt;/dev/null 2&gt;&amp;1</pre>
++                        <p class="help-block">Keep this URL secret. Opening it in a browser shows a JSON result – handy for testing.</p>
++
++                        <div class="checkbox">
++                            <input type="checkbox" name="regenerate_cron_key" id="dfb_regen" value="1">
++                            <label for="dfb_regen">Generate a new secret key on save (old cron URL stops working)</label>
++                        </div>
++
++                        <p class="text-muted tw-mt-3">
++                            Last daily run: <?php echo $s['last_daily_run'] ? e($s['last_daily_run']) : 'never'; ?><br>
++                            Only leads closed after <?php echo e($s['start_date']); ?> (module installation) are picked up by the cron scan.
++                        </p>
++                    </div>
++                </div>
++            </div>
++
++            <?php echo form_close(); ?>
++        </div>
++    </div>
++</div>
++<?php init_tail(); ?>
++<script>
++    function dfbAddStatus(name) {
++        var input = document.getElementById('status_names');
++        var list = input.value.split(',').map(function (s) { return s.trim(); }).filter(Boolean);
++        if (list.map(function (s) { return s.toLowerCase(); }).indexOf(name.toLowerCase()) === -1) {
++            list.push(name);
++        }
++        input.value = list.join(', ');
++    }
++</script>
++</body>
++</html>
+diff --git a/app/modules/discharge_feedback/views/index.html b/app/modules/discharge_feedback/views/index.html
+new file mode 100644
+index 0000000..ce170d0
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/index.html
+@@ -0,0 +1 @@
++<html><head><title>403 Forbidden</title></head><body><p>Directory access is forbidden.</p></body></html>
+diff --git a/app/modules/discharge_feedback/views/public/form.php b/app/modules/discharge_feedback/views/public/form.php
+new file mode 100644
+index 0000000..db5709f
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/public/form.php
+@@ -0,0 +1,530 @@
++<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
++<!DOCTYPE html>
++<html lang="en">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1.0">
++    <meta name="robots" content="noindex, nofollow">
++    <title>Medi Travel - Fit-to-Fly Medical Sign-Off Form</title>
++
++    <style>
++        @page {
++            size: A4;
++            margin: 13mm 15mm 13mm 15mm;
++        }
++
++        * {
++            box-sizing: border-box;
++        }
++
++        html,
++        body {
++            margin: 0;
++            padding: 0;
++            background: #ffffff;
++        }
++
++        body {
++            font-family: Arial, Helvetica, sans-serif;
++            font-size: 14px;
++            line-height: 1.45;
++            color: #33415a;
++        }
++
++        .page {
++            width: auto;
++            max-width: 900px;
++            margin: 0 auto;
++            padding: 13mm 15mm;
++        }
++
++        .main-table,
++        .profile-table,
++        .checklist-table,
++        .signature-table {
++            width: 100%;
++            border-collapse: collapse;
++        }
++
++        .brand {
++            padding: 0 0 10px 0;
++            font-size: 32px;
++            line-height: 1.05;
++            font-weight: bold;
++            letter-spacing: 5px;
++            color: #24469a;
++        }
++
++        .document-title {
++            padding: 6px 0 16px 0;
++            font-size: 20px;
++            line-height: 1.25;
++            font-weight: bold;
++            color: #182033;
++        }
++
++        .top-rule {
++            width: 100%;
++            height: 12px;
++            margin: 0 0 18px 0;
++            border-bottom: 3px solid #1787c8;
++        }
++
++        .profile-table {
++            margin-bottom: 16px;
++            table-layout: fixed;
++        }
++
++        .profile-table td {
++            border: 1px solid #c7d2df;
++            padding: 9px 10px;
++            vertical-align: middle;
++            line-height: 1.4;
++        }
++
++        .profile-label {
++            background: #f4f6f9;
++            font-weight: bold;
++            color: #354258;
++            font-size: 14px;
++        }
++
++        .profile-value {
++            background: #ffffff;
++        }
++
++        .field-input {
++            display: block;
++            width: 100%;
++            height: 28px;
++            margin: 0;
++            padding: 2px 4px;
++            border: none;
++            border-bottom: 1px solid #66758a;
++            outline: none;
++            background: transparent;
++            color: #182033;
++            font-family: Arial, Helvetica, sans-serif;
++            font-size: 14px;
++        }
++
++        .checklist-table {
++            margin-bottom: 32px;
++        }
++
++        .checklist-table td {
++            padding: 7px 0;
++            vertical-align: top;
++            line-height: 1.5;
++        }
++
++        .check-cell {
++            width: 30px;
++            padding-top: 7px !important;
++        }
++
++        .check-input {
++            width: 16px;
++            height: 16px;
++            margin: 0;
++            padding: 0;
++            vertical-align: middle;
++            cursor: pointer;
++        }
++
++        .check-label {
++            cursor: pointer;
++            color: #26334a;
++            font-size: 14px;
++            line-height: 1.5;
++        }
++
++        .signature-table {
++            table-layout: fixed;
++        }
++
++        .signature-table td {
++            border: none;
++            padding: 0;
++            vertical-align: bottom;
++        }
++
++        .signature-left {
++            width: 57%;
++            padding-right: 24px !important;
++        }
++
++        .signature-right {
++            width: 43%;
++        }
++
++        .signature-input {
++            display: block;
++            width: 100%;
++            height: 32px;
++            margin: 0;
++            padding: 2px 4px;
++            border: none;
++            border-bottom: 1px solid #56657a;
++            outline: none;
++            background: transparent;
++            color: #182033;
++            font-family: Arial, Helvetica, sans-serif;
++            font-size: 14px;
++        }
++
++        .field-caption {
++            padding-top: 5px;
++            color: #26334a;
++            font-size: 14px;
++            line-height: 1.4;
++        }
++
++        .avoid-break {
++            page-break-inside: avoid;
++        }
++
++        /* ---- added for the online version ---- */
++        .field-input:focus,
++        .signature-input:focus {
++            border-bottom: 2px solid #1787c8;
++        }
++
++        .field-error {
++            display: block;
++            margin-top: 4px;
++            color: #c0392b;
++            font-size: 12px;
++        }
++
++        .has-error .field-input {
++            border-bottom-color: #c0392b;
++        }
++
++        .error-summary {
++            margin: 0 0 16px 0;
++            padding: 10px 12px;
++            border-left: 4px solid #c0392b;
++            background: #fdf1f0;
++            color: #8e2a20;
++        }
++
++        .actions {
++            margin-top: 34px;
++            text-align: right;
++        }
++
++        .submit-btn {
++            display: inline-block;
++            padding: 11px 28px;
++            border: none;
++            border-radius: 4px;
++            background: #24469a;
++            color: #ffffff;
++            font-family: Arial, Helvetica, sans-serif;
++            font-size: 15px;
++            font-weight: bold;
++            letter-spacing: 0.5px;
++            cursor: pointer;
++        }
++
++        .submit-btn:hover {
++            background: #1c3880;
++        }
++
++        .submit-btn[disabled] {
++            opacity: 0.6;
++            cursor: default;
++        }
++
++        /* Mobile: patients mostly open the SMS link on a phone */
++        @media (max-width: 640px) {
++            .page {
++                padding: 18px 16px;
++            }
++
++            .brand {
++                font-size: 24px;
++                letter-spacing: 3px;
++            }
++
++            .document-title {
++                font-size: 17px;
++            }
++
++            .profile-table,
++            .profile-table tbody,
++            .profile-table tr,
++            .profile-table td,
++            .signature-table,
++            .signature-table tbody,
++            .signature-table tr,
++            .signature-table td {
++                display: block;
++                width: 100% !important;
++            }
++
++            .profile-table colgroup {
++                display: none;
++            }
++
++            .profile-table td.profile-label {
++                border-bottom: none;
++            }
++
++            .profile-table td.profile-value {
++                margin-bottom: 8px;
++            }
++
++            .signature-left {
++                padding-right: 0 !important;
++                margin-bottom: 22px;
++            }
++
++            .actions {
++                text-align: center;
++            }
++
++            .submit-btn {
++                width: 100%;
++            }
++        }
++
++        @media print {
++            * {
++                -webkit-print-color-adjust: exact !important;
++                print-color-adjust: exact !important;
++            }
++
++            body {
++                font-size: 14px;
++            }
++
++            .page {
++                max-width: none;
++            }
++
++            .actions,
++            .error-summary {
++                display: none;
++            }
++        }
++    </style>
++</head>
++
++<body>
++
++<form action="<?php echo html_escape($action); ?>" method="post" id="fitToFlyMedicalSignOffForm" novalidate>
++    <input type="hidden" name="<?php echo html_escape($csrf_name); ?>" value="<?php echo html_escape($csrf_hash); ?>">
++
++    <div class="page">
++
++        <table class="main-table">
++            <tr>
++                <td>
++
++                    <div class="brand">
++                        MEDITRAVEL
++                    </div>
++
++                    <div class="document-title">
++                        FIT-TO-FLY MEDICAL SIGN-OFF FORM
++                    </div>
++
++                    <div class="top-rule"></div>
++
++                    <?php if (!empty($errors)) { ?>
++                        <div class="error-summary">Please correct the highlighted fields and submit again.</div>
++                    <?php } ?>
++
++                    <!-- PATIENT DETAILS -->
++                    <table class="profile-table">
++
++                        <colgroup>
++                            <col style="width:25%;">
++                            <col style="width:25%;">
++                            <col style="width:25%;">
++                            <col style="width:25%;">
++                        </colgroup>
++
++                        <tr>
++
++                            <td class="profile-label">
++                                <label for="patient_name">Patient Full Name</label>
++                            </td>
++
++                            <td class="profile-value<?php echo isset($errors['patient_name']) ? ' has-error' : ''; ?>">
++                                <input
++                                    type="text"
++                                    id="patient_name"
++                                    name="patient_name"
++                                    class="field-input"
++                                    maxlength="191"
++                                    required
++                                    autocomplete="name"
++                                    value="<?php echo html_escape($values['patient_name']); ?>"
++                                >
++                                <?php if (isset($errors['patient_name'])) { ?>
++                                    <span class="field-error"><?php echo html_escape($errors['patient_name']); ?></span>
++                                <?php } ?>
++                            </td>
++
++                            <td class="profile-label">
++                                <label for="passport_number">Passport Number</label>
++                            </td>
++
++                            <td class="profile-value<?php echo isset($errors['passport_number']) ? ' has-error' : ''; ?>">
++                                <input
++                                    type="text"
++                                    id="passport_number"
++                                    name="passport_number"
++                                    class="field-input"
++                                    maxlength="100"
++                                    required
++                                    autocapitalize="characters"
++                                    value="<?php echo html_escape($values['passport_number']); ?>"
++                                >
++                                <?php if (isset($errors['passport_number'])) { ?>
++                                    <span class="field-error"><?php echo html_escape($errors['passport_number']); ?></span>
++                                <?php } ?>
++                            </td>
++
++                        </tr>
++
++                    </table>
++
++
++                    <!-- MEDICAL FITNESS CHECKLIST -->
++                    <table class="checklist-table">
++
++                        <tr>
++
++                            <td class="check-cell">
++
++                                <input
++                                    type="checkbox"
++                                    id="incision_healed"
++                                    name="incision_healed"
++                                    value="1"
++                                    class="check-input"
++                                    <?php echo $values['incision_healed'] ? 'checked' : ''; ?>
++                                >
++
++                            </td>
++
++                            <td>
++
++                                <label
++                                    for="incision_healed"
++                                    class="check-label"
++                                >
++                                    The surgical incision site(s) are closed, healing stably...
++                                </label>
++
++                            </td>
++
++                        </tr>
++
++
++                        <tr>
++
++                            <td class="check-cell">
++
++                                <input
++                                    type="checkbox"
++                                    id="cardio_stable"
++                                    name="cardio_stable"
++                                    value="1"
++                                    class="check-input"
++                                    <?php echo $values['cardio_stable'] ? 'checked' : ''; ?>
++                                >
++
++                            </td>
++
++                            <td>
++
++                                <label
++                                    for="cardio_stable"
++                                    class="check-label"
++                                >
++                                    The patient's cardiopulmonary status is stable...
++                                </label>
++
++                            </td>
++
++                        </tr>
++
++                    </table>
++
++
++                    <!-- PHYSICIAN SIGN-OFF -->
++                    <div class="avoid-break">
++
++                        <table class="signature-table">
++
++                            <tr>
++
++                                <td class="signature-left">
++
++                                    <input
++                                        type="text"
++                                        id="physician_signature"
++                                        name="physician_signature"
++                                        class="signature-input"
++                                        maxlength="191"
++                                        value="<?php echo html_escape($values['physician_signature']); ?>"
++                                    >
++
++                                    <div class="field-caption">
++                                        <label for="physician_signature">Signature of Attending Physician</label>
++                                    </div>
++
++                                </td>
++
++
++                                <td class="signature-right">
++
++                                    <input
++                                        type="text"
++                                        id="license_number"
++                                        name="license_number"
++                                        class="signature-input"
++                                        maxlength="100"
++                                        value="<?php echo html_escape($values['license_number']); ?>"
++                                    >
++
++                                    <div class="field-caption">
++                                        <label for="license_number">License Number</label>
++                                    </div>
++
++                                </td>
++
++                            </tr>
++
++                        </table>
++
++                    </div>
++
++                    <div class="actions">
++                        <button type="submit" class="submit-btn" id="submitBtn">Submit Form</button>
++                    </div>
++
++                </td>
++            </tr>
++        </table>
++
++    </div>
++
++</form>
++
++<script>
++    // Prevent double submission
++    document.getElementById('fitToFlyMedicalSignOffForm').addEventListener('submit', function () {
++        var btn = document.getElementById('submitBtn');
++        btn.disabled = true;
++        btn.textContent = 'Submitting...';
++    });
++</script>
++
++</body>
++</html>
+diff --git a/app/modules/discharge_feedback/views/public/index.html b/app/modules/discharge_feedback/views/public/index.html
+new file mode 100644
+index 0000000..ce170d0
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/public/index.html
+@@ -0,0 +1 @@
++<html><head><title>403 Forbidden</title></head><body><p>Directory access is forbidden.</p></body></html>
+diff --git a/app/modules/discharge_feedback/views/public/thanks.php b/app/modules/discharge_feedback/views/public/thanks.php
+new file mode 100644
+index 0000000..ff6da23
+--- /dev/null
++++ b/app/modules/discharge_feedback/views/public/thanks.php
+@@ -0,0 +1,46 @@
++<?php defined('BASEPATH') or exit('No direct script access allowed'); ?>
++<!DOCTYPE html>
++<html lang="en">
++<head>
++    <meta charset="UTF-8">
++    <meta name="viewport" content="width=device-width, initial-scale=1.0">
++    <meta name="robots" content="noindex, nofollow">
++    <title>Medi Travel - Thank You</title>
++    <style>
++        * { box-sizing: border-box; }
++        html, body { margin: 0; padding: 0; background: #ffffff; }
++        body { font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.5; color: #33415a; }
++        .page { max-width: 900px; margin: 0 auto; padding: 13mm 15mm; }
++        .brand { padding: 0 0 10px 0; font-size: 32px; line-height: 1.05; font-weight: bold; letter-spacing: 5px; color: #24469a; }
++        .document-title { padding: 6px 0 16px 0; font-size: 20px; font-weight: bold; color: #182033; }
++        .top-rule { height: 12px; margin: 0 0 24px 0; border-bottom: 3px solid #1787c8; }
++        .box { padding: 22px 24px; border: 1px solid #c7d2df; background: #f4f6f9; }
++        .box h2 { margin: 0 0 8px 0; font-size: 18px; color: #182033; }
++        .box p { margin: 0; color: #26334a; }
++        @media (max-width: 640px) {
++            .page { padding: 18px 16px; }
++            .brand { font-size: 24px; letter-spacing: 3px; }
++            .document-title { font-size: 17px; }
++        }
++    </style>
++</head>
++<body>
++<div class="page">
++    <div class="brand">MEDITRAVEL</div>
++    <div class="document-title">FIT-TO-FLY MEDICAL SIGN-OFF FORM</div>
++    <div class="top-rule"></div>
++
++    <div class="box">
++        <?php if ($already) { ?>
++            <h2>This form has already been submitted</h2>
++            <p>We have already received your form. Thank you – there is nothing more you need to do.</p>
++        <?php } else { ?>
++            <h2>Thank you!</h2>
++            <p>Your form has been submitted successfully. Our team will review it shortly.</p>
++        <?php } ?>
++        <p style="margin-top:14px;">Wishing you a safe journey home.<br>
++            Team <?php echo html_escape($company ?: 'MediTravel'); ?></p>
++    </div>
++</div>
++</body>
++</html>
+-- 
+2.43.0
+
